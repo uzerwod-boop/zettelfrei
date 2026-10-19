@@ -18,7 +18,7 @@ Jede Änderung der KI wird vorher als „alt → neu“ angezeigt und erst nach 
 
 ![Zettelfrei mit der Beispiel-Auftragsliste](docs/screenshot.png)
 
-> Prototyp von **Bohdan Sychevskyi**. Feedback von Handwerksbetrieben ist sehr willkommen.
+> Prototyp von **Bohdan Sychevskyi**, entwickelt gemeinsam mit einem guten Freund: **Claude** von Anthropic. Die Idee, die Produktentscheidungen und die Tests kommen von mir, beim Code hat Claude mitgeschrieben. Feedback von Handwerksbetrieben ist sehr willkommen.
 
 ---
 
@@ -126,4 +126,4 @@ Zettelfrei lets small trade businesses work with their existing Excel files in p
 
 ## Lizenz
 
-MIT © 2026 Bohdan Sychevskyi. Mitgelieferte Bibliotheken und Schriften stehen unter ihren eigenen Lizenzen (siehe `vendor/` und `fonts/`).
+MIT © 2026 Bohdan Sychevskyi. Entwickelt gemeinsam mit Claude (Anthropic). Mitgelieferte Bibliotheken und Schriften stehen unter ihren eigenen Lizenzen (siehe `vendor/` und `fonts/`).
