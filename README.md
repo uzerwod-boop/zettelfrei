@@ -10,7 +10,24 @@ Zettelfrei öffnet die Excel-Dateien, die ein Handwerksbetrieb sowieso hat – S
 - **PDF & Foto:** Lieferantenrechnung hineinziehen, der Lagerbestand wird erhöht. Auch gescannte PDFs.
 - **Prüfen:** leere Pflichtfelder, doppelte Nummern, Text in Zahlenspalten, Formelfehler; fachliche Prüfung per KI.
 - **Verlauf:** jeder Stand lässt sich zurückholen.
-- **Speichern:** zurück als `.xlsx` mit Formeln, Datums- und Zahlenformaten.
+- **Speichern:** zurück als `.xlsx` mit Formeln, Farben, Schriften und Zahlenformaten der Originaldatei.
+
+### Neu in Version 0.2: Bürokratie, die sich selbst erledigt
+
+- **E-Rechnung empfangen:** XRechnung (XML) und ZUGFeRD/Factur-X (PDF mit eingebetteter XML) werden **exakt und ohne KI** gelesen. Bestand im Lager steigt automatisch (Zuordnung über Artikelnummer), Eingangsrechnungen landen als Zeile in der Liste.
+- **E-Rechnung schreiben:** aus einer Auftragszeile eine **XRechnung 3.0** plus PDF zur Ansicht. Geprüft gegen die offiziellen Regeln EN 16931 und XRechnung (siehe unten).
+- **Arbeitszeit nach ArbZG:** Beginn, Ende und Pause als Uhrzeit; Hinweise bei über 10 Stunden am Tag (§ 3), zu kurzer Pause (§ 4) und weniger als 11 Stunden Ruhezeit (§ 5).
+- **Änderungsprotokoll:** wer hat wann welche Zelle geändert. Wird nie gelöscht und kann als eigenes Blatt in der Excel-Datei mitgespeichert werden.
+- **Mahnwesen:** überfällige Rechnungen auf einen Blick; Zahlungserinnerung, 1. und 2. Mahnung als PDF-Brief, Mahnstufe wird eingetragen.
+- **Abnahmeprotokoll:** auf dem Handy beim Kunden, mit Mängeln, Fotos und zwei Unterschriften; ergibt ein PDF und das Abnahmedatum in der Tabelle.
+- **Für den Steuerberater:** Belegliste als CSV (Excel-tauglich) je Monat. Kein DATEV-Format.
+- **Prüfungen für Geld:** MwSt passt nicht zu 19 % oder 7 %, Rechnungen überfällig; die KI-Prüfung weist zusätzlich auf mögliche Fälle von § 13b UStG hin.
+- **Wochenbericht:** Stunden je Projekt, Nachbestellungen, offene Rechnungen, Hinweise zur Arbeitszeit – zum Kopieren oder Teilen per WhatsApp.
+- **Handy und Sprache:** große Bedienelemente, Eingabe per Mikrofon (Spracherkennung des Browsers).
+
+![Bereich Dokumente: E-Rechnung schreiben, Mahnwesen, Abnahmeprotokoll](docs/screenshot-dokumente.png)
+
+> Die Vorlagen für Mahnungen und Protokolle und die Hinweise zu ArbZG und § 13b UStG sind Hilfen für den Alltag, keine Rechtsberatung.
 
 Jede Änderung der KI wird vorher als „alt → neu“ angezeigt und erst nach Klick übernommen.
 
@@ -32,9 +49,9 @@ cd zettelfrei
 npm start
 ```
 
-Dann **http://localhost:8787** öffnen. Drei Beispieldateien sind eingebaut (oben „Beispiel öffnen…“), oder eine eigene Excel-Datei mit „Excel öffnen“ laden bzw. hineinziehen.
+Dann **http://localhost:8787** öffnen. Fünf Beispieldateien und zwei Beispiel-E-Rechnungen sind eingebaut (oben „Beispiel öffnen…“), oder eine eigene Excel-Datei mit „Excel öffnen“ laden bzw. hineinziehen.
 
-Ohne KI funktioniert bereits: Datei öffnen, Zellen bearbeiten, Formeln rechnen, Zeilen hinzufügen und löschen, Prüfen, Verlauf, Speichern.
+Ohne KI funktioniert bereits: Datei öffnen, Zellen bearbeiten, Formeln rechnen, Zeilen hinzufügen und löschen, Prüfen, Verlauf, Speichern – und alles aus Version 0.2: E-Rechnungen lesen und schreiben, Arbeitszeit, Mahnwesen, Abnahme, Export, Wochenbericht. Die KI braucht es nur für freie Sätze, PDFs ohne E-Rechnung und Fotos.
 
 ## KI einrichten
 
@@ -91,11 +108,16 @@ Die Engine (`src/engine.js`) erkennt selbst:
 index.html            Oberfläche
 src/engine.js         Excel-Engine: lesen, rechnen, ändern, schreiben (ohne Abhängigkeiten außer SheetJS)
 src/ai.js             KI-Anbindung: OpenRouter, eigener Server, Claude API, lokales Modell
-src/app.js            Bedienung, Vorschau, Prüfen, Verlauf
+src/app.js            Bedienung, Vorschau, Prüfen, Verlauf, Änderungsprotokoll
+src/einvoice.js       E-Rechnung: XRechnung (UBL) und ZUGFeRD (CII) lesen, XRechnung 3.0 schreiben
+src/xlsxio.js         Speichern mit Formatierung (ExcelJS)
+src/docs.js           PDF-Briefe, Rechnungsansicht, Abnahmeprotokoll, CSV-Export, Wochenbericht
+src/workflows.js      Bereich „Dokumente“
 src/styles.css        Gestaltung (hell und dunkel)
 server.js             kleiner Server, leitet KI-Anfragen mit Schlüssel weiter (Claude oder OpenRouter)
-beispiele/            drei typische Excel-Dateien eines Fliesenlegers (erfundene Daten)
-vendor/               SheetJS und PDF.js lokal, damit alles offline läuft
+beispiele/            fünf typische Excel-Dateien eines Fliesenlegers und zwei E-Rechnungen (erfundene Daten)
+vendor/               SheetJS, PDF.js, ExcelJS und jsPDF lokal, damit alles offline läuft
+scripts/              Beispiele erzeugen, XRechnung prüfen
 tests/                Tests für Engine, Server und Browser
 ```
 
@@ -105,13 +127,30 @@ tests/                Tests für Engine, Server und Browser
 npm test                          # Engine + Server, ohne Abhängigkeiten
 pip install playwright && python -m playwright install chromium
 python tests/browser_test.py      # Ende-zu-Ende im Browser: ohne KI, OpenRouter, Claude API, lokales Modell, Server
+python tests/browser_v2_test.py   # Version 0.2: E-Rechnung, ArbZG, Mahnung, Abnahme, Export, Formatierung
 ```
+
+### XRechnung prüfen
+
+Erzeugte Rechnungen lassen sich gegen die offiziellen Regelwerke prüfen (EN 16931 und XRechnung, Schematron):
+
+```bash
+pip install saxonche
+git clone --depth 1 https://github.com/ConnectingEurope/eInvoicing-EN16931 _regeln/en16931
+git clone --depth 1 https://github.com/itplr-kosit/xrechnung-schematron     _regeln/xrechnung
+git clone --depth 1 https://github.com/Schematron/schematron                _regeln/iso
+python scripts/validate_xrechnung.py XRechnung_2026-032.xml
+```
+
+Beim Entwickeln wurden Rechnungen mit USt-IdNr., mit Steuernummer, mit Handelsregisternummer und mit gemischten Steuersätzen (19 % und 7 %) geprüft – alle ohne Fehler. Eine Prüfung mit dem offiziellen KoSIT-Validator (Java) ist vor dem Echtbetrieb trotzdem empfehlenswert.
 
 Die Browser-Tests bauen die KI-Antworten nach; ein echter Schlüssel ist nicht nötig.
 
 ## Grenzen des Prototyps
 
-- Beim Speichern gehen Farben und Schriftarten verloren; Werte, Formeln und Zahlenformate bleiben.
+- Formatierung bleibt erhalten, wenn eine `.xlsx`-Datei geöffnet wurde. Bei `.xls`/`.csv` werden nur Werte, Formeln und Zahlenformate gespeichert. Bedingte Formatierungen und verbundene Zellen innerhalb der Tabelle werden nicht angepasst.
+- E-Rechnungen werden als XRechnung (XML) erzeugt. Ein ZUGFeRD-PDF (PDF/A-3 mit eingebetteter XML) erzeugt der Prototyp noch nicht; das PDF dient nur der Ansicht.
+- Mehrere Nutzer gleichzeitig und Synchronisation mit OneDrive oder Google Drive sind noch nicht eingebaut.
 - Formeln mit `WENN`, `SVERWEIS` u. Ä. werden nicht live neu berechnet, es wird der zuletzt gespeicherte Wert angezeigt.
 - Beim Löschen von Zeilen werden Bezüge aus *anderen* Blättern nicht verschoben.
 - Sehr große Dateien (viele tausend Zeilen) passen nicht vollständig in eine KI-Anfrage.
@@ -122,7 +161,7 @@ Das Repository enthält einen Workflow, der die Seite auf GitHub Pages veröffen
 
 ## English summary
 
-Zettelfrei lets small trade businesses work with their existing Excel files in plain German sentences: add rows, update them, ask questions (totals are computed exactly by the sheet, not the model), import supplier invoices from PDF or photos, check for errors, and save back to `.xlsx` with formulas intact. AI is optional and pluggable: OpenRouter (any model, one key), a tiny Node server holding the key, the Claude API from the browser, or a local OpenAI-compatible model. Run with `npm start`.
+Zettelfrei lets small trade businesses work with their existing Excel files in plain German sentences: add rows, update them, ask questions (totals are computed exactly by the sheet, not the model), import supplier invoices from PDF or photos, check for errors, and save back to `.xlsx` with formulas and formatting intact. Version 0.2 adds German paperwork: reading XRechnung/ZUGFeRD e-invoices without AI, writing validated XRechnung 3.0, working-time checks (ArbZG), an append-only change log, payment reminders, signed acceptance reports, a CSV export for the tax advisor and a weekly report. AI is optional and pluggable: OpenRouter (any model, one key), a tiny Node server holding the key, the Claude API from the browser, or a local OpenAI-compatible model. Run with `npm start`.
 
 ## Lizenz
 

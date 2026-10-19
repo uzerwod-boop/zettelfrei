@@ -20,6 +20,10 @@ function serialToDate(n){ var d=new Date(Date.UTC(1899,11,30)+Math.round(n)*8640
   return String(d.getUTCDate()).padStart(2,"0")+"."+String(d.getUTCMonth()+1).padStart(2,"0")+"."+d.getUTCFullYear(); }
 function normDate(s){ var m=String(s).trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/); if(!m) return null;
   var y=+m[3]; if(y<100) y+=2000; return String(+m[1]).padStart(2,"0")+"."+String(+m[2]).padStart(2,"0")+"."+y; }
+function isTimeFmt(z){ z=String(z||"").toLowerCase().replace(/"[^"]*"|\\./g,""); return /h/.test(z) && !/[dy]/.test(z); }
+function fmtTime(v){ if(typeof v!=="number"||!isFinite(v)) return v; var m=Math.round((v%1+1)%1*1440); if(m===1440) m=0; return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0"); }
+function parseTime(s){ var m=String(s).trim().match(/^(\d{1,2})[:.h](\d{2})(?:\s*uhr)?$/i)||String(s).trim().match(/^(\d{1,2})\s*uhr$/i); if(!m) return null; var h=+m[1], mi=m[2]?+m[2]:0; if(h>24||mi>59) return null; return (h*60+mi)/1440; }
+function todaySerial(d){ d=d||new Date(); return (Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(1899,11,30))/86400000; }
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
 function blank(c){ return !c || ((c.v==null || c.v==="") && !c.f); }
 
@@ -47,7 +51,10 @@ function cellFrom(c, XLSX){
   if(!c) return null;
   var o={};
   if(c.f) o.f=String(c.f);
-  if(c.t==="n"){ if(c.z && XLSX.SSF.is_date(c.z)) { o.v=serialToDate(c.v); o.d=1; } else o.v=c.v; }
+  if(c.t==="n"){
+    if(c.z && isTimeFmt(c.z)) { o.v=c.v; o.tm=1; }
+    else if(c.z && XLSX.SSF.is_date(c.z)) { o.v=serialToDate(c.v); o.d=1; }
+    else o.v=c.v; }
   else if(c.t==="d"){ var dt=new Date(c.v); o.v=String(dt.getDate()).padStart(2,"0")+"."+String(dt.getMonth()+1).padStart(2,"0")+"."+dt.getFullYear(); o.d=1; }
   else if(c.t==="b") o.v=c.v?"WAHR":"FALSCH";
   else if(c.t==="e") o.v=c.w||"#FEHLER";
@@ -73,7 +80,7 @@ function parseSheet(XLSX, ws, name){
   var filled=function(row){ return row?row.filter(function(c){ return !blank(c); }).length:0; };
   for(var i=0;i<Math.min(grid.length,20);i++) best=Math.max(best,score(grid[i]));
   if(best>=2){ for(i=0;i<Math.min(grid.length,20);i++){ var s=score(grid[i]); if(s>=2 && s>=0.7*best && (i+1>=grid.length || filled(grid[i+1])>=1)){ hr=i; break; } } }
-  if(hr<0) return {name:name, hr:-1, top:grid, headers:[], rows:[], foot:[], c0:0, ncol:0, widths:widths, merges:merges, colFmt:[], dateCol:[]};
+  if(hr<0) return {name:name, hr:-1, top:grid, headers:[], rows:[], foot:[], c0:0, ncol:0, widths:widths, merges:merges, colFmt:[], dateCol:[], timeCol:[]};
   var hrow=grid[hr], c0=hrow.findIndex(function(c){ return !blank(c); }), cEnd=hrow.length-1;
   while(cEnd>c0 && blank(hrow[cEnd])) cEnd--;
   var ncol=cEnd-c0+1;
@@ -99,13 +106,13 @@ function parseSheet(XLSX, ws, name){
   var remap=function(cells){ cells.forEach(function(c){ if(c&&c.f) c.f=transformRefs(c.f,function(row,col,part){ return mapRow(row,part); }); }); };
   rows.forEach(remap); foot.forEach(remap); grid.slice(0,hr).forEach(remap);
   // Spaltentypen
-  var colFmt=[], dateCol=[];
+  var colFmt=[], dateCol=[], timeCol=[];
   for(k=0;k<ncol;k++){
-    var z=null, d=0, n=0;
-    rows.forEach(function(rw){ var c=rw[k]; if(c&&!blank(c)){ n++; if(c.d) d++; if(!z&&c.z) z=c.z; } });
-    colFmt.push(z); dateCol.push(n>0 && d/n>=0.6);
+    var z=null, d=0, n=0, t=0;
+    rows.forEach(function(rw){ var c=rw[k]; if(c&&!blank(c)){ n++; if(c.d) d++; if(c.tm) t++; if(!z&&c.z) z=c.z; } });
+    colFmt.push(z); dateCol.push(n>0 && d/n>=0.6); timeCol.push(n>0 && t/n>=0.6);
   }
-  return {name:name, hr:hr, top:grid.slice(0,hr), headers:headers, rows:rows, foot:foot, c0:c0, ncol:ncol, widths:widths, merges:merges.filter(function(m){ return m[2]<hr; }), colFmt:colFmt, dateCol:dateCol};
+  return {name:name, hr:hr, top:grid.slice(0,hr), headers:headers, rows:rows, foot:foot, c0:c0, ncol:ncol, widths:widths, merges:merges.filter(function(m){ return m[2]<hr; }), colFmt:colFmt, dateCol:dateCol, timeCol:timeCol, orig:{data:oldRows, foot:footOld}};
 }
 
 /* ---------- Adressen ---------- */
@@ -223,6 +230,15 @@ function deleteRow(sh, excelRow){
   return true;
 }
 
+/* ---------- Spalte anhängen ---------- */
+function addColumn(sh, name){
+  var k=findCol(sh,name); if(k>=0 && String(sh.headers[k]).toLowerCase()===String(name).toLowerCase()) return k;
+  sh.headers.push(name); sh.ncol++; sh.colFmt.push(null); sh.dateCol.push(/datum|am$|\bam\b/i.test(name)); if(sh.timeCol) sh.timeCol.push(false);
+  sh.rows.forEach(function(r){ r.push(null); }); sh.foot.forEach(function(r){ r.push(null); });
+  if(sh.widths) sh.widths[sh.c0+sh.ncol-1]=Math.max(12,name.length+2);
+  return sh.ncol-1;
+}
+
 /* ---------- Werte setzen ---------- */
 function findCol(sh, name){
   if(name==null) return -1; var n=String(name).toLowerCase().replace(/[^a-zäöüß0-9]/g,"");
@@ -236,6 +252,7 @@ function findCol(sh, name){
 function numericCol(sh,k){ var n=0,num=0; sh.rows.forEach(function(r){ var c=r[k]; if(c&&!blank(c)&&!c.f){ n++; if(typeof c.v==="number") num++; } }); return n>0&&num/n>=0.6; }
 function coerce(sh,k,val){
   if(val==null||val==="") return null;
+  if(sh.timeCol&&sh.timeCol[k]){ if(typeof val==="number") return val; var tt=parseTime(val); if(tt!=null) return tt; }
   if(sh.dateCol[k]){ var d=normDate(val); if(d) return d; }
   if(numericCol(sh,k)){ var n=typeof val==="number"?val:parseNum(val); if(n!=null) return n; }
   if(typeof val==="number") return val;
@@ -287,7 +304,7 @@ function query(model, q){
 }
 
 /* ---------- Prüfen (allgemein) ---------- */
-function checks(model){
+function checks(model,opts){
   var calc=new Calc(model), out=[];
   model.sheets.forEach(function(sh){
     if(sh.hr<0||!sh.rows.length) return;
@@ -304,8 +321,54 @@ function checks(model){
         if(key && v!=null && v!==""){ var s=String(v).trim().toLowerCase(); if(seen[s]) out.push({blatt:sh.name,zeile:row,k:k,problem:sh.headers[k]+" doppelt (auch Zeile "+seen[s]+")"}); else seen[s]=row; }
       });
     }
+    lawChecks(sh,calc,out,opts);
   });
   return out;
+}
+
+/* Fachliche Prüfungen: Arbeitszeit (ArbZG), MwSt, offene Rechnungen */
+function deNum(n){ return String(n).replace(".",","); }
+function col(sh,re){ for(var k=0;k<sh.ncol;k++) if(re.test(sh.headers[k])) return k; return -1; }
+function lawChecks(sh,calc,out,opts){
+  var today=todaySerial(opts&&opts.today), add=function(i,k,p){ out.push({blatt:sh.name,zeile:dataRowNo(sh,i),k:k,problem:p}); };
+  var V=function(i,k){ return k<0?null:calc.value(sh,dataRowNo(sh,i),sh.c0+k); };
+  var cDat=col(sh,/^datum$|^tag$/i), cMa=col(sh,/mitarbeiter|name|person/i), cBeg=col(sh,/beginn|von|start|anfang/i), cEnd=col(sh,/ende|bis/i),
+      cPau=col(sh,/pause/i), cStd=col(sh,/^stunden|^std|arbeitszeit/i);
+  // Arbeitszeit pro Person und Tag
+  if(cDat>=0 && cMa>=0 && cStd>=0){
+    var day={};
+    sh.rows.forEach(function(r,i){ var key=V(i,cMa)+"|"+V(i,cDat), h=calc.num(V(i,cStd)); if(!isNaN(h)){ (day[key]=day[key]||{h:0,last:i}).h+=h; day[key].last=i; } });
+    Object.keys(day).forEach(function(key){ if(day[key].h>10) add(day[key].last,cStd,"Über 10 Std. Arbeitszeit am Tag ("+deNum(Math.round(day[key].h*100)/100)+" Std., § 3 ArbZG)"); });
+  }
+  if(cBeg>=0 && cEnd>=0 && sh.timeCol && sh.timeCol[cBeg]){
+    var shifts=[];
+    sh.rows.forEach(function(r,i){
+      var b=V(i,cBeg), e=V(i,cEnd); if(typeof b!=="number"||typeof e!=="number") return;
+      var dur=(e-b)*24; if(dur<0) dur+=24;
+      var p=cPau>=0?calc.num(V(i,cPau)):0; p=isNaN(p)?0:p; // Minuten
+      var work=dur-p/60;
+      if(work>9 && p<45) add(i,cPau>=0?cPau:cEnd,"Pause zu kurz: über 9 Std. Arbeit braucht 45 Min. (§ 4 ArbZG)");
+      else if(work>6 && p<30) add(i,cPau>=0?cPau:cEnd,"Pause zu kurz: über 6 Std. Arbeit braucht 30 Min. (§ 4 ArbZG)");
+      if(cDat>=0 && cMa>=0){ var d=V(i,cDat); if(isDateStr(d)) shifts.push({i:i,ma:V(i,cMa),start:dateToSerial(d)+b,end:dateToSerial(d)+e+(e<b?1:0)}); }
+    });
+    var byMa={}; shifts.forEach(function(s){ (byMa[s.ma]=byMa[s.ma]||[]).push(s); });
+    Object.keys(byMa).forEach(function(m){ var l=byMa[m].sort(function(a,b){ return a.start-b.start; });
+      for(var j=1;j<l.length;j++){ var gap=(l[j].start-l[j-1].end)*24; if(gap>0 && gap<11 && Math.floor(l[j].start)!==Math.floor(l[j-1].start)) add(l[j].i,cBeg,"Ruhezeit nur "+deNum(Math.round(gap*10)/10)+" Std. seit letzter Schicht, mindestens 11 Std. (§ 5 ArbZG)"); } });
+  }
+  // MwSt-Satz plausibel?
+  var cNet=col(sh,/netto/i), cTax=col(sh,/mwst|ust|steuer/i);
+  if(cNet>=0 && cTax>=0 && cTax!==cNet && !/satz|%/i.test(sh.headers[cTax])){
+    sh.rows.forEach(function(r,i){ var n=calc.num(V(i,cNet)), t=calc.num(V(i,cTax)); if(n>0 && !isNaN(t) && t>0){ var q=t/n; if(Math.abs(q-0.19)>0.002 && Math.abs(q-0.07)>0.002) add(i,cTax,"MwSt passt weder zu 19 % noch zu 7 % ("+deNum(Math.round(q*1000)/10)+" %)"); } });
+  }
+  // Offene Rechnungen
+  var cRe=col(sh,/rechnung am|rechnungsdatum|re-datum/i), cBez=col(sh,/bezahlt am|zahlung am|bezahlt$/i), cFae=col(sh,/fällig|faellig/i);
+  if((cRe>=0||cFae>=0) && cBez>=0){
+    var limit=(opts&&opts.zahlungsziel)||30;
+    sh.rows.forEach(function(r,i){ var b=V(i,cBez); if(b!=null&&b!=="") return;
+      var due=cFae>=0?V(i,cFae):null;
+      if(isDateStr(due)){ var over=today-dateToSerial(due); if(over>0) add(i,cBez,"Seit "+over+" Tag"+(over===1?"":"en")+" überfällig"); return; }
+      var d=cRe>=0?V(i,cRe):null; if(isDateStr(d)){ var days=today-dateToSerial(d); if(days>limit) add(i,cBez,"Rechnung seit "+days+" Tagen offen"); } });
+  }
 }
 
 /* ---------- Für die KI beschreiben ---------- */
@@ -315,9 +378,9 @@ function describe(model, maxChars){
     if(sh.hr<0){ out.push("\nBlatt „"+sh.name+"“: keine Tabelle erkannt."); return; }
     var comp=computedCols(sh), tpl=templateRow(sh);
     out.push("\nBlatt „"+sh.name+"“ — Kopfzeile in Excel-Zeile "+(sh.hr+1)+", Daten in Zeilen "+dataRowNo(sh,0)+"–"+dataRowNo(sh,sh.rows.length-1)+".");
-    out.push("Spalten: "+sh.headers.map(function(h,k){ return colLetter(sh.c0+k)+" „"+h+"“ ("+(comp[k]?"berechnet, nicht setzen":sh.dateCol[k]?"Datum":numericCol(sh,k)?"Zahl":"Text")+")"; }).join("; "));
+    out.push("Spalten: "+sh.headers.map(function(h,k){ return colLetter(sh.c0+k)+" „"+h+"“ ("+(comp[k]?"berechnet, nicht setzen":sh.dateCol[k]?"Datum":sh.timeCol&&sh.timeCol[k]?"Uhrzeit HH:MM":numericCol(sh,k)?"Zahl":"Text")+")"; }).join("; "));
     out.push("Zeile;"+sh.headers.join(";"));
-    sh.rows.forEach(function(r,i){ var row=dataRowNo(sh,i); out.push(row+";"+rowValues(model,sh,i,calc).map(function(v){ return v==null?"":String(v).replace(/;/g,","); }).join(";")); });
+    sh.rows.forEach(function(r,i){ var row=dataRowNo(sh,i); out.push(row+";"+rowValues(model,sh,i,calc).map(function(v,k){ if(sh.timeCol&&sh.timeCol[k]) v=fmtTime(v); return v==null?"":String(v).replace(/;/g,","); }).join(";")); });
     sh.foot.forEach(function(r,j){ var row=footRowNo(sh,j); var vals=[]; for(var k=0;k<sh.ncol;k++) vals.push(calc.value(sh,row,sh.c0+k)); out.push(row+" (Summenzeile);"+vals.map(function(v){ return v==null?"":v; }).join(";")); });
   });
   var s=out.join("\n"); return s.length>maxChars? s.slice(0,maxChars)+"\n[gekürzt]" : s;
@@ -397,6 +460,7 @@ function buildWorkbook(XLSX, model){
 }
 
 return {colLetter:colLetter,colIndex:colIndex,parseNum:parseNum,isDateStr:isDateStr,normDate:normDate,clone:clone,blank:blank,
+  isTimeFmt:isTimeFmt,fmtTime:fmtTime,parseTime:parseTime,dateToSerial:dateToSerial,serialToDate:serialToDate,todaySerial:todaySerial,addColumn:addColumn,col:col,
   loadWorkbook:loadWorkbook,parseSheet:parseSheet,Calc:Calc,display:display,dataRowNo:dataRowNo,footRowNo:footRowNo,cellAt:cellAt,
   appendRow:appendRow,deleteRow:deleteRow,setCell:setCell,findCol:findCol,computedCols:computedCols,numericCol:numericCol,
   query:query,checks:checks,describe:describe,planOps:planOps,applyPlan:applyPlan,buildWorkbook:buildWorkbook,transformRefs:transformRefs};

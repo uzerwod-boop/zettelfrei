@@ -31,7 +31,8 @@
     <section class="panel" aria-label="Assistent">
       <div class="tabs" role="tablist">
         <button role="tab" aria-selected="true" data-pane="p-cmd" id="t-cmd">Assistent</button>
-        <button role="tab" aria-selected="false" data-pane="p-pdf" id="t-pdf">PDF &amp; Foto</button>
+        <button role="tab" aria-selected="false" data-pane="p-pdf" id="t-pdf">Belege</button>
+        <button role="tab" aria-selected="false" data-pane="p-docs" id="t-docs">Dokumente</button>
         <button role="tab" aria-selected="false" data-pane="p-check" id="t-check">Prüfen<span class="n" id="issueN" hidden></span></button>
         <button role="tab" aria-selected="false" data-pane="p-hist" id="t-hist">Verlauf</button>
       </div>
@@ -39,21 +40,28 @@
       <div class="pane" id="p-cmd">
         <h2>Was soll in der Tabelle passieren?</h2>
         <p class="hint">Eintragen, ändern, löschen oder fragen. Summen rechnet die Tabelle selbst, nicht die KI. Jede Änderung sehen Sie vorher.</p>
-        <textarea id="cmdText" rows="3" placeholder="z. B. Becker hat heute bezahlt"></textarea>
+        <div class="cmdwrap"><textarea id="cmdText" rows="3" placeholder="z. B. Becker hat heute bezahlt"></textarea>
+        <button type="button" class="mic" id="micBtn" hidden aria-pressed="false" title="Sprechen (Spracherkennung des Browsers)" aria-label="Sprechen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12h-2Z"/></svg></button></div>
         <div class="examples" id="cmdEx"></div>
         <div class="row"><button class="btn" id="cmdBtn">Ausführen</button><button class="btn quiet" id="cmdStop" hidden>Stopp</button><span id="cmdBusy"></span></div>
         <div id="cmdOut" style="display:grid;gap:10px"></div>
       </div>
 
       <div class="pane" id="p-pdf" hidden>
-        <h2>PDF oder Foto übernehmen</h2>
-        <p class="hint">Rechnung, Lieferschein, Auftrag oder abfotografierter Zettel. Gescannte PDFs werden als Bild gelesen. Sie sehen vorher, welche Zeilen sich ändern.</p>
+        <h2>Belege übernehmen</h2>
+        <p class="hint">E-Rechnungen (XRechnung, ZUGFeRD) werden exakt und ohne KI gelesen. Andere PDFs, Scans und Fotos liest die KI. Sie sehen vorher, welche Zeilen sich ändern.</p>
         <label class="hint" for="pdfTarget">In welches Blatt?</label>
         <select id="pdfTarget"></select>
-        <label class="drop" id="drop" for="pdfInput"><strong>Datei hierher ziehen oder antippen</strong>PDF, JPG oder PNG</label>
-        <input type="file" id="pdfInput" accept="application/pdf,image/png,image/jpeg,image/webp" hidden>
-        <div class="row"><button class="btn quiet" id="pdfSample">Beispiel-Rechnung testen</button><span id="pdfBusy"></span></div>
+        <label class="drop" id="drop" for="pdfInput"><strong>Datei hierher ziehen oder antippen</strong>E-Rechnung (XML, ZUGFeRD-PDF), PDF, JPG oder PNG</label>
+        <input type="file" id="pdfInput" accept="application/pdf,image/png,image/jpeg,image/webp,.xml,application/xml,text/xml" hidden>
+        <div class="row"><button class="btn quiet small" type="button" data-sampledoc="Rechnung_Weber_88213_XRechnung.xml">Beispiel: XRechnung</button><button class="btn quiet small" type="button" data-sampledoc="Rechnung_Kaiser_RE-2026-4502_ZUGFeRD.pdf">Beispiel: ZUGFeRD-PDF</button><button class="btn quiet small" id="pdfSample" type="button">Beispiel: Rechnungstext (KI)</button></div>
+        <span id="pdfBusy"></span>
         <div id="pdfOut" style="display:grid;gap:10px"></div>
+      </div>
+
+      <div class="pane" id="p-docs" hidden>
+        <h2>Dokumente</h2>
+        <div id="docs" class="docs"></div>
       </div>
 
       <div class="pane" id="p-check" hidden>
@@ -67,6 +75,11 @@
         <h2>Verlauf</h2>
         <p class="hint">Jede Änderung ist ein Stand. Ein Klick holt einen früheren zurück.</p>
         <ul class="histlist" id="hist"></ul>
+        <h2 style="margin-top:6px">Änderungsprotokoll</h2>
+        <p class="hint">Wer hat wann was geändert, Zelle für Zelle. Das Protokoll wird nie gelöscht, auch nicht beim Zurückholen. <span id="protN"></span></p>
+        <label class="check"><input type="checkbox" id="protSheet" checked> Beim Speichern als eigenes Blatt „Änderungsprotokoll“ anhängen</label>
+        <div class="row"><button class="btn quiet small" type="button" id="protCsv">Protokoll als CSV</button></div>
+        <ul class="histlist prot" id="protList"></ul>
       </div>
     </section>
 
@@ -77,11 +90,56 @@
         <div class="sumbar" id="sumbar"></div>
         <div class="scroll" id="scroll"><table id="grid"></table></div>
       </div>
-      <p class="foot">Zellen direkt anklicken und tippen, mit „=“ beginnt eine Formel. Neue Zeilen übernehmen die Formeln der Zeile darüber, Summenzeilen wachsen mit. Beim Speichern bleiben Werte, Formeln, Datums- und Zahlenformate erhalten; Farben und Schriftarten gehen im Prototyp verloren. Die Datei bleibt in diesem Browser; an die KI geht nur, was Sie ausführen.</p>
+      <p class="foot">Zellen direkt anklicken und tippen, mit „=“ beginnt eine Formel, Uhrzeiten als 7:30. Neue Zeilen übernehmen die Formeln der Zeile darüber, Summenzeilen wachsen mit. Beim Speichern bleiben Werte, Formeln, Farben, Schriften und Zahlenformate der Originaldatei erhalten. Die Datei bleibt in diesem Browser; an die KI geht nur, was Sie ausführen.</p>
     </section>
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
+
+<dialog id="firmaDlg">
+  <form method="dialog" id="firmaForm">
+    <h2>Firmendaten</h2>
+    <p class="note">Für E-Rechnungen, Mahnungen und Protokolle. Bleiben nur in diesem Browser.</p>
+    <div class="grid2">
+      <label>Firmenname<input id="fName" autocomplete="organization"></label>
+      <label>Ansprechpartner<input id="fContact" autocomplete="name"></label>
+      <label>Straße und Nr.<input id="fStreet" autocomplete="street-address"></label>
+      <label>PLZ<input id="fZip" autocomplete="postal-code" inputmode="numeric"></label>
+      <label>Ort<input id="fCity" autocomplete="address-level2"></label>
+      <label>Telefon<input id="fPhone" autocomplete="tel"></label>
+      <label>E-Mail (für E-Rechnungen)<input id="fEmail" type="email" autocomplete="email"></label>
+      <label>USt-IdNr.<input id="fVat" placeholder="DE123456789"></label>
+      <label>Steuernummer<input id="fTaxNo" placeholder="12/345/67890"></label>
+      <label>Handelsregister (optional)<input id="fReg" placeholder="HRB 12345 B"></label>
+      <label>IBAN<input id="fIban"></label>
+      <label>BIC (optional)<input id="fBic"></label>
+      <label>Bank (optional)<input id="fBank"></label>
+      <label>Zahlungsziel in Tagen<input id="fZiel" inputmode="numeric"></label>
+      <label>Ihr Name im Protokoll<input id="fBearbeiter"></label>
+    </div>
+    <div class="row"><button class="btn" value="save">Speichern</button><button class="btn quiet" value="cancel" formnovalidate>Abbrechen</button></div>
+  </form>
+</dialog>
+
+<dialog id="abnDlg" class="wide">
+  <div class="dlgbody">
+    <h2 id="abnTitle">Abnahme</h2>
+    <div class="grid2">
+      <label>Datum<input id="abnDatum"></label>
+      <label>Anwesend<input id="abnAnw"></label>
+    </div>
+    <label>Mängel (einer pro Zeile, leer = ohne Mängel)<textarea id="abnMaengel" rows="3" placeholder="z. B. Silikonfuge an der Duschtasse nachziehen"></textarea></label>
+    <label>Vorbehalte (optional)<input id="abnVorb"></label>
+    <label class="btn quiet small fotobtn">Fotos hinzufügen<input type="file" id="abnFotoIn" accept="image/*" multiple capture="environment" hidden></label>
+    <div class="thumbs" id="abnFotos"></div>
+    <div class="sigs">
+      <div><div class="sighead"><span>Unterschrift Auftraggeber</span><button type="button" class="linkbtn" data-clear="k">löschen</button></div><canvas id="sigKunde" class="sig"></canvas></div>
+      <div><div class="sighead"><span>Unterschrift Auftragnehmer</span><button type="button" class="linkbtn" data-clear="f">löschen</button></div><canvas id="sigFirma" class="sig"></canvas></div>
+    </div>
+    <p class="hint warnc" id="abnMsg"></p>
+    <div class="row"><button class="btn" type="button" id="abnOk">PDF erstellen</button><button class="btn quiet" type="button" id="abnCancel">Abbrechen</button></div>
+  </div>
+</dialog>
 <dialog id="settings">
   <form method="dialog" id="settingsForm">
     <h2>KI-Einstellungen</h2>
@@ -107,9 +165,15 @@
 
 <script src="vendor/xlsx.full.min.js"></script>
 <script src="vendor/pdf.min.js"></script>
+<script src="vendor/exceljs.min.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
 <script src="src/engine.js"></script>
+<script src="src/einvoice.js"></script>
+<script src="src/docs.js"></script>
+<script src="src/xlsxio.js"></script>
 <script src="src/examples.js"></script>
 <script src="src/ai.js"></script>
 <script src="src/app.js"></script>
+<script src="src/workflows.js"></script>
 </body>
 </html>

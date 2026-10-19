@@ -7,7 +7,7 @@ var TODAY = String(NOW.getDate()).padStart(2,"0")+"."+String(NOW.getMonth()+1).p
 var WEEKDAY = ["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"][NOW.getDay()];
 var SAMPLE_INVOICE = "Fliesen-Großhandel Weber KG · Industriestr. 14 · 04129 Leipzig\nRECHNUNG Nr. 88213        Datum: 15.10.2026\nKunde: Fliesen Krause, Kommission: Küche Yilmaz\nPos  Artikel                                Menge   Einh.   Einzelpreis   Gesamt\n1    Feinsteinzeug 60x60 anthrazit          18,5    m²      32,90 €       608,65 €\n2    Abschlussprofil Alu 2,5 m              8       Stk     9,80 €        78,40 €\n3    Flexkleber S1 25 kg                    6       Sack    17,50 €       105,00 €\n4    Fugenmörtel weiß 5 kg                  4       Eimer   11,40 €       45,60 €\nNetto 837,65 €   MwSt 19 % 159,15 €   Brutto 996,80 €\nZahlbar bis 29.10.2026 ohne Abzug.";
 
-var model=null, history=[], cur=0, fresh={}, hits={}, aiIssues=[], downloads=null;
+var model=null, history=[], protokoll=[], origBytes=null, cur=0, fresh={}, hits={}, aiIssues=[], downloads=null;
 var $=function(id){ return document.getElementById(id); };
 var esc=function(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); };
 function toast(m){ var t=$("toast"); t.textContent=m; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(function(){ t.hidden=true; },2800); }
@@ -15,9 +15,30 @@ function de(n,d){ return Number(n).toLocaleString("de-DE",{minimumFractionDigits
 function sheetObj(){ return model.sheets[cur]; }
 
 /* ---------- Speichern im Browser ---------- */
-function persist(){ try{ localStorage.setItem("zf2",JSON.stringify({model:model,history:history.slice(-15),cur:cur})); }catch(e){} }
-function restore(){ try{ var s=JSON.parse(localStorage.getItem("zf2")||"null"); if(s&&s.model&&s.model.sheets){ model=s.model; history=s.history||[]; cur=Math.min(s.cur||0,model.sheets.length-1); return true; } }catch(e){} return false; }
-function commit(label){ history.push({t:Date.now(),label:label,snap:JSON.stringify(model)}); if(history.length>40) history=history.slice(-40); persist(); renderAll(); }
+function persist(){ try{ localStorage.setItem("zf2",JSON.stringify({model:model,history:history.slice(-15),protokoll:protokoll.slice(-2000),cur:cur})); }catch(e){} }
+function persistOrig(){ try{ if(origBytes&&origBytes.length<3e6){ var s="",ch=0x8000; for(var i=0;i<origBytes.length;i+=ch) s+=String.fromCharCode.apply(null,origBytes.subarray(i,i+ch)); localStorage.setItem("zf2-orig",btoa(s)); } else localStorage.removeItem("zf2-orig"); }catch(e){} }
+function restore(){ try{ var s=JSON.parse(localStorage.getItem("zf2")||"null"); if(s&&s.model&&s.model.sheets){ model=s.model; history=s.history||[]; protokoll=s.protokoll||[]; cur=Math.min(s.cur||0,model.sheets.length-1);
+  var o=localStorage.getItem("zf2-orig"); if(o) origBytes=b64(o); return true; } }catch(e){} return false; }
+function firma(){ try{ return JSON.parse(localStorage.getItem("zf-firma")||"{}")||{}; }catch(e){ return {}; } }
+function stamp(){ var d=new Date(); return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+"."+d.getFullYear()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")+":"+String(d.getSeconds()).padStart(2,"0"); }
+function diffDetails(prevJson, now){
+  var out=[], prev; try{ prev=JSON.parse(prevJson); }catch(e){ return out; }
+  now.sheets.forEach(function(sh){
+    var ps=prev.sheets.find(function(x){ return x.name===sh.name; }); if(!ps||sh.hr<0) return;
+    if(ps.rows.length!==sh.rows.length) out.push(sh.name+": "+(sh.rows.length>ps.rows.length?"+":"")+(sh.rows.length-ps.rows.length)+" Zeile(n)");
+    var n=Math.min(ps.rows.length,sh.rows.length);
+    for(var i=0;i<n&&out.length<25;i++) for(var k=0;k<sh.ncol;k++){
+      var a=rawOf(ps.rows[i][k]), b=rawOf(sh.rows[i][k]);
+      if(a!==b && !(sh.rows[i][k]&&sh.rows[i][k].f)) out.push(sh.name+"!"+ZF.colLetter(sh.c0+k)+ZF.dataRowNo(sh,i)+": „"+(a||"leer")+"“ → „"+(b||"leer")+"“");
+    }
+    if(ps.ncol!==sh.ncol) out.push(sh.name+": neue Spalte „"+sh.headers.slice(ps.ncol).join("“, „")+"“");
+  });
+  return out;
+}
+function commit(label){
+  var prev=history.length?history[history.length-1].snap:null;
+  protokoll.push({zeit:stamp(),wer:firma().bearbeiter||"",aktion:label,details:prev?diffDetails(prev,model):[]});
+  history.push({t:Date.now(),label:label,snap:JSON.stringify(model)}); if(history.length>40) history=history.slice(-40); persist(); renderAll(); }
 
 /* ---------- Datei öffnen / speichern ---------- */
 function b64(s){ var bin=atob(s), a=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) a[i]=bin.charCodeAt(i); return a; }
@@ -27,6 +48,8 @@ function openData(data,name){
   if(!m.sheets.length){ toast("Die Datei ist leer."); return; }
   model=m; cur=Math.max(0,m.sheets.findIndex(function(s){ return s.hr>=0; })); fresh={}; hits={}; aiIssues=[];
   history=[{t:Date.now(),label:"Geöffnet: "+name,snap:JSON.stringify(model)}];
+  origBytes=/\.xlsx$|\.xlsm$/i.test(name)?new Uint8Array(data):null; persistOrig();
+  protokoll.push({zeit:stamp(),wer:firma().bearbeiter||"",aktion:"Datei geöffnet: "+name,details:[]});
   $("cmdOut").innerHTML=""; $("pdfOut").innerHTML=""; $("fxAddr").textContent="–"; $("fxVal").textContent="";
   persist(); renderAll(); renderExamples();
   var parsed=m.sheets.filter(function(s){ return s.hr>=0; });
@@ -41,19 +64,25 @@ sw.addEventListener("dragover",function(e){ if([].some.call(e.dataTransfer.items
 sw.addEventListener("drop",function(e){ var f=e.dataTransfer.files[0]; if(!f) return; e.preventDefault();
   if(/\.(xlsx|xlsm|xls|csv|ods)$/i.test(f.name)) f.arrayBuffer().then(function(b){ openData(new Uint8Array(b),f.name); });
   else { selectTab("p-pdf"); handleFile(f); } });
+function saveFile(name,data,mime){
+  var blob=data instanceof Blob?data:new Blob([data],{type:mime||"application/octet-stream"});
+  if(downloads){ return downloads.save({filename:name,data:blob}).then(function(){ toast(name+" gespeichert"); },function(e){ if(e&&e.code!=="declined") toast("Speichern ist hier nicht möglich."); }); }
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },1000); toast(name+" gespeichert"); return Promise.resolve();
+}
 $("saveBtn").addEventListener("click",function(){
   if(!model||!window.XLSX) return;
-  var buf; try{ buf=ZF.buildWorkbook(XLSX,model); }catch(e){ toast("Speichern fehlgeschlagen."); return; }
   var name=model.name.replace(/\.(xls|csv|ods|xlsm)$/i,".xlsx"); if(!/\.xlsx$/i.test(name)) name+=".xlsx";
-  var blob=new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
-  if(downloads){ downloads.save({filename:name,data:blob}).then(function(){ toast(name+" gespeichert"); },function(e){ if(e&&e.code!=="declined") toast("Speichern ist hier nicht möglich."); }); return; }
-  var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click();
-  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },1000); toast(name+" gespeichert");
+  var withProt=$("protSheet")&&$("protSheet").checked;
+  var plain=function(){ try{ return Promise.resolve(ZF.buildWorkbook(XLSX,model)); }catch(e){ return Promise.reject(e); } };
+  var styled=(window.ExcelJS&&origBytes&&window.ZFX)?ZFX.save(ExcelJS,ZF,origBytes,model,{protokoll:withProt?protokoll:null}).catch(function(){ return plain(); }):plain();
+  styled.then(function(buf){ return saveFile(name,buf,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"); },function(){ toast("Speichern fehlgeschlagen."); });
 });
 
 /* ---------- Tabelle zeichnen ---------- */
 function fmtVal(sh,k,v,cell){
   if(v==null||v==="") return "";
+  if(typeof v==="number" && ((k>=0&&sh.timeCol&&sh.timeCol[k])||(cell&&cell.tm))) return ZF.fmtTime(v);
   if(typeof v==="number"){
     var z=(cell&&cell.z)||(k>=0?sh.colFmt[k]:null)||"", h=k>=0?sh.headers[k]:"";
     var money=/€|EUR/.test(z)||/€/.test(h), two=money||/0\.00/.test(z);
@@ -61,8 +90,8 @@ function fmtVal(sh,k,v,cell){
   }
   return String(v);
 }
-function rawOf(cell){ if(!cell) return ""; if(cell.f) return "="+cell.f; if(typeof cell.v==="number") return String(cell.v).replace(".",","); return cell.v==null?"":String(cell.v); }
-function issuesFor(){ var all=ZF.checks(model).concat(aiIssues); return all; }
+function rawOf(cell){ if(!cell) return ""; if(cell.f) return "="+cell.f; if(cell.tm&&typeof cell.v==="number") return ZF.fmtTime(cell.v); if(typeof cell.v==="number") return String(cell.v).replace(".",","); return cell.v==null?"":String(cell.v); }
+function issuesFor(){ var all=ZF.checks(model,{today:new Date()}).concat(aiIssues); return all; }
 function renderTabs(){
   $("sheetTabs").innerHTML=model.sheets.map(function(s,i){ return '<button role="tab" aria-selected="'+(i===cur)+'" data-i="'+i+'" title="'+esc(s.name)+'">'+esc(s.name)+'</button>'; }).join("");
   var opts=model.sheets.map(function(s,i){ return s.hr>=0?'<option value="'+i+'">'+esc(s.name)+'</option>':""; }).join("");
@@ -125,6 +154,7 @@ grid.addEventListener("focusout",function(e){
   if(td.dataset.cancel){ delete td.dataset.cancel; td.textContent=td.dataset.shown; return; }
   if(txt===td.dataset.raw){ td.textContent=td.dataset.shown; return; }
   ZF.setCell(sh,r,k,txt);
+  if(sh.timeCol&&sh.timeCol[k]){ var tc=ZF.cellAt(sh,r,sh.c0+k); if(tc&&typeof tc.v==="number") tc.tm=1; }
   var nx=e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest("td[contenteditable]");
   var nr=nx?nx.dataset.r:null, nk=nx?nx.dataset.k:null;
   commit(ZF.colLetter(sh.c0+k)+r+" geändert: „"+(txt.length>30?txt.slice(0,30)+"…":txt)+"“");
@@ -149,12 +179,14 @@ function goTo(sheetName,row,k){
 }
 
 /* ---------- Seitenleiste ---------- */
-function selectTab(id){ document.querySelectorAll(".tabs button").forEach(function(x){ x.setAttribute("aria-selected",x.dataset.pane===id); $(x.dataset.pane).hidden=x.dataset.pane!==id; }); if(id==="p-hist") renderHist(); if(id==="p-check") renderIssues(); }
+function selectTab(id){ document.querySelectorAll(".tabs button").forEach(function(x){ x.setAttribute("aria-selected",x.dataset.pane===id); $(x.dataset.pane).hidden=x.dataset.pane!==id; }); if(id==="p-hist"){ renderHist(); renderProt(); } if(id==="p-check") renderIssues(); if(id==="p-docs"&&window.ZFDOC) ZFDOC.render(); }
 document.querySelectorAll(".tabs button").forEach(function(b){ b.addEventListener("click",function(){ selectTab(b.dataset.pane); }); });
 
 function renderExamples(){
   var heads=model.sheets.map(function(s){ return s.headers.join(" "); }).join(" ").toLowerCase(), ex;
   if(/mitarbeiter/.test(heads)&&/stunden/.test(heads)) ex=["Mehmet heute 7 Stunden Bad Schneider, Wand gefliest","Wie viele Stunden hatte Kevin im Oktober?","Bei der Fahrt am 15.10. gehört das zu Küche Yilmaz","Was kostet uns Bad Schneider bisher an Lohn?"];
+  else if(/beginn/.test(heads)&&/ende/.test(heads)) ex=["Kevin heute 7:00 bis 15:30, 30 Min. Pause, Küche Yilmaz, Fliesen verlegt","Wer hatte diese Woche die meisten Stunden?","Bei Kevin am 13.10. war die Pause 30 Minuten","Wie viele Stunden hatte Jonas bei Küche Yilmaz?"];
+  else if(/lieferant/.test(heads)&&/fällig/.test(heads)) ex=["Weber 87911 haben wir heute bezahlt","Welche Rechnungen sind diese Woche fällig?","Wie viel haben wir bei Baustoff Kaiser offen?","Die Lehmann-Rechnung gehört zu Bad Schneider"];
   else if(/bestand/.test(heads)) ex=["Heute 3 Sack Fliesenkleber C2TE verbraucht","Welche Artikel liegen unter dem Mindestbestand?","Neuer Artikel A-1012: Fugenmörtel weiß 5 kg, 6 Eimer, 11,40 €, Baustoff Kaiser","Wie hoch ist der Lagerwert bei Weber?"];
   else if(/status/.test(heads)&&/kunde/.test(heads)) ex=["Becker hat heute bezahlt","Welche fertigen Aufträge sind noch nicht bezahlt und wie viel ist offen?","Neuer Auftrag 2026-036 für Lange, Martina: Bad 4.200 € netto, Status Angebot","Setz Neumann auf Beauftragt"];
   else ex=["Wie viele Zeilen hat die Tabelle?","Füge eine neue Zeile hinzu mit …","Welche Zeilen sind unvollständig?"];
@@ -292,6 +324,19 @@ var cmdCtl;
 $("cmdStop").addEventListener("click",function(){ if(cmdCtl) cmdCtl.abort(); });
 $("cmdText").addEventListener("keydown",function(e){ if(e.key==="Enter"&&(e.metaKey||e.ctrlKey)) runCmd(); });
 $("cmdBtn").addEventListener("click",runCmd);
+(function(){
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition, btn=$("micBtn"); if(!SR||!btn) return;
+  btn.hidden=false; var rec=null;
+  btn.addEventListener("click",function(){
+    if(rec){ rec.stop(); return; }
+    rec=new SR(); rec.lang="de-DE"; rec.interimResults=true; rec.continuous=false;
+    var base=$("cmdText").value.trim(); btn.classList.add("on"); btn.setAttribute("aria-pressed","true");
+    rec.onresult=function(ev){ var t=""; for(var i=0;i<ev.results.length;i++) t+=ev.results[i][0].transcript; $("cmdText").value=(base?base+" ":"")+t; };
+    rec.onerror=function(ev){ if(ev.error==="not-allowed") toast("Mikrofon wurde nicht freigegeben."); };
+    rec.onend=function(){ rec=null; btn.classList.remove("on"); btn.setAttribute("aria-pressed","false"); };
+    rec.start();
+  });
+})();
 function runCmd(){
   var text=$("cmdText").value.trim(); if(!text||!model) return;
   var out=$("cmdOut");
@@ -311,14 +356,38 @@ var drop=$("drop");
 drop.addEventListener("drop",function(e){ var f=e.dataTransfer.files[0]; if(f) handleFile(f); });
 $("pdfInput").addEventListener("change",function(e){ var f=e.target.files[0]; e.target.value=""; if(f) handleFile(f); });
 $("pdfSample").addEventListener("click",function(){ extract(SAMPLE_INVOICE,[],"Beispiel-Rechnung Weber KG"); });
+var DOCS=window.ZF_DOCS||{};
+document.querySelectorAll("[data-sampledoc]").forEach(function(b){ b.addEventListener("click",function(){
+  var n=b.dataset.sampledoc; if(!DOCS[n]) return; var bytes=b64(DOCS[n]);
+  handleFile(new File([bytes],n,{type:/\.pdf$/i.test(n)?"application/pdf":"application/xml"})); }); });
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc="vendor/pdf.worker.min.js";
+function showEInvoice(inv,name){
+  var out=$("pdfOut"), target=model.sheets[+$("pdfTarget").value]||sheetObj();
+  busy($("pdfBusy"),"");
+  var box=document.createElement("div"); box.className="einv";
+  box.innerHTML='<div class="einv-h"><span class="badge">E-Rechnung</span><span>'+esc(inv.format)+' · exakt gelesen, ohne KI</span></div>'+
+    '<dl class="kv"><dt>'+esc(inv.type)+'</dt><dd>Nr. '+esc(inv.number)+' vom '+esc(inv.date)+'</dd><dt>Von</dt><dd>'+esc(inv.seller.name)+'</dd>'+
+    (inv.buyerRef||inv.project?'<dt>Kommission</dt><dd>'+esc(inv.project||inv.buyerRef)+'</dd>':'')+
+    '<dt>Betrag</dt><dd>'+de(inv.net,2)+' € netto · '+de(inv.gross,2)+' € brutto</dd>'+(inv.due?'<dt>Fällig</dt><dd>'+esc(inv.due)+'</dd>':'')+'</dl>'+
+    '<ul class="einv-lines">'+inv.lines.map(function(l){ return '<li><span>'+esc(l.name)+'</span><span>'+de(l.qty,l.qty%1?2:0)+' '+esc(l.unit)+' × '+de(l.price,2)+' €</span></li>'; }).join("")+'</ul>';
+  out.innerHTML=""; out.appendChild(box);
+  var plan=ZF.planOps(model,ZFE.toOps(ZF,model,target,inv)).filter(function(p){ return p.error||p.typ!=="neu"||p.changes.length; });
+  if(!plan.length){ var h=document.createElement("p"); h.className="hint"; h.textContent="Das Blatt „"+target.name+"“ passt nicht zu einer Rechnung. Wählen Sie oben ein Lager- oder Rechnungsblatt."; out.appendChild(h); return; }
+  out.appendChild(planView(plan,"E-Rechnung übernommen: "+inv.seller.name+" "+inv.number));
+}
+function readEInvoiceText(text,name){
+  try{ showEInvoice(ZFE.read(text),name); return true; }catch(e){ busy($("pdfBusy"),""); $("pdfOut").innerHTML='<p class="hint" style="color:var(--warn)">Diese XML-Datei ist keine lesbare E-Rechnung ('+esc(e.message)+').</p>'; return false; }
+}
 function handleFile(f){
   var st=$("pdfBusy"); $("pdfOut").innerHTML="";
+  if(/\.xml$/i.test(f.name)||/xml/.test(f.type)){ f.text().then(function(t){ readEInvoiceText(t,f.name); }); return; }
   if(f.type.indexOf("image/")===0){ return extract("",[f],f.name); }
   if(!/pdf$/i.test(f.type)&&!/\.pdf$/i.test(f.name)){ toast("Bitte ein PDF oder Foto wählen."); return; }
   if(!window.pdfjsLib){ $("pdfOut").innerHTML='<p class="hint">Der PDF-Leser konnte nicht geladen werden.</p>'; return; }
   busy(st,"PDF wird geöffnet…");
   f.arrayBuffer().then(function(buf){ return pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise; }).then(async function(pdf){
+    var att=null; try{ att=await ZFE.fromPdf(pdf); }catch(e){}
+    if(att){ readEInvoiceText(att.xml,f.name); return; }
     var text="";
     for(var p=1;p<=Math.min(pdf.numPages,6);p++){ var pg=await pdf.getPage(p), tc=await pg.getTextContent(), lastY=null;
       tc.items.forEach(function(it){ var y=it.transform[5]; text+=(lastY!==null&&Math.abs(y-lastY)>3)?"\n":(lastY!==null?" ":""); text+=it.str; lastY=y; }); text+="\n\n"; }
@@ -359,7 +428,7 @@ $("issues").addEventListener("click",function(e){ var b=e.target.closest("button
 $("aiCheckBtn").addEventListener("click",function(){
   if(!AI.active()){ openSettings(); return; }
   $("aiCheckBtn").disabled=true; busy($("checkBusy"),"KI prüft die Datei…");
-  var prompt=context()+"\n\nPrüfe die Datei fachlich wie eine erfahrene Bürokraft im Handwerk. Finde höchstens 12 echte Auffälligkeiten, die Geld, Termine oder Ordnung betreffen: z. B. Bestand unter Mindestbestand, fertige Aufträge ohne Rechnung, Rechnungen lange unbezahlt, unplausible Stunden, Tippfehler in Namen, fehlende Zuordnungen. Keine Kleinigkeiten zur Formatierung.\nAntworte NUR mit JSON: {\"probleme\":[{\"blatt\":\"…\",\"zeile\":Excel-Zeilennummer,\"spalte\":\"Spaltenname\",\"problem\":\"kurz, deutsch\"}]}";
+  var prompt=context()+"\n\nPrüfe die Datei fachlich wie eine erfahrene Bürokraft im Handwerk. Finde höchstens 12 echte Auffälligkeiten, die Geld, Termine oder Ordnung betreffen: z. B. Bestand unter Mindestbestand, fertige Aufträge ohne Rechnung, Rechnungen lange unbezahlt, unplausible Stunden, Tippfehler in Namen, fehlende Zuordnungen, falscher MwSt-Satz, Bauleistungen an andere Baufirmen, bei denen § 13b UStG (Steuerschuldnerschaft des Leistungsempfängers) zu prüfen wäre. Formuliere solche Punkte als Hinweis zum Prüfen, nicht als Rechtsauskunft. Keine Kleinigkeiten zur Formatierung.\nAntworte NUR mit JSON: {\"probleme\":[{\"blatt\":\"…\",\"zeile\":Excel-Zeilennummer,\"spalte\":\"Spaltenname\",\"problem\":\"kurz, deutsch\"}]}";
   AI.json(prompt).then(function(res){
     aiIssues=((res&&res.probleme)||[]).filter(function(p){ return p&&p.blatt&&p.zeile; }).map(function(p){ return {blatt:p.blatt,zeile:+p.zeile,spalte:p.spalte,problem:String(p.problem||""),ki:1}; });
     renderAll(); toast(aiIssues.length?aiIssues.length+" fachliche Hinweise gefunden":"Fachlich nichts Auffälliges gefunden");
@@ -372,10 +441,19 @@ function renderHist(){
   $("hist").innerHTML=items.map(function(x,j){ var d=new Date(x.h.t);
     return "<li><time>"+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")+"</time><span>"+esc(x.h.label)+"</span>"+(j===0?'<span class="hint">aktuell</span>':'<button class="btn quiet small" data-restore="'+x.i+'">Zurückholen</button>')+"</li>"; }).join("");
 }
+$("protCsv").addEventListener("click",function(){
+  saveFile("Aenderungsprotokoll.csv",ZFD.csv([["Zeitpunkt","Bearbeiter","Aktion","Details"]].concat(protokoll.map(function(e){ return [e.zeit,e.wer,e.aktion,(e.details||[]).join("; ")]; }))),"text/csv");
+});
+function renderProt(){ $("protN").textContent=protokoll.length+" Einträge"; $("protList").innerHTML=protokoll.slice(-30).reverse().map(function(e){
+  return "<li><time>"+esc(e.zeit.slice(0,16))+"</time><span>"+esc(e.aktion)+(e.details&&e.details.length?'<small>'+esc(e.details.slice(0,4).join(" · "))+(e.details.length>4?" …":"")+"</small>":"")+"</span>"+(e.wer?'<span class="hint">'+esc(e.wer)+"</span>":"<span></span>")+"</li>"; }).join(""); }
 $("hist").addEventListener("click",function(e){ var b=e.target.closest("[data-restore]"); if(!b) return; var h=history[+b.dataset.restore];
   model=JSON.parse(h.snap); cur=Math.min(cur,model.sheets.length-1); fresh={}; hits={}; commit("Zurückgeholt: Stand „"+h.label+"“"); renderHist(); toast("Früherer Stand zurückgeholt"); });
 
-function renderAll(){ if(!model) return; renderTabs(); renderGrid(); renderIssues(); if(!$("p-hist").hidden) renderHist(); }
+function renderAll(){ if(!model) return; renderTabs(); renderGrid(); renderIssues(); if(!$("p-hist").hidden){ renderHist(); renderProt(); } if(window.ZFDOC&&!$("p-docs").hidden) ZFDOC.render(); }
+
+/* Schnittstelle für src/workflows.js */
+window.ZFAPP={ model:function(){ return model; }, commit:commit, saveFile:saveFile, toast:toast, firma:firma, esc:esc, de:de, today:function(){ return TODAY; },
+  planView:planView, selectTab:selectTab, goTo:goTo, renderAll:renderAll, mark:function(rows,sheet){ fresh={}; fresh[sheet]={}; rows.forEach(function(r){ fresh[sheet][r]=1; }); } };
 
 /* Start */
 if(restore()){ renderAll(); renderExamples(); }

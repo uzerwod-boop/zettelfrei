@@ -31,7 +31,7 @@ eq(ZF.query(m,{blatt:"Oktober 2026",spalte:"Betrag €",art:"summe",filter:[{spa
 eq(ZF.query(m,{blatt:"Oktober 2026",spalte:"Stunden",art:"summe",filter:[{spalte:"Datum",op:">=",wert:"14.10.2026"}]}).value,31,"Stunden ab 14.10.");
 
 // Prüfen
-eq(ZF.checks(m).map(x=>x.zeile+":"+x.problem),["11:Projekt fehlt"],"Prüfung Stundenzettel");
+eq(ZF.checks(m).map(x=>x.zeile+":"+x.problem),["11:Projekt fehlt","8:Über 10 Std. Arbeitszeit am Tag (11 Std., § 3 ArbZG)"],"Prüfung Stundenzettel");
 
 // --- Lager: plus-Änderung + Export
 m=load("Material_Lager.xlsx"); sh=m.sheets[0];
@@ -49,7 +49,8 @@ eq([ws.H16.f,ws.H17.f,ws.G16.z],["D16*G16","SUM(H2:H16)",'#,##0.00" €"'],"Expo
 m=load("Auftraege_2026.xlsx"); sh=m.sheets[0];
 eq([sh.hr,sh.rows.length],[3,8],"Aufträge erkannt (Titel + Stand oben)");
 c=new ZF.Calc(m); eq(c.value(sh,5,6),2812,"ROUND MwSt");
-eq(ZF.checks(m).map(x=>x.zeile+":"+x.problem),["12:Auftrags-Nr doppelt (auch Zeile 7)","11:Kunde fehlt"],"Prüfung Aufträge");
+eq(ZF.checks(m,{today:new Date(2026,9,19)}).map(x=>x.zeile+":"+x.problem),["12:Auftrags-Nr doppelt (auch Zeile 7)","11:Kunde fehlt"],"Prüfung Aufträge");
+eq(ZF.checks(m,{today:new Date(2026,10,10)}).filter(x=>/offen/.test(x.problem)).map(x=>x.zeile+":"+x.problem),["9:Rechnung seit 45 Tagen offen"],"offene Rechnung nach 30 Tagen");
 eq(ZF.query(m,{blatt:"Aufträge 2026",spalte:"Brutto €",art:"summe",filter:[{spalte:"Status",op:"=",wert:"Fertig"},{spalte:"Bezahlt am",op:"leer"}]}).value,11221.7,"offene Rechnungen brutto");
 plan=ZF.planOps(m,[{typ:"aendern",blatt:"Aufträge 2026",zeile:9,werte:{"Status":"Bezahlt","Bezahlt am":"19.10.2026"}}]);
 ZF.applyPlan(m,plan);

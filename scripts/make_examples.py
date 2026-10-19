@@ -134,3 +134,66 @@ for col in "FGH":
     c.font = BOLD
 wb.save(OUT + "Auftraege_2026.xlsx")
 print("ok")
+
+# 4) Arbeitszeit nach ArbZG --------------------------------------------------
+from datetime import time
+TIME = "HH:MM"
+wb = Workbook()
+ws = wb.active
+ws.title = "KW 42"
+ws["A1"] = "Arbeitszeitnachweis KW 42 / 2026"
+ws["A1"].font = Font(bold=True, size=14)
+header(ws, 3, ["Datum", "Mitarbeiter", "Projekt", "Beginn", "Ende", "Pause (Min.)", "Stunden", "Tätigkeit"],
+       [12, 13, 18, 9, 9, 12, 9, 30])
+shifts = [
+    (date(2026, 10, 12), "Kevin", "Bad Schneider", time(7, 0), time(15, 30), 30, "Altfliesen entfernt"),
+    (date(2026, 10, 12), "Mehmet", "Bad Schneider", time(7, 0), time(15, 0), 30, "Untergrund grundiert"),
+    (date(2026, 10, 13), "Kevin", "Bad Schneider", time(7, 30), time(14, 0), 15, "Abdichtung Dusche"),
+    (date(2026, 10, 13), "Jonas", "Küche Yilmaz", time(13, 0), time(22, 0), 45, "Aufmaß und Notdienst"),
+    (date(2026, 10, 14), "Jonas", "Praxis Dr. Hahn", time(6, 30), time(11, 0), 0, "Fugen ausgebessert"),
+    (date(2026, 10, 14), "Mehmet", "Bad Schneider", time(6, 0), time(18, 0), 45, "Wand gefliest 30x60"),
+    (date(2026, 10, 15), "Kevin", "Küche Yilmaz", time(7, 0), time(15, 30), 30, "Boden verlegt"),
+    (date(2026, 10, 16), "Jonas", "Küche Yilmaz", time(7, 0), time(14, 0), 30, "Verfugt, Silikon"),
+]
+for i, (d, m, p, b, e, pause, t) in enumerate(shifts):
+    r = 4 + i
+    ws.cell(r, 1, d).number_format = DATE
+    ws.cell(r, 2, m); ws.cell(r, 3, p)
+    ws.cell(r, 4, b).number_format = TIME
+    ws.cell(r, 5, e).number_format = TIME
+    ws.cell(r, 6, pause)
+    ws.cell(r, 7, f"=ROUND((E{r}-D{r})*24-F{r}/60,2)").number_format = "0.00"
+    ws.cell(r, 8, t)
+last = 3 + len(shifts)
+ws.cell(last + 1, 1, "Summe").font = BOLD
+ws.cell(last + 1, 7, f"=SUM(G4:G{last})").number_format = "0.00"
+wb.save(OUT + "Arbeitszeit_KW42.xlsx")
+
+# 5) Eingangsrechnungen ------------------------------------------------------
+wb = Workbook()
+ws = wb.active
+ws.title = "Eingangsrechnungen"
+header(ws, 1, ["Rechnung am", "Lieferant", "Rechnungs-Nr", "Netto €", "MwSt-Satz", "MwSt €", "Brutto €", "Fällig am", "Bezahlt am", "Projekt"],
+       [12, 28, 14, 12, 10, 11, 12, 12, 12, 18])
+bills = [
+    (date(2026, 9, 18), "Baustoff Kaiser GmbH", "RE-2026-4398", 412.60, 0.19, date(2026, 10, 2), date(2026, 9, 30), "Bad Schneider"),
+    (date(2026, 10, 1), "Fliesen-Großhandel Weber KG", "87911", 1960.00, 0.19, date(2026, 10, 15), None, "Bad Schneider"),
+    (date(2026, 10, 13), "Baustoff Kaiser GmbH", "RE-2026-4471", 311.20, 0.19, date(2026, 10, 27), None, "Bad Schneider"),
+    (date(2026, 10, 14), "Werkzeug Lehmann", "WL-2209", 189.00, 0.19, date(2026, 10, 28), None, None),
+]
+for i, (d, l, nr, net, rate, due, paid, proj) in enumerate(bills, 2):
+    ws.cell(i, 1, d).number_format = DATE
+    ws.cell(i, 2, l); ws.cell(i, 3, nr)
+    ws.cell(i, 4, net).number_format = EUR
+    ws.cell(i, 5, rate).number_format = "0%"
+    ws.cell(i, 6, f"=ROUND(D{i}*E{i},2)").number_format = EUR
+    ws.cell(i, 7, f"=D{i}+F{i}").number_format = EUR
+    ws.cell(i, 8, due).number_format = DATE
+    if paid: ws.cell(i, 9, paid).number_format = DATE
+    if proj: ws.cell(i, 10, proj)
+last = 1 + len(bills)
+ws.cell(last + 1, 1, "Summe").font = BOLD
+for c in "DFG":
+    ws[f"{c}{last+1}"] = f"=SUM({c}2:{c}{last})"; ws[f"{c}{last+1}"].number_format = EUR
+wb.save(OUT + "Eingangsrechnungen_2026.xlsx")
+print("ok 2")
