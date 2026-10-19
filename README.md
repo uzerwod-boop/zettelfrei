@@ -14,6 +14,8 @@ Zettelfrei öffnet die Excel-Dateien, die ein Handwerksbetrieb sowieso hat – S
 
 Jede Änderung der KI wird vorher als „alt → neu“ angezeigt und erst nach Klick übernommen.
 
+**Direkt im Browser ausprobieren:** https://uzerwod-boop.github.io/zettelfrei/
+
 ![Zettelfrei mit der Beispiel-Auftragsliste](docs/screenshot.png)
 
 > Prototyp von **Bohdan Sychevskyi**. Feedback von Handwerksbetrieben ist sehr willkommen.
@@ -25,7 +27,7 @@ Jede Änderung der KI wird vorher als „alt → neu“ angezeigt und erst nach 
 Voraussetzung: [Node.js](https://nodejs.org) ab Version 18. Keine weiteren Pakete nötig.
 
 ```bash
-git clone https://github.com/<IHR-NAME>/zettelfrei.git
+git clone https://github.com/uzerwod-boop/zettelfrei.git
 cd zettelfrei
 npm start
 ```
