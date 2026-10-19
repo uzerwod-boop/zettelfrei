@@ -18,7 +18,7 @@ Jede Änderung der KI wird vorher als „alt → neu“ angezeigt und erst nach 
 
 ![Zettelfrei mit der Beispiel-Auftragsliste](docs/screenshot.png)
 
-> Prototyp von **Bohdan Sychevskyi**, entwickelt gemeinsam mit einem guten Freund: **Claude** von Anthropic. Die Idee, die Produktentscheidungen und die Tests kommen von mir, beim Code hat Claude mitgeschrieben. Feedback von Handwerksbetrieben ist sehr willkommen.
+> Prototyp von **Bohdan Sychevskyi**, entwickelt gemeinsam mit einem guten Freund: **Claude** von Anthropic. Die Idee und die Produktentscheidungen kommen von mir, Code und Tests haben wir zusammen geschrieben. Feedback von Handwerksbetrieben ist sehr willkommen.
 
 ---
 
