@@ -36,7 +36,7 @@ function init(){
   if(window.claude && window.claude.use){
     tasks.push(window.claude.use("sample").then(function(s){ artifactSample=s; },function(){}));
   }
-  if(location.protocol.indexOf("http")===0){
+  if(location.protocol.indexOf("http")===0 && !/\.github\.io$|\.netlify\.app$/.test(location.hostname)){ // statische Hosts haben keinen Server
     tasks.push(fetch("api/health",{cache:"no-store"}).then(function(r){ return r.ok?r.json():null; }).then(function(j){ server=j&&j.ok?j:null; },function(){ server=null; }));
   }
   return Promise.all(tasks).then(notify);
