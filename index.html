@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Zettelfrei</title>
+<meta name="description" content="Excel-Dateien eines Handwerksbetriebs mit ganzen Sätzen bedienen: eintragen, ändern, fragen, PDFs übernehmen, prüfen.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230f6b5c'/%3E%3Cpath d='M9 10h14L9 22h14' stroke='white' stroke-width='3' fill='none' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Zettelfrei</h1>
+      <p>Ihre Excel-Datei, bedient mit ganzen Sätzen.</p>
+    </div>
+    <div class="filebar">
+      <span class="chip" title="Geöffnete Datei"><span class="file" id="fileName">–</span></span>
+      <select id="exampleSel" aria-label="Beispiel öffnen">
+        <option value="">Beispiel öffnen…</option>
+      </select>
+      <button class="btn quiet" id="openBtn">Excel öffnen</button>
+      <input type="file" id="openInput" accept=".xlsx,.xlsm,.xls,.csv,.ods" hidden>
+      <button class="btn" id="saveBtn">Als Excel speichern</button>
+      <button type="button" class="chip click" id="aiChip" title="KI-Einstellungen"><span class="dot"></span><span id="aiText">KI wird verbunden…</span></button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <section class="panel" aria-label="Assistent">
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-pane="p-cmd" id="t-cmd">Assistent</button>
+        <button role="tab" aria-selected="false" data-pane="p-pdf" id="t-pdf">PDF &amp; Foto</button>
+        <button role="tab" aria-selected="false" data-pane="p-check" id="t-check">Prüfen<span class="n" id="issueN" hidden></span></button>
+        <button role="tab" aria-selected="false" data-pane="p-hist" id="t-hist">Verlauf</button>
+      </div>
+
+      <div class="pane" id="p-cmd">
+        <h2>Was soll in der Tabelle passieren?</h2>
+        <p class="hint">Eintragen, ändern, löschen oder fragen. Summen rechnet die Tabelle selbst, nicht die KI. Jede Änderung sehen Sie vorher.</p>
+        <textarea id="cmdText" rows="3" placeholder="z. B. Becker hat heute bezahlt"></textarea>
+        <div class="examples" id="cmdEx"></div>
+        <div class="row"><button class="btn" id="cmdBtn">Ausführen</button><button class="btn quiet" id="cmdStop" hidden>Stopp</button><span id="cmdBusy"></span></div>
+        <div id="cmdOut" style="display:grid;gap:10px"></div>
+      </div>
+
+      <div class="pane" id="p-pdf" hidden>
+        <h2>PDF oder Foto übernehmen</h2>
+        <p class="hint">Rechnung, Lieferschein, Auftrag oder abfotografierter Zettel. Gescannte PDFs werden als Bild gelesen. Sie sehen vorher, welche Zeilen sich ändern.</p>
+        <label class="hint" for="pdfTarget">In welches Blatt?</label>
+        <select id="pdfTarget"></select>
+        <label class="drop" id="drop" for="pdfInput"><strong>Datei hierher ziehen oder antippen</strong>PDF, JPG oder PNG</label>
+        <input type="file" id="pdfInput" accept="application/pdf,image/png,image/jpeg,image/webp" hidden>
+        <div class="row"><button class="btn quiet" id="pdfSample">Beispiel-Rechnung testen</button><span id="pdfBusy"></span></div>
+        <div id="pdfOut" style="display:grid;gap:10px"></div>
+      </div>
+
+      <div class="pane" id="p-check" hidden>
+        <h2>Was stimmt nicht?</h2>
+        <p class="hint">Leere Pflichtfelder, doppelte Nummern, Text in Zahlenspalten und Formelfehler findet die Tabelle selbst. Fachliches prüft die KI.</p>
+        <div class="row"><button class="btn ghost" id="aiCheckBtn">Fachlich prüfen lassen</button><span id="checkBusy"></span></div>
+        <ul class="issues" id="issues"></ul>
+      </div>
+
+      <div class="pane" id="p-hist" hidden>
+        <h2>Verlauf</h2>
+        <p class="hint">Jede Änderung ist ein Stand. Ein Klick holt einen früheren zurück.</p>
+        <ul class="histlist" id="hist"></ul>
+      </div>
+    </section>
+
+    <section class="sheetwrap" aria-label="Tabelle">
+      <div class="sheettabs" role="tablist" id="sheetTabs"></div>
+      <div class="sheet">
+        <div class="fxbar" aria-live="polite"><span class="addr" id="fxAddr">–</span><span class="fx">fx</span><span class="val" id="fxVal"></span></div>
+        <div class="sumbar" id="sumbar"></div>
+        <div class="scroll" id="scroll"><table id="grid"></table></div>
+      </div>
+      <p class="foot">Zellen direkt anklicken und tippen, mit „=“ beginnt eine Formel. Neue Zeilen übernehmen die Formeln der Zeile darüber, Summenzeilen wachsen mit. Beim Speichern bleiben Werte, Formeln, Datums- und Zahlenformate erhalten; Farben und Schriftarten gehen im Prototyp verloren. Die Datei bleibt in diesem Browser; an die KI geht nur, was Sie ausführen.</p>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+<dialog id="settings">
+  <form method="dialog" id="settingsForm">
+    <h2>KI-Einstellungen</h2>
+    <p class="note">Ohne KI funktioniert alles außer Assistent, PDF-Auslesen und fachlicher Prüfung. Einstellungen bleiben nur in diesem Browser.</p>
+    <label>Anbieter
+      <select id="setProvider">
+        <option value="auto">Automatisch</option>
+        <option value="server">Eigener Server (npm start mit API-Schlüssel)</option>
+        <option value="claude">Claude API, Schlüssel in diesem Browser</option>
+        <option value="local">Lokales Modell (Ollama, LM Studio; OpenAI-kompatibel)</option>
+        <option value="off">Aus</option>
+      </select>
+    </label>
+    <label id="rowKey">API-Schlüssel<input type="password" id="setKey" autocomplete="off" placeholder="sk-ant-…"></label>
+    <label id="rowUrl">Adresse des lokalen Modells<input type="text" id="setUrl" placeholder="http://localhost:11434/v1"></label>
+    <label>Modell<input type="text" id="setModel" placeholder="claude-sonnet-5-5"></label>
+    <p class="note" id="setHelp"></p>
+    <div class="status" id="setStatus" hidden></div>
+    <div class="row"><button class="btn" value="save" id="setSave">Speichern</button><button class="btn quiet" type="button" id="setTest">Verbindung testen</button><button class="btn quiet" value="cancel" formnovalidate>Abbrechen</button></div>
+  </form>
+</dialog>
+
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="vendor/pdf.min.js"></script>
+<script src="src/engine.js"></script>
+<script src="src/examples.js"></script>
+<script src="src/ai.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>

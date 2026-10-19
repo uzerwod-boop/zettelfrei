@@ -1,0 +1,15 @@
+{
+  "name": "zettelfrei",
+  "version": "0.1.0",
+  "description": "Excel-Dateien eines Handwerksbetriebs mit ganzen Sätzen bedienen: eintragen, ändern, fragen, PDFs übernehmen, prüfen.",
+  "license": "MIT",
+  "author": "Bohdan Sychevskyi",
+  "private": true,
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test tests/*.test.js",
+    "beispiele": "node scripts/build-examples.js"
+  },
+  "devDependencies": {}
+}
