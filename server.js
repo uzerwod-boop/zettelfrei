@@ -3,11 +3,14 @@
  * Liefert die Oberfläche aus und leitet KI-Anfragen an die Claude API weiter,
  * damit der API-Schlüssel nur auf dem Server liegt.
  *
+ *   OPENROUTER_API_KEY=sk-or-... npm start
  *   ANTHROPIC_API_KEY=sk-ant-... npm start
  *
  * Umgebungsvariablen:
- *   ANTHROPIC_API_KEY  Schlüssel für die Claude API (ohne: Oberfläche läuft, KI im Browser einstellbar)
- *   ZF_MODEL           Modell, Standard claude-sonnet-5-5
+ *   OPENROUTER_API_KEY Schlüssel für OpenRouter (viele Modelle über einen Schlüssel)
+ *   ANTHROPIC_API_KEY  Schlüssel für die Claude API
+ *                      (ohne beide: Oberfläche läuft, KI ist im Browser einstellbar)
+ *   ZF_MODEL           Modell, Standard claude-sonnet-5-5 bzw. anthropic/claude-sonnet-5.5 bei OpenRouter
  *   PORT               Standard 8787
  *   HOST               Standard 127.0.0.1 (nur dieser Rechner). 0.0.0.0 öffnet ihn im Netzwerk.
  */
@@ -19,9 +22,12 @@ const path = require("path");
 const ROOT = __dirname;
 const PORT = Number(process.env.PORT || 8787);
 const HOST = process.env.HOST || "127.0.0.1";
-const KEY = process.env.ANTHROPIC_API_KEY || "";
-const MODEL = process.env.ZF_MODEL || "claude-sonnet-5-5";
-const UPSTREAM = process.env.ZF_UPSTREAM || "https://api.anthropic.com/v1/messages";
+const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || "";
+const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY || "";
+const PROVIDER = ANTHROPIC_KEY ? "claude" : OPENROUTER_KEY ? "openrouter" : null;
+const KEY = ANTHROPIC_KEY || OPENROUTER_KEY;
+const MODEL = process.env.ZF_MODEL || (PROVIDER === "openrouter" ? "anthropic/claude-sonnet-5.5" : "claude-sonnet-5-5");
+const UPSTREAM = process.env.ZF_UPSTREAM || (PROVIDER === "openrouter" ? "https://openrouter.ai/api/v1/chat/completions" : "https://api.anthropic.com/v1/messages");
 const MAX_BODY = 25 * 1024 * 1024;
 
 const TYPES = {
@@ -44,23 +50,47 @@ function readBody(req) {
   });
 }
 
+// Anthropic-Format (vom Browser) -> OpenAI-Format (OpenRouter)
+function toOpenAI(clean) {
+  return {
+    model: clean.model, max_tokens: clean.max_tokens, temperature: 0,
+    messages: clean.messages.map(m => ({
+      role: m.role,
+      content: typeof m.content === "string" ? m.content : m.content.map(b =>
+        b.type === "image" ? { type: "image_url", image_url: { url: `data:${b.source.media_type};base64,${b.source.data}` } }
+                           : { type: "text", text: b.text })
+    }))
+  };
+}
+
 async function proxy(req, res) {
-  if (!KEY) return send(res, 503, { error: "ANTHROPIC_API_KEY ist auf dem Server nicht gesetzt" });
+  if (!KEY) return send(res, 503, { error: "Kein OPENROUTER_API_KEY oder ANTHROPIC_API_KEY auf dem Server gesetzt" });
   let body;
   try { body = JSON.parse(await readBody(req)); } catch (e) { return send(res, e.status || 400, { error: e.status ? "Anfrage zu groß" : "Ungültige Anfrage" }); }
   // Nur das Nötige weiterreichen; Modell bestimmt der Server.
   const clean = { model: MODEL, max_tokens: Math.min(Number(body.max_tokens) || 4096, 8192), messages: body.messages };
   if (!Array.isArray(clean.messages)) return send(res, 400, { error: "messages fehlt" });
   try {
+    if (PROVIDER === "openrouter") {
+      const r = await fetch(UPSTREAM, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${KEY}`, "HTTP-Referer": "https://github.com/uzerwod-boop/zettelfrei", "X-OpenRouter-Title": "Zettelfrei" },
+        body: JSON.stringify(toOpenAI(clean))
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) return send(res, r.status, data);
+      const msg = data.choices && data.choices[0] && data.choices[0].message;
+      const text = msg ? (typeof msg.content === "string" ? msg.content : (msg.content || []).map(p => p.text || "").join("")) : "";
+      return send(res, 200, { content: [{ type: "text", text }] });
+    }
     const r = await fetch(UPSTREAM, {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": KEY, "anthropic-version": "2023-06-01" },
       body: JSON.stringify(clean)
     });
-    const text = await r.text();
-    send(res, r.status, text);
+    send(res, r.status, await r.text());
   } catch (e) {
-    send(res, 502, { error: "Claude API nicht erreichbar" });
+    send(res, 502, { error: "KI-Anbieter nicht erreichbar" });
   }
 }
 
@@ -78,7 +108,7 @@ function serveFile(req, res) {
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://x").pathname;
-  if (url === "/api/health" && req.method === "GET") return send(res, 200, { ok: !!KEY, provider: "claude", model: KEY ? MODEL : null });
+  if (url === "/api/health" && req.method === "GET") return send(res, 200, { ok: !!KEY, provider: PROVIDER, model: KEY ? MODEL : null });
   if (url === "/api/messages" && req.method === "POST") return proxy(req, res);
   if (req.method !== "GET" && req.method !== "HEAD") return send(res, 405, { error: "Nicht erlaubt" });
   serveFile(req, res);
@@ -87,7 +117,8 @@ const server = http.createServer((req, res) => {
 if (require.main === module) {
   server.listen(PORT, HOST, () => {
     console.log(`Zettelfrei läuft: http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`);
-    console.log(KEY ? `KI: Claude (${MODEL}) über diesen Server` : "KI: kein ANTHROPIC_API_KEY gesetzt. Oberfläche läuft, KI kann im Browser eingerichtet werden.");
+    console.log(KEY ? `KI: ${PROVIDER === "openrouter" ? "OpenRouter" : "Claude"} (${MODEL}) über diesen Server`
+                    : "KI: kein Schlüssel gesetzt. Oberfläche läuft, KI kann im Browser eingerichtet werden (z. B. OpenRouter).");
   });
 }
 module.exports = server;

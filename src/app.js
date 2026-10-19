@@ -173,19 +173,27 @@ document.addEventListener("click",function(e){ if(e.target.closest("[data-open-s
 /* ---------- Einstellungen ---------- */
 function openSettings(){
   var c=AI.status().cfg, d=$("settings");
-  $("setProvider").value=c.provider||"auto"; $("setKey").value=c.key||""; $("setUrl").value=c.url||"http://localhost:11434/v1"; $("setModel").value=c.model||"";
-  $("setStatus").hidden=true; updateSettingsForm();
+  draft={keys:Object.assign({},c.keys), models:Object.assign({},c.models)};
+  $("setProvider").value=c.provider||"auto"; $("setUrl").value=c.url||"http://localhost:11434/v1";
+  $("setStatus").hidden=true; lastProv=null; updateSettingsForm();
   if(d.showModal) d.showModal(); else d.setAttribute("open","");
 }
+var draft={keys:{},models:{}}, lastProv=null;
+function keyProv(p){ var st=AI.status(); if(p==="auto") return st.server?null:"openrouter"; return (p==="claude"||p==="openrouter"||p==="local")?p:null; }
+function stash(){ if(lastProv){ draft.keys[lastProv]=$("setKey").value.trim(); draft.models[lastProv]=$("setModel").value.trim(); } }
 function updateSettingsForm(){
-  var p=$("setProvider").value, st=AI.status();
-  $("rowKey").hidden=!(p==="claude"||p==="local"||(p==="auto"&&!st.server));
-  $("rowUrl").hidden=p!=="local";
-  $("setModel").placeholder=p==="local"?"z. B. llama3.2-vision oder qwen2.5":AI.DEFAULT_MODEL;
+  stash();
+  var p=$("setProvider").value, st=AI.status(), kp=keyProv(p);
+  $("rowKey").hidden=!kp; $("rowModel").hidden=!kp; $("rowUrl").hidden=p!=="local";
+  if(kp){ $("setKey").value=draft.keys[kp]||""; $("setModel").value=draft.models[kp]||""; $("setModel").placeholder=st.defaults[kp];
+    $("setKey").placeholder=kp==="openrouter"?"sk-or-…":kp==="claude"?"sk-ant-…":"optional"; }
+  $("keyLabel").textContent=kp==="local"?"API-Schlüssel (meist leer lassen)":kp==="openrouter"?"OpenRouter-Schlüssel":"Claude-API-Schlüssel";
+  lastProv=kp;
   var help={
-    auto:"Nutzt den eigenen Server, wenn Zettelfrei mit „npm start“ läuft"+(st.server?" (gefunden)":" (nicht gefunden)")+", sonst den API-Schlüssel unten.",
-    server:"Schlüssel liegt nur auf dem Server: <code>ANTHROPIC_API_KEY=… npm start</code>. Am besten für Betriebe mit mehreren Nutzern."+(st.server?" Server gefunden.":" Kein Server gefunden."),
-    claude:"Schlüssel aus console.anthropic.com. Er wird nur in diesem Browser gespeichert und direkt an Anthropic geschickt. Nur für den eigenen Rechner.",
+    auto:"Nutzt den eigenen Server, wenn Zettelfrei mit „npm start“ läuft"+(st.server?" (gefunden)":" (nicht gefunden)")+", sonst OpenRouter mit dem Schlüssel unten.",
+    server:"Schlüssel liegt nur auf dem Server: <code>OPENROUTER_API_KEY=… npm start</code> oder <code>ANTHROPIC_API_KEY=… npm start</code>. Am besten für Betriebe mit mehreren Rechnern."+(st.server?" Server gefunden.":" Kein Server gefunden."),
+    openrouter:"Ein Schlüssel für viele Modelle: Claude, GPT, Gemini, Mistral. Schlüssel auf <code>openrouter.ai/keys</code> anlegen und mit Guthaben aufladen. Modellnamen stehen auf <code>openrouter.ai/models</code>. Der Schlüssel bleibt in diesem Browser.",
+    claude:"Schlüssel aus <code>console.anthropic.com</code>. Er wird nur in diesem Browser gespeichert und direkt an Anthropic geschickt. Nur für den eigenen Rechner.",
     local:"Daten verlassen den Rechner nicht. Für Ollama: <code>OLLAMA_ORIGINS=* ollama serve</code>, Adresse <code>http://localhost:11434/v1</code>. Für Fotos und Scans ein Modell mit Bildverständnis wählen.",
     off:"Tabelle öffnen, bearbeiten, prüfen und speichern funktioniert ohne KI."
   };
@@ -193,7 +201,7 @@ function updateSettingsForm(){
 }
 $("aiChip").addEventListener("click",openSettings);
 $("setProvider").addEventListener("change",updateSettingsForm);
-function readSettings(){ return {provider:$("setProvider").value,key:$("setKey").value.trim(),url:$("setUrl").value.trim(),model:$("setModel").value.trim()}; }
+function readSettings(){ stash(); return {provider:$("setProvider").value,url:$("setUrl").value.trim(),keys:draft.keys,models:draft.models}; }
 $("settingsForm").addEventListener("submit",function(e){ if(e.submitter&&e.submitter.value==="save"){ AI.save(readSettings()); toast("KI-Einstellungen gespeichert"); } });
 $("setTest").addEventListener("click",function(){
   var before=AI.status().cfg; AI.save(readSettings());
@@ -206,6 +214,8 @@ function aiError(e){
   if(c==="cancelled") return "";
   if(c==="no_provider") return "Keine KI eingerichtet. Oben rechts auf den KI-Status klicken.";
   if(c==="auth") return "Der API-Schlüssel wurde abgelehnt. Bitte in den KI-Einstellungen prüfen.";
+  if(c==="credits") return "Beim KI-Anbieter ist kein Guthaben mehr. Bitte aufladen (bei OpenRouter unter openrouter.ai/credits).";
+  if(c==="model") return "Dieses Modell kennt der Anbieter nicht. Modellnamen in den KI-Einstellungen prüfen.";
   if(c==="network") return "Keine Verbindung zur KI. Internet, Server oder lokales Modell prüfen.";
   if(c==="http") return "Die KI hat einen Fehler gemeldet ("+esc(e.message)+"). Modellname in den Einstellungen prüfen.";
   if(c==="not_granted"||c==="sampling_disabled"||c==="not_declared"||c==="capability_disabled"){ return "Die KI wurde für diese Seite nicht freigegeben. Tabelle bearbeiten, öffnen und speichern funktioniert weiter."; }

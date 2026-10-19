@@ -90,14 +90,15 @@
       <select id="setProvider">
         <option value="auto">Automatisch</option>
         <option value="server">Eigener Server (npm start mit API-Schlüssel)</option>
+        <option value="openrouter">OpenRouter, ein Schlüssel für viele Modelle</option>
         <option value="claude">Claude API, Schlüssel in diesem Browser</option>
         <option value="local">Lokales Modell (Ollama, LM Studio; OpenAI-kompatibel)</option>
         <option value="off">Aus</option>
       </select>
     </label>
-    <label id="rowKey">API-Schlüssel<input type="password" id="setKey" autocomplete="off" placeholder="sk-ant-…"></label>
+    <label id="rowKey"><span id="keyLabel">API-Schlüssel</span><input type="password" id="setKey" autocomplete="off"></label>
     <label id="rowUrl">Adresse des lokalen Modells<input type="text" id="setUrl" placeholder="http://localhost:11434/v1"></label>
-    <label>Modell<input type="text" id="setModel" placeholder="claude-sonnet-5-5"></label>
+    <label id="rowModel">Modell (leer = Standard)<input type="text" id="setModel"></label>
     <p class="note" id="setHelp"></p>
     <div class="status" id="setStatus" hidden></div>
     <div class="row"><button class="btn" value="save" id="setSave">Speichern</button><button class="btn quiet" type="button" id="setTest">Verbindung testen</button><button class="btn quiet" value="cancel" formnovalidate>Abbrechen</button></div>

@@ -1,7 +1,7 @@
 """Ende-zu-Ende-Test im echten Browser (optional, braucht Python + Playwright):
     pip install playwright && python -m playwright install chromium
     python tests/browser_test.py
-Testet: ohne KI, Claude API mit Schlüssel im Browser, eigener Server, lokales Modell.
+Testet: ohne KI, OpenRouter, Claude API mit Schlüssel im Browser, lokales Modell, eigener Server.
 Die KI-Antworten werden nachgebaut, es wird kein echter Schlüssel gebraucht.
 """
 import asyncio, json, os, subprocess, sys, time, socket, threading, http.server
@@ -80,6 +80,17 @@ async def main():
             await r.fulfill(status=200, content_type="application/json", headers={"access-control-allow-origin": "*"},
                             body=json.dumps({"content": [{"type": "text", "text": "```json\n" + json.dumps(ANSWER) + "\n```"}]}))
         await scenario(b, base, "Claude API im Browser", set_claude, {"pattern": "https://api.anthropic.com/**", "handler": claude_route})
+
+        async def set_or(pg):
+            await pg.click("#aiChip"); await pg.select_option("#setProvider", "openrouter"); await pg.fill("#setKey", "sk-or-test"); await pg.click("#setSave")
+        async def or_route(r, seen):
+            h = r.request.headers; body = json.loads(r.request.post_data)
+            seen["Bearer-Schlüssel"] = h.get("authorization") == "Bearer sk-or-test"
+            seen["Standardmodell anthropic/claude-sonnet-5.5"] = body.get("model") == "anthropic/claude-sonnet-5.5"
+            seen["App-Name an OpenRouter"] = h.get("x-openrouter-title") == "Zettelfrei"
+            await r.fulfill(status=200, content_type="application/json", headers={"access-control-allow-origin": "*"},
+                            body=json.dumps({"choices": [{"message": {"content": json.dumps(ANSWER)}}]}))
+        await scenario(b, base, "OpenRouter", set_or, {"pattern": "https://openrouter.ai/**", "handler": or_route})
 
         async def set_local(pg):
             await pg.click("#aiChip"); await pg.select_option("#setProvider", "local"); await pg.fill("#setUrl", "http://localhost:11434/v1"); await pg.fill("#setModel", "qwen2.5"); await pg.click("#setSave")
