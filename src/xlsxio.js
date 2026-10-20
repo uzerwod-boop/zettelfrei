@@ -13,6 +13,14 @@ function save(ExcelJS, ZF, origBytes, model, opts){
   opts=opts||{};
   var wb=new ExcelJS.Workbook(), calc=new ZF.Calc(model);
   return wb.xlsx.load(origBytes).then(function(){
+    // Formeln außerhalb der Tabellen (Titelzeilen, Übersichtsblätter) aktualisieren, z. B. verschobene Bezüge auf andere Blätter
+    model.sheets.forEach(function(sh){
+      var ws=wb.getWorksheet(sh.name); if(!ws) return;
+      (sh.top||[]).forEach(function(row,ri){ (row||[]).forEach(function(cell,ci){
+        if(!cell||!cell.f) return; var xc=ws.getCell(ri+1,ci+1), cur=xc.value&&xc.value.formula;
+        if(cur!==undefined&&String(cur).replace(/^=/,"").toUpperCase()===String(cell.f).toUpperCase()) return;
+        var v=calc.value(sh,ri+1,ci); xc.value={formula:cell.f,result:typeof v==="number"?v:(v==null?undefined:String(v))}; }); });
+    });
     model.sheets.forEach(function(sh){
       if(sh.hr<0) return;
       var ws=wb.getWorksheet(sh.name); if(!ws) return;

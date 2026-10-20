@@ -211,7 +211,7 @@ function toOps(ZF, model, sheet, inv){
     var kA=ZF.findCol(sh,hArtikel), kN=hNr?ZF.findCol(sh,hNr):-1;
     inv.lines.forEach(function(l){
       var best=null, score=0;
-      sh.rows.forEach(function(r,i){ var row=ZF.dataRowNo(sh,i);
+      sh.rows.forEach(function(r,i){ if(ZF.isData&&!ZF.isData(sh,i)) return; var row=ZF.dataRowNo(sh,i);
         if(kN>=0 && l.articleNo && String(calc.value(sh,row,sh.c0+kN)).trim()===l.articleNo){ best=row; score=2; return; }
         var sc=similar(l.name,calc.value(sh,row,sh.c0+kA)); if(sc>score){ score=sc; best=row; } });
       if(best && score>=0.6){ var w={}; w[hBestand]={plus:sg(l.qty)}; ops.push({typ:"aendern",blatt:sh.name,zeile:best,werte:w}); }

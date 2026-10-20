@@ -33,7 +33,7 @@ function remember(k,v){ var b=mailBook(); b[k]=v; try{ localStorage.setItem("zf-
 function apply(ops,label){ var m=M(), plan=ZF.planOps(m,ops).filter(function(p){ return !p.error; }); if(!plan.length) return; var t=ZF.applyPlan(m,plan); A().mark(t.map(function(x){ return x.row; }),t[0]?t[0].sheet:""); A().commit(label); }
 function ensureCols(sheetName,names){ var sh=M().sheets.find(function(s){ return s.name===sheetName; }); names.forEach(function(n){ ZF.addColumn(sh,n); }); }
 function rowOptions(list,sel){ return list.map(function(o,i){ return '<option value="'+i+'"'+(i===sel?" selected":"")+'>'+esc(o.nr+" · "+o.kunde+(o.status?" · "+o.status:"")+(o.reAm?" · Rechnung "+o.reAm:""))+"</option>"; }).join(""); }
-function allOrders(){ var out=[]; orderSheets().forEach(function(sh){ sh.rows.forEach(function(_,i){ out.push(rowObj(sh,i)); }); }); return out; }
+function allOrders(){ var out=[]; orderSheets().forEach(function(sh){ sh.rows.forEach(function(_,i){ if(ZF.isData(sh,i)) out.push(rowObj(sh,i)); }); }); return out; }
 
 /* ---------- Oberfläche ---------- */
 var state={inv:0,abn:0};
@@ -72,7 +72,7 @@ function render(){
   var exp=M().sheets.filter(function(sh){ return sh.hr>=0 && ZF.col(sh,/netto|angebot/i)>=0 && ZF.col(sh,/rechnung am|rechnungsdatum|^datum$/i)>=0; });
   html+='<section class="doc"><h3>Für den Steuerberater</h3><p class="hint">Belegliste als CSV (Excel-tauglich): Datum, Nummer, Partner, Netto, USt, Brutto, bezahlt am. Kein DATEV-Format.</p>';
   if(!exp.length) html+='<p class="hint">Dafür braucht es ein Blatt mit Rechnungsdatum und Nettobetrag.</p>';
-  else { var months={}; exp.forEach(function(sh){ var calc=new ZF.Calc(M()), k=ZF.col(sh,/rechnung am|rechnungsdatum|^datum$/i); sh.rows.forEach(function(_,i){ var d=calc.value(sh,ZF.dataRowNo(sh,i),sh.c0+k); if(ZF.isDateStr(d)) months[d.slice(3)]=1; }); });
+  else { var months={}; exp.forEach(function(sh){ var calc=new ZF.Calc(M()), k=ZF.col(sh,/rechnung am|rechnungsdatum|^datum$/i); sh.rows.forEach(function(_,i){ if(!ZF.isData(sh,i)) return; var d=calc.value(sh,ZF.dataRowNo(sh,i),sh.c0+k); if(ZF.isDateStr(d)) months[d.slice(3)]=1; }); });
     html+='<div class="grid2"><label class="fl">Blatt<select id="expSheet">'+exp.map(function(sh){ return '<option>'+esc(sh.name)+'</option>'; }).join("")+'</select></label>'+
       '<label class="fl">Monat<select id="expMonth"><option value="">alle</option>'+Object.keys(months).sort(function(a,b){ return a.slice(3)+a.slice(0,2)<b.slice(3)+b.slice(0,2)?1:-1; }).map(function(m){ return '<option>'+m+'</option>'; }).join("")+'</select></label></div>'+
       '<div class="row"><button class="btn quiet" type="button" data-act="csv">CSV herunterladen</button></div>'; }

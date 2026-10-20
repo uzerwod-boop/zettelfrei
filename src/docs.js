@@ -123,7 +123,7 @@ function belegliste(ZF, model, sheet, art, monat){
       kNet=H(/netto|angebot/i), kSatz=H(/satz/i), kTax=H(/mwst|ust/i), kBr=H(/brutto/i), kBez=H(/bezahlt am|zahlung am/i), kPro=H(/projekt|leistung|kommission/i);
   if(kSatz===kTax) kTax=-1;
   var out=[["Belegdatum","Belegnummer","Art","Geschäftspartner","Netto","USt-Satz","USt","Brutto","Bezahlt am","Projekt/Leistung"]];
-  sh.rows.forEach(function(r,i){
+  sh.rows.forEach(function(r,i){ if(!ZF.isData(sh,i)) return;
     var row=ZF.dataRowNo(sh,i), v=function(k){ return k<0?null:calc.value(sh,row,sh.c0+k); };
     var dat=v(kDat); if(!ZF.isDateStr(dat)) return;
     if(monat && dat.slice(3)!==monat) return;
@@ -151,7 +151,7 @@ function weekReport(ZF, model, opts){
     var kDat=H(/^datum$|^tag$/i), kStd=H(/^stunden|^std/i), kPro=H(/projekt|kommission|baustelle/i), kMa=H(/mitarbeiter/i);
     if(kDat>=0 && kStd>=0){
       var byP={}, byM={}, sum=0;
-      sh.rows.forEach(function(r,i){ var d=V(i,kDat); if(!ZF.isDateStr(d)) return; var s=ZF.dateToSerial(d); if(s<from||s>to) return;
+      sh.rows.forEach(function(r,i){ if(!ZF.isData(sh,i)) return; var d=V(i,kDat); if(!ZF.isDateStr(d)) return; var s=ZF.dateToSerial(d); if(s<from||s>to) return;
         var h=calc.num(V(i,kStd)); if(isNaN(h)) return; sum+=h; var p=V(i,kPro)||"ohne Projekt", m=V(i,kMa)||"?"; byP[p]=(byP[p]||0)+h; byM[m]=(byM[m]||0)+h; });
       if(sum){ lines.push("","Stunden („"+sh.name+"“): "+de(sum,1)+" Std.");
         Object.keys(byP).sort(function(a,b){ return byP[b]-byP[a]; }).forEach(function(p){ lines.push("  · "+p+": "+de(byP[p],1)+" Std."); });
@@ -159,13 +159,13 @@ function weekReport(ZF, model, opts){
     }
     var kBest=H(/bestand/i), kMin=H(/mindest/i), kArt=H(/artikel$|^artikel |bezeichnung/i);
     if(kBest>=0 && kMin>=0){
-      var low=[]; sh.rows.forEach(function(r,i){ var b=calc.num(V(i,kBest)), mi=calc.num(V(i,kMin)); if(!isNaN(b)&&!isNaN(mi)&&mi>0&&b<mi) low.push(V(i,kArt>=0?kArt:0)+" ("+de(b,b%1?1:0)+" von min. "+de(mi,0)+")"); });
+      var low=[]; sh.rows.forEach(function(r,i){ if(!ZF.isData(sh,i)) return; var b=calc.num(V(i,kBest)), mi=calc.num(V(i,kMin)); if(!isNaN(b)&&!isNaN(mi)&&mi>0&&b<mi) low.push(V(i,kArt>=0?kArt:0)+" ("+de(b,b%1?1:0)+" von min. "+de(mi,0)+")"); });
       if(low.length){ lines.push("","Nachbestellen („"+sh.name+"“):"); low.forEach(function(x){ lines.push("  · "+x); }); }
     }
     var kRe=H(/rechnung am|rechnungsdatum/i), kBez=H(/bezahlt am/i), kBr=H(/brutto/i), kPar=H(/kunde|lieferant/i), kFae=H(/fällig/i);
     if(kRe>=0 && kBez>=0 && kBr>=0){
       var open=[], total=0;
-      sh.rows.forEach(function(r,i){ if(!ZF.isDateStr(V(i,kRe))) return; var b=V(i,kBez); if(b!=null&&b!=="") return; var br=calc.num(V(i,kBr)); total+=br; open.push(V(i,kPar)+" "+de(br)+" €"+(kFae>=0&&ZF.isDateStr(V(i,kFae))?" (fällig "+V(i,kFae)+")":"")); });
+      sh.rows.forEach(function(r,i){ if(!ZF.isData(sh,i)||!ZF.isDateStr(V(i,kRe))) return; var b=V(i,kBez); if(b!=null&&b!=="") return; var br=calc.num(V(i,kBr)); total+=br; open.push(V(i,kPar)+" "+de(br)+" €"+(kFae>=0&&ZF.isDateStr(V(i,kFae))?" (fällig "+V(i,kFae)+")":"")); });
       if(open.length){ lines.push("",(kFae>=0?"Offene Eingangsrechnungen":"Offene Rechnungen an Kunden")+" („"+sh.name+"“): "+de(total)+" €"); open.forEach(function(x){ lines.push("  · "+x); }); }
     }
   });

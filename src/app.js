@@ -70,7 +70,7 @@ function showWorkbook(m,data,name){
   $("cmdOut").innerHTML=""; $("pdfOut").innerHTML=""; $("fxAddr").textContent="–"; $("fxVal").textContent="";
   persist(); renderAll(); renderExamples();
   var parsed=m.sheets.filter(function(s){ return s.hr>=0; });
-  toast(parsed.length? name+" geöffnet · "+parsed.map(function(s){ return s.rows.length+" Zeilen in „"+s.name+"“"; }).join(", ") : "Keine Tabelle mit Überschriften gefunden.");
+  toast(parsed.length? name+" geöffnet · "+parsed.map(function(s){ return ZF.dataCount(s)+" Zeilen in „"+s.name+"“"; }).join(", ") : "Keine Tabelle mit Überschriften gefunden.");
 }
 Object.keys(EXAMPLES).forEach(function(n){ var o=document.createElement("option"); o.value=n; o.textContent=n.replace(/_/g," ").replace(/\.xlsx$/,""); $("exampleSel").appendChild(o); });
 $("exampleSel").addEventListener("change",function(){ var n=this.value; if(n) openData(b64(EXAMPLES[n]),n); this.value=""; });
@@ -101,7 +101,10 @@ function fmtVal(sh,k,v,cell){
   if(v==null||v==="") return "";
   if(typeof v==="number" && ((k>=0&&sh.timeCol&&sh.timeCol[k])||(cell&&cell.tm))) return ZF.fmtTime(v);
   if(typeof v==="number"){
-    var z=(cell&&cell.z)||(k>=0?sh.colFmt[k]:null)||"", h=k>=0?sh.headers[k]:"";
+    var z=(cell&&cell.z)||(k>=0?sh.colFmt[k]:null)||"", h=k>=0?sh.headers[k]:"", zz=String(z).replace(/"[^"]*"|\\./g,"");
+    if(/[dy]/i.test(zz) && !/h/i.test(zz) && v>20000 && v<80000) return ZF.serialToDate(v);         // Datum, z. B. aus =D3+14
+    if(/%/.test(zz)) return de(Math.round(v*10000)/100,null)+" %";
+    if(k>=0 && /(^|[^a-z])(nr|nummer|id|kd-?nr|kdnr|plz)([^a-z]|$)/i.test(h) && Number.isInteger(v)) return String(v);   // Nummern ohne Tausenderpunkt
     var money=/€|EUR/.test(z)||/€/.test(h), two=money||/0\.00/.test(z);
     return de(v,two?2:null)+(money?" €":"");
   }
@@ -139,23 +142,24 @@ function renderGrid(){
   var cellsHtml=function(row,r,editable){
     var out=""; for(var c=0;c<C;c++){ var k=c-sh.c0; if(k<0){ out+="<td></td>"; continue; }
       var cell=row[k], v=calc.value(sh,r,c), fl=flagMap[r+":"+k];
-      var cls=[(typeof v==="number"||numc[k])?"num":"", cell&&cell.f?"fxc":"", fl?"flag":""].join(" ").trim();
+      var cls=[(typeof v==="number"||(numc[k]&&(v==null||v==="")))?"num":"", cell&&cell.f?"fxc":"", fl?"flag":""].join(" ").trim();
       out+='<td'+(editable?' contenteditable="true" spellcheck="false"':"")+' data-r="'+r+'" data-k="'+k+'" class="'+cls+'"'+(fl?' title="'+esc(fl)+'"':"")+'>'+esc(fmtVal(sh,k,v,cell))+"</td>"; }
     return out; };
   var limit=sh._showAll?sh.rows.length:Math.min(sh.rows.length,400);
   for(var i=0;i<limit;i++){ var r=ZF.dataRowNo(sh,i);
+    if(!ZF.isData(sh,i)){ var kd=sh.kind[i]; h+='<tr class="sep sep-'+kd+'" data-row="'+r+'" title="'+({leer:"Leerzeile",summe:"Zwischensumme",abschnitt:"Abschnitt",notiz:"Notiz"}[kd]||"")+' – wird nicht als Datenzeile gezählt"><th class="rn">'+r+"</th>"+cellsHtml(sh.rows[i],r,kd!=="leer")+"<td></td></tr>"; continue; }
     h+='<tr class="'+(fset[r]?"fresh":hset[r]?"hit":"")+'" data-row="'+r+'"><th class="rn">'+r+"</th>"+cellsHtml(sh.rows[i],r,true)+'<td class="del"><button type="button" data-del="'+r+'" aria-label="Zeile '+r+' löschen" title="Zeile löschen">×</button></td></tr>'; }
   if(limit<sh.rows.length) h+='<tr class="add"><th class="rn"></th><td colspan="'+(C+1)+'"><button type="button" id="showAll">Alle '+sh.rows.length+' Zeilen anzeigen</button></td></tr>';
   h+='<tr class="add"><th class="rn"></th><td colspan="'+(C+1)+'"><button type="button" id="addRow">+ Zeile hinzufügen</button></td></tr>';
   sh.foot.forEach(function(row,j){ var r=ZF.footRowNo(sh,j); h+='<tr class="foot"><th class="rn">'+r+"</th>"+cellsHtml(row,r,true)+"<td></td></tr>"; });
   $("grid").innerHTML=h+"</tbody>";
   var nIss=issues.length;
-  var s="<span>Zeilen <b>"+sh.rows.length+"</b></span><span>Spalten <b>"+sh.ncol+"</b></span>";
+  var s="<span>Zeilen <b>"+ZF.dataCount(sh)+"</b></span><span>Spalten <b>"+sh.ncol+"</b></span>";
   var fcount=comp.filter(Boolean).length; if(fcount) s+="<span>Berechnete Spalten <b>"+fcount+"</b></span>";
   s+= nIss? '<span class="warnc">'+nIss+" Hinweis"+(nIss===1?"":"e")+" zum Prüfen</span>" : "<span>Keine Auffälligkeiten</span>";
   $("sumbar").innerHTML=s;
   var sa=$("showAll"); if(sa) sa.onclick=function(){ sh._showAll=true; renderGrid(); };
-  $("addRow").onclick=function(){ var r=ZF.appendRow(sh,[]); mark(fresh,sh.name,[r]); commit("Leere Zeile "+r+" hinzugefügt"); var td=document.querySelector('td[data-r="'+r+'"]:not(.fxc)'); if(td) td.focus(); };
+  $("addRow").onclick=function(){ var r=ZF.appendRow(sh,[],model); mark(fresh,sh.name,[r]); commit("Leere Zeile "+r+" hinzugefügt"); var td=document.querySelector('td[data-r="'+r+'"]:not(.fxc)'); if(td) td.focus(); };
 }
 var grid=$("grid");
 grid.addEventListener("focusin",function(e){
@@ -184,7 +188,7 @@ grid.addEventListener("keydown",function(e){
   if(e.key==="Escape"){ td.dataset.cancel="1"; td.blur(); }
 });
 grid.addEventListener("click",function(e){ var b=e.target.closest("[data-del]"); if(!b) return; var r=+b.dataset.del;
-  ZF.deleteRow(sheetObj(),r); fresh={}; hits={}; commit("Zeile "+r+" gelöscht"); toast("Zeile "+r+" gelöscht. Im Verlauf zurückholen."); });
+  ZF.deleteRow(sheetObj(),r,model); fresh={}; hits={}; commit("Zeile "+r+" gelöscht"); toast("Zeile "+r+" gelöscht. Im Verlauf zurückholen."); });
 
 function mark(store,sheetName,rows){ store[sheetName]={}; rows.forEach(function(r){ store[sheetName][r]=1; }); }
 function goTo(sheetName,row,k){
