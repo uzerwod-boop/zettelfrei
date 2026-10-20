@@ -57,7 +57,7 @@ cd zettelfrei
 npm start        # open http://localhost:8787
 ```
 
-Five sample spreadsheets and two sample e-invoices are built in.
+Six sample spreadsheets and two sample e-invoices are built in – including a deliberately messy “Stresstest” file like the ones real businesses have.
 
 ## AI setup
 

@@ -51,7 +51,7 @@ test("Excel lesen mit ExcelJS ergibt dieselben Werte wie bisher", async () => {
       assert.deepEqual([sb.hr, sb.headers, sb.dateCol, sb.timeCol], [sa.hr, sa.headers, sa.dateCol, sa.timeCol], f + " Struktur");
       for (let r = 1; r <= sa.hr + 2 + sa.rows.length + sa.foot.length; r++) for (let c = 0; c < sa.c0 + sa.ncol; c++) {
         const va = ca.value(sa, r, c), vb = cb.value(sb, r, c);
-        if (typeof va === "number") assert.ok(Math.abs(va - vb) < 1e-9, `${f} ${r}/${c}`); else assert.deepEqual(vb, va, `${f} ${r}/${c}`);
+        if (typeof va === "number") assert.ok(Math.abs(va - vb) < 1e-6, `${f} ${r}/${c} (Uhrzeiten auf Millisekunden genau)`); else assert.deepEqual(vb, va, `${f} ${r}/${c}`);
       }
     });
   }

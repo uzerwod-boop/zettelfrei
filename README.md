@@ -94,7 +94,7 @@ cd zettelfrei
 npm start
 ```
 
-Dann **http://localhost:8787** öffnen. Fünf Beispieldateien und zwei Beispiel-E-Rechnungen sind eingebaut (oben „Beispiel öffnen…“), oder eine eigene Excel-Datei mit „Excel öffnen“ laden bzw. hineinziehen.
+Dann **http://localhost:8787** öffnen. Sechs Beispieldateien und zwei Beispiel-E-Rechnungen sind eingebaut – darunter „Stresstest Chaos Tabelle“, eine absichtlich unordentliche Datei mit zweizeiligen Überschriften, Zwischensummen, Daten in sieben Formaten und Zahlen als Text, wie sie in echten Betrieben vorkommt (oben „Beispiel öffnen…“), oder eine eigene Excel-Datei mit „Excel öffnen“ laden bzw. hineinziehen.
 
 Ohne KI funktioniert bereits: Datei öffnen, Zellen bearbeiten, Formeln rechnen, Zeilen hinzufügen und löschen, Prüfen, Verlauf, Speichern – und alles aus Version 0.2: E-Rechnungen lesen und schreiben, Arbeitszeit, Mahnwesen, Abnahme, Export, Wochenbericht. Die KI braucht es nur für freie Sätze, PDFs ohne E-Rechnung und Fotos.
 
@@ -175,7 +175,7 @@ src/docs.js           PDF-Briefe, Rechnungsansicht, Abnahmeprotokoll, CSV-Export
 src/workflows.js      Bereich „Dokumente“
 src/styles.css        Gestaltung (hell und dunkel)
 server.js             kleiner Server, leitet KI-Anfragen mit Schlüssel weiter (Claude oder OpenRouter)
-beispiele/            fünf typische Excel-Dateien eines Fliesenlegers und zwei E-Rechnungen (erfundene Daten)
+beispiele/            fünf typische Excel-Dateien eines Fliesenlegers, eine Stresstest-Datei und zwei E-Rechnungen (erfundene Daten)
 vendor/               SheetJS, PDF.js, ExcelJS und jsPDF lokal, damit alles offline läuft
 scripts/              Beispiele erzeugen, XRechnung prüfen
 tests/                Tests für Engine, Server und Browser
