@@ -1,41 +1,84 @@
-# Zettelfrei
+<p align="center">
+  <a href="https://uzerwod-boop.github.io/zettelfrei/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/brand/zettelfrei-logo-dark.svg">
+      <img src="docs/brand/zettelfrei-logo.svg" alt="Zettelfrei" height="76">
+    </picture>
+  </a>
+</p>
 
-**Excel bleibt. Das Tippen fällt weg.**
+<h3 align="center">Excel bleibt. Das Tippen fällt weg.</h3>
 
-Zettelfrei öffnet die Excel-Dateien, die ein Handwerksbetrieb sowieso hat – Stundenzettel, Lagerliste, Auftragsliste – und lässt sie mit ganzen Sätzen bedienen:
+<p align="center">
+  Die Excel-Dateien, die ein Handwerksbetrieb sowieso hat, bedient mit ganzen Sätzen –<br>
+  plus E-Rechnung, Arbeitszeit, Mahnwesen und Abnahme. Läuft im Browser, die Datei bleibt bei Ihnen.
+</p>
 
-- **Eintragen:** „Mehmet heute 7 Stunden Bad Schneider, Wand gefliest“ wird eine neue Zeile.
-- **Ändern:** „Becker hat heute bezahlt“ setzt Status und Datum.
-- **Fragen:** „Wie viele Stunden hatte Kevin im Oktober?“ – die Summe rechnet die Tabelle, nicht die KI.
-- **PDF & Foto:** Lieferantenrechnung hineinziehen, der Lagerbestand wird erhöht. Auch gescannte PDFs.
-- **Prüfen:** leere Pflichtfelder, doppelte Nummern, Text in Zahlenspalten, Formelfehler; fachliche Prüfung per KI.
-- **Verlauf:** jeder Stand lässt sich zurückholen.
-- **Speichern:** zurück als `.xlsx` mit Formeln, Farben, Schriften und Zahlenformaten der Originaldatei.
+<p align="center">
+  <a href="https://github.com/uzerwod-boop/zettelfrei/releases"><img alt="Version" src="https://img.shields.io/github/package-json/v/uzerwod-boop/zettelfrei?style=flat-square&label=Version&color=0f6b5c"></a>
+  <a href="https://github.com/uzerwod-boop/zettelfrei/actions/workflows/tests.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/uzerwod-boop/zettelfrei/tests.yml?style=flat-square&label=Tests"></a>
+  <img alt="XRechnung 3.0" src="https://img.shields.io/badge/XRechnung-3.0%20gepr%C3%BCft-1d2528?style=flat-square">
+  <img alt="Ohne Installation" src="https://img.shields.io/badge/l%C3%A4uft%20im-Browser-26282e?style=flat-square">
+  <a href="#lizenz"><img alt="Lizenz" src="https://img.shields.io/badge/Lizenz-MIT%20%7C%20Apache--2.0-3a3a3a?style=flat-square"></a>
+  <img alt="Status" src="https://img.shields.io/badge/Status-Prototyp-f6dd6a?style=flat-square&labelColor=3a3a3a">
+</p>
 
-### Neu in Version 0.2: Bürokratie, die sich selbst erledigt
+<p align="center">
+  <a href="https://uzerwod-boop.github.io/zettelfrei/"><b>Online ausprobieren</b></a> ·
+  <a href="#was-es-kann">Was es kann</a> ·
+  <a href="#schnellstart">Schnellstart</a> ·
+  <a href="#ki-einrichten">KI einrichten</a> ·
+  <a href="#sicherheit-version-021">Sicherheit</a> ·
+  <a href="https://github.com/uzerwod-boop/zettelfrei/releases">Versionen</a>
+</p>
 
-- **E-Rechnung empfangen:** XRechnung (XML) und ZUGFeRD/Factur-X (PDF mit eingebetteter XML) werden **exakt und ohne KI** gelesen. Bestand im Lager steigt automatisch (Zuordnung über Artikelnummer), Eingangsrechnungen landen als Zeile in der Liste.
-- **E-Rechnung schreiben:** aus einer Auftragszeile eine **XRechnung 3.0** plus PDF zur Ansicht. Geprüft gegen die offiziellen Regeln EN 16931 und XRechnung (siehe unten).
-- **Arbeitszeit nach ArbZG:** Beginn, Ende und Pause als Uhrzeit; Hinweise bei über 10 Stunden am Tag (§ 3), zu kurzer Pause (§ 4) und weniger als 11 Stunden Ruhezeit (§ 5).
-- **Änderungsprotokoll:** wer hat wann welche Zelle geändert. Wird nie gelöscht und kann als eigenes Blatt in der Excel-Datei mitgespeichert werden.
-- **Mahnwesen:** überfällige Rechnungen auf einen Blick; Zahlungserinnerung, 1. und 2. Mahnung als PDF-Brief, Mahnstufe wird eingetragen.
-- **Abnahmeprotokoll:** auf dem Handy beim Kunden, mit Mängeln, Fotos und zwei Unterschriften; ergibt ein PDF und das Abnahmedatum in der Tabelle.
-- **Für den Steuerberater:** Belegliste als CSV (Excel-tauglich) je Monat. Kein DATEV-Format.
-- **Prüfungen für Geld:** MwSt passt nicht zu 19 % oder 7 %, Rechnungen überfällig; die KI-Prüfung weist zusätzlich auf mögliche Fälle von § 13b UStG hin.
-- **Wochenbericht:** Stunden je Projekt, Nachbestellungen, offene Rechnungen, Hinweise zur Arbeitszeit – zum Kopieren oder Teilen per WhatsApp.
-- **Handy und Sprache:** große Bedienelemente, Eingabe per Mikrofon (Spracherkennung des Browsers).
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dunkel.png">
+    <img src="docs/screenshot-hell.png" alt="Zettelfrei: Lagerliste, daneben eine ZUGFeRD-Rechnung, die ohne KI gelesen wurde" width="900">
+  </picture>
+  <br><sub>Lieferantenrechnung (ZUGFeRD) hineinziehen – der Lagerbestand steigt, nach einem Klick auf „Übernehmen“.</sub>
+</p>
 
-![Bereich Dokumente: E-Rechnung schreiben, Mahnwesen, Abnahmeprotokoll](docs/screenshot-dokumente.png)
-
-> Die Vorlagen für Mahnungen und Protokolle und die Hinweise zu ArbZG und § 13b UStG sind Hilfen für den Alltag, keine Rechtsberatung.
-
-Jede Änderung der KI wird vorher als „alt → neu“ angezeigt und erst nach Klick übernommen.
-
-**Direkt im Browser ausprobieren:** https://uzerwod-boop.github.io/zettelfrei/
-
-![Zettelfrei mit der Beispiel-Auftragsliste](docs/screenshot.png)
-
+> [!NOTE]
 > Prototyp von **Bohdan Sychevskyi**, entwickelt gemeinsam mit einem guten Freund: **Claude** von Anthropic. Die Idee und die Produktentscheidungen kommen von mir, Code und Tests haben wir zusammen geschrieben. Feedback von Handwerksbetrieben ist sehr willkommen.
+
+## Was es kann
+
+Zettelfrei öffnet Stundenzettel, Lagerliste oder Auftragsliste und lässt sie mit ganzen Sätzen bedienen. Jede Änderung der KI wird vorher als „alt → neu“ angezeigt und erst nach Klick übernommen.
+
+| | |
+|---|---|
+| ✍️ **Eintragen** | „Mehmet heute 7 Stunden Bad Schneider, Wand gefliest“ wird eine neue Zeile. |
+| 🔁 **Ändern** | „Becker hat heute bezahlt“ setzt Status und Datum. |
+| 🧮 **Fragen** | „Wie viele Stunden hatte Kevin im Oktober?“ – die Summe rechnet die Tabelle, nicht die KI. |
+| 📄 **PDF & Foto** | Lieferantenrechnung hineinziehen, der Lagerbestand wird erhöht. Auch gescannte PDFs. |
+| 🔍 **Prüfen** | leere Pflichtfelder, doppelte Nummern, Text in Zahlenspalten, Formelfehler; fachliche Prüfung per KI. |
+| 🕓 **Verlauf** | jeder Stand lässt sich zurückholen. |
+| 💾 **Speichern** | zurück als `.xlsx` mit Formeln, Farben, Schriften und Zahlenformaten der Originaldatei. |
+
+### Bürokratie, die sich selbst erledigt (seit 0.2)
+
+| | |
+|---|---|
+| 📥 **E-Rechnung empfangen** | XRechnung (XML) und ZUGFeRD/Factur-X (PDF mit eingebetteter XML) werden **exakt und ohne KI** gelesen. Lagerbestand steigt automatisch (Zuordnung über Artikelnummer), Eingangsrechnungen landen als Zeile in der Liste, Gutschriften mit Minus. |
+| 📤 **E-Rechnung schreiben** | aus einer Auftragszeile eine **XRechnung 3.0** plus PDF zur Ansicht. Geprüft gegen die offiziellen Regeln EN 16931 und XRechnung (siehe unten). |
+| ⏱️ **Arbeitszeit nach ArbZG** | Beginn, Ende und Pause als Uhrzeit; Hinweise bei über 10 Stunden am Tag (§ 3), zu kurzer Pause (§ 4) und weniger als 11 Stunden Ruhezeit (§ 5). |
+| 📜 **Änderungsprotokoll** | wer hat wann welche Zelle geändert. Wird nie gelöscht und kann als eigenes Blatt in der Excel-Datei mitgespeichert werden. |
+| 💶 **Mahnwesen** | überfällige Rechnungen auf einen Blick; Zahlungserinnerung, 1. und 2. Mahnung als PDF-Brief, Mahnstufe wird eingetragen. |
+| ✅ **Abnahmeprotokoll** | auf dem Handy beim Kunden, mit Mängeln, Fotos und zwei Unterschriften; ergibt ein PDF und das Abnahmedatum in der Tabelle. |
+| 🧾 **Für den Steuerberater** | Belegliste als CSV (Excel-tauglich) je Monat. Kein DATEV-Format. |
+| ⚠️ **Prüfungen für Geld** | MwSt passt nicht zu 19 % oder 7 %, Rechnungen überfällig; die KI-Prüfung weist zusätzlich auf mögliche Fälle von § 13b UStG hin. |
+| 📊 **Wochenbericht** | Stunden je Projekt, Nachbestellungen, offene Rechnungen, Hinweise zur Arbeitszeit – zum Kopieren oder Teilen per WhatsApp. |
+| 🎙️ **Handy und Sprache** | große Bedienelemente, Eingabe per Mikrofon (Spracherkennung des Browsers). |
+
+<p align="center">
+  <img src="docs/screenshot-dokumente.png" alt="Bereich Dokumente: E-Rechnung schreiben, Mahnwesen, Abnahmeprotokoll" width="900">
+  <br><sub>Bereich „Dokumente“: E-Rechnung schreiben, Mahnwesen, Abnahmeprotokoll.</sub>
+</p>
+
+> [!IMPORTANT]
+> Die Vorlagen für Mahnungen und Protokolle und die Hinweise zu ArbZG und § 13b UStG sind Hilfen für den Alltag, keine Rechtsberatung.
 
 ---
 
@@ -181,3 +224,10 @@ Zettelfrei lets small trade businesses work with their existing Excel files in p
 ## Lizenz
 
 © 2026 Bohdan Sychevskyi. Nach Wahl unter der [MIT-Lizenz](LICENSE-MIT) oder der [Apache-Lizenz 2.0](LICENSE-APACHE) nutzbar (MIT OR Apache-2.0). Beiträge werden, sofern nicht anders angegeben, unter beiden Lizenzen eingebracht. Entwickelt gemeinsam mit Claude (Anthropic). Mitgelieferte Bibliotheken und Schriften stehen unter ihren eigenen Lizenzen (siehe `vendor/` und `fonts/`).
+
+---
+
+<p align="center">
+  <img src="docs/brand/zettelfrei-mark.svg" alt="" width="40"><br>
+  <sub>Für Betriebe, die lieber auf der Baustelle sind als im Büro.</sub>
+</p>
