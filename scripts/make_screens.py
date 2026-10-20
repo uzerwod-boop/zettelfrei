@@ -30,7 +30,7 @@ h1{{font:800 96px/1 A;letter-spacing:-.02em;margin:26px 0 18px}}
 .chips{{display:flex;flex-wrap:wrap;gap:10px}} .chips span{{font:500 19px P;padding:6px 14px;border:2px solid #0f6b5c;color:#0f6b5c;border-radius:999px}}
 .by{{position:absolute;left:84px;bottom:48px;font:500 20px P;color:#5d686b}}
 .s{{position:absolute;left:690px;top:70px;width:760px;border-radius:14px;box-shadow:0 20px 60px rgba(15,60,50,.25);border:1px solid #d9ddd6}}
-</style></head><body><div class="l"><div class="mk">{mark}</div><h1>Zettelfrei</h1>
+</style></head><body><div class="l"><div class="mk">{mark}</div><h1>Zettel<span style="color:#0f6b5c">frei</span></h1>
 <p class="t">Excel bleibt.<br><b>Das Tippen fällt weg.</b></p>
 <div class="chips"><span>E-Rechnung</span><span>Arbeitszeit</span><span>Mahnwesen</span><span>Abnahme</span></div></div>
 <img class="s" src="file://{D}/screenshot-hell.png"><div class="by">Open Source · Bohdan Sychevskyi</div></body></html>"""

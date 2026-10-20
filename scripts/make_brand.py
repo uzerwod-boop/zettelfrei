@@ -24,24 +24,32 @@ def text_path(s, size, x0, base, track=0.0):
         x += hmtx[g][0] * sc + track * size
     return pen.getCommands(), x - track * size
 
-def mark(x=0, y=0, s=64):
-    """Zeichen: Blatt mit Eselsohr (Zettel), darin Tabellenlinien und ein Z als Textmarker-Strich."""
-    k = s / 64
-    T = lambda v: round(v * k, 2)
-    return f'''<g transform="translate({x} {y})">
-  <path d="M{T(14)} 0H{T(44)}L{T(64)} {T(20)}V{T(50)}A{T(14)} {T(14)} 0 0 1 {T(50)} {T(64)}H{T(14)}A{T(14)} {T(14)} 0 0 1 0 {T(50)}V{T(14)}A{T(14)} {T(14)} 0 0 1 {T(14)} 0Z" fill="{ACCENT}"/>
-  <path d="M{T(44)} 0V{T(14)}A{T(6)} {T(6)} 0 0 0 {T(50)} {T(20)}H{T(64)}Z" fill="#8fd0c0"/>
-  <g stroke="#ffffff" stroke-opacity=".22" stroke-width="{T(2)}"><path d="M{T(10)} {T(25)}H{T(54)}M{T(10)} {T(39)}H{T(54)}M{T(25)} {T(12)}V{T(54)}M{T(39)} {T(22)}V{T(54)}"/></g>
-  <path d="M{T(17)} {T(19)}H{T(46)}L{T(18)} {T(46)}H{T(47)}" fill="none" stroke="{MARKER}" stroke-width="{T(7.5)}" stroke-linecap="round" stroke-linejoin="round"/>
-</g>'''
+# Zeichen: 4×4 Tabellenzellen, die gefüllten bilden ein Z; die gelbe Zelle ist die markierte Zelle.
+Z = ["####", "..y.", ".#..", "####"]
+THEMES = {"light": (ACCENT, "#cdd2ca"), "dark": (ACCENT_D, "#3a4446")}
+
+def mark(x=0, y=0, s=64, theme="light", outline=True):
+    fill, line = THEMES[theme]; c = s * 13 / 64; g = s * 4 / 64; r = s * 3.5 / 64; sw = s * 2.2 / 64
+    out = [f'<g transform="translate({x} {y})">']
+    for ri, row in enumerate(Z):
+        for ci, ch in enumerate(row):
+            px, py = round(ci * (c + g), 2), round(ri * (c + g), 2)
+            if ch == "#": out.append(f'<rect x="{px}" y="{py}" width="{round(c,2)}" height="{round(c,2)}" rx="{round(r,2)}" fill="{fill}"/>')
+            elif ch == "y": out.append(f'<rect x="{px}" y="{py}" width="{round(c,2)}" height="{round(c,2)}" rx="{round(r,2)}" fill="{MARKER}"/>')
+            elif outline: out.append(f'<rect x="{round(px+sw/2,2)}" y="{round(py+sw/2,2)}" width="{round(c-sw,2)}" height="{round(c-sw,2)}" rx="{round(r-sw/2,2)}" fill="none" stroke="{line}" stroke-width="{round(sw,2)}"/>')
+    out.append("</g>"); return "\n".join(out)
 
 def svg(w, h, body, title="Zettelfrei"):
     return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" aria-label="{title}"><title>{title}</title>\n{body}\n</svg>\n'
 
-# Zeichen allein
+# Zeichen allein: groß mit leeren Zellen, klein (Favicon, ≤ 32 px) nur die gefüllten
 open(os.path.join(OUT, "zettelfrei-mark.svg"), "w").write(svg(64, 64, mark()))
-# Logo: Zeichen + Wortmarke, für hellen und dunklen Hintergrund
-for name, ink in (("zettelfrei-logo.svg", INK), ("zettelfrei-logo-dark.svg", INK_D)):
-    d, w = text_path("Zettelfrei", 58, 92, 60, track=-0.012)
-    open(os.path.join(OUT, name), "w").write(svg(int(92 + w + 4), 76, mark(0, 6) + f'\n<path d="{d}" fill="{ink}"/>'))
-print("ok", os.listdir(OUT))
+open(os.path.join(OUT, "zettelfrei-mark-dark.svg"), "w").write(svg(64, 64, mark(theme="dark")))
+open(os.path.join(OUT, "zettelfrei-mark-small.svg"), "w").write(svg(64, 64, mark(outline=False)))
+# Logo: Zeichen + „Zettel“ + „frei“ in Akzentfarbe
+for name, theme, ink, acc in (("zettelfrei-logo.svg", "light", INK, ACCENT), ("zettelfrei-logo-dark.svg", "dark", INK_D, ACCENT_D)):
+    d1, w1 = text_path("Zettel", 76, 92, 62.5, track=-0.012)
+    d2, w2 = text_path("frei", 76, 92 + w1 - 0.012 * 76, 62.5, track=-0.012)
+    W = int(92 + w1 + w2 + 6)
+    open(os.path.join(OUT, name), "w").write(svg(W, 72, mark(0, 4, theme=theme) + f'\n<path d="{d1}" fill="{ink}"/>\n<path d="{d2}" fill="{acc}"/>'))
+print("ok", sorted(os.listdir(OUT)))

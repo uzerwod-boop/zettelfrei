@@ -1,8 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Zettelfrei"><title>Zettelfrei</title>
 <g transform="translate(0 0)">
-  <path d="M14.0 0H44.0L64.0 20.0V50.0A14.0 14.0 0 0 1 50.0 64.0H14.0A14.0 14.0 0 0 1 0 50.0V14.0A14.0 14.0 0 0 1 14.0 0Z" fill="#0f6b5c"/>
-  <path d="M44.0 0V14.0A6.0 6.0 0 0 0 50.0 20.0H64.0Z" fill="#8fd0c0"/>
-  <g stroke="#ffffff" stroke-opacity=".22" stroke-width="2.0"><path d="M10.0 25.0H54.0M10.0 39.0H54.0M25.0 12.0V54.0M39.0 22.0V54.0"/></g>
-  <path d="M17.0 19.0H46.0L18.0 46.0H47.0" fill="none" stroke="#f6dd6a" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="0.0" y="0.0" width="13.0" height="13.0" rx="3.5" fill="#0f6b5c"/>
+<rect x="17.0" y="0.0" width="13.0" height="13.0" rx="3.5" fill="#0f6b5c"/>
+<rect x="34.0" y="0.0" width="13.0" height="13.0" rx="3.5" fill="#0f6b5c"/>
+<rect x="51.0" y="0.0" width="13.0" height="13.0" rx="3.5" fill="#0f6b5c"/>
+<rect x="1.1" y="18.1" width="10.8" height="10.8" rx="2.4" fill="none" stroke="#cdd2ca" stroke-width="2.2"/>
+<rect x="18.1" y="18.1" width="10.8" height="10.8" rx="2.4" fill="none" stroke="#cdd2ca" stroke-width="2.2"/>
+<rect x="34.0" y="17.0" width="13.0" height="13.0" rx="3.5" fill="#f6dd6a"/>
+<rect x="52.1" y="18.1" width="10.8" height="10.8" rx="2.4" fill="none" stroke="#cdd2ca" stroke-width="2.2"/>
+<rect x="1.1" y="35.1" width="10.8" height="10.8" rx="2.4" fill="none" stroke="#cdd2ca" stroke-width="2.2"/>
+<rect x="17.0" y="34.0" width="13.0" height="13.0" rx="3.5" fill="#0f6b5c"/>
+<rect x="35.1" y="35.1" width="10.8" height="10.8" rx="2.4" fill="none" stroke="#cdd2ca" stroke-width="2.2"/>
+<rect x="52.1" y="35.1" width="10.8" height="10.8" rx="2.4" fill="none" stroke="#cdd2ca" stroke-width="2.2"/>
+<rect x="0.0" y="51.0" width="13.0" height="13.0" rx="3.5" fill="#0f6b5c"/>
+<rect x="17.0" y="51.0" width="13.0" height="13.0" rx="3.5" fill="#0f6b5c"/>
+<rect x="34.0" y="51.0" width="13.0" height="13.0" rx="3.5" fill="#0f6b5c"/>
+<rect x="51.0" y="51.0" width="13.0" height="13.0" rx="3.5" fill="#0f6b5c"/>
 </g>
 </svg>

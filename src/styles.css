@@ -28,7 +28,11 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-
 .brand h1{font-family:var(--f-display);font-weight:800;font-size:28px;letter-spacing:-.01em;margin:0;line-height:1}
 .brand p{margin:0;color:var(--muted)}
 .brand h1{display:flex;align-items:center;gap:10px}
-.brand .mark{width:34px;height:34px;flex:none}
+.brand .mark{width:30px;height:30px;flex:none}
+.brand .mark .mk-f{fill:var(--accent)}
+.brand .mark .mk-l{stroke:var(--line)}
+.brand .mark{width:34px;height:34px}
+.brand .frei{color:var(--accent)}
 .filebar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:var(--sheet);color:var(--muted);white-space:nowrap}
 .chip .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}

@@ -224,6 +224,9 @@ Zettelfrei lets small trade businesses work with their existing Excel files in p
 ---
 
 <p align="center">
-  <img src="docs/brand/zettelfrei-mark.svg" alt="" width="40"><br>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/zettelfrei-mark-dark.svg">
+    <img src="docs/brand/zettelfrei-mark.svg" alt="" width="40">
+  </picture><br>
   <sub>Für Betriebe, die lieber auf der Baustelle sind als im Büro.</sub>
 </p>
