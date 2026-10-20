@@ -33,6 +33,12 @@ async def main():
         pg.on("pageerror", lambda e: errs.append(str(e)))
         await pg.goto(f"http://127.0.0.1:{port}/"); await pg.wait_for_timeout(700)
 
+        # 0) CSV im deutschen Format öffnen (eigener Leser)
+        await pg.set_input_files("#openInput", files=[{"name": "Export.csv", "mimeType": "text/csv",
+            "buffer": "Datum;Kunde;Netto €\n12.10.2026;\"Becker; Thomas\";1.234,50\n".encode("utf-8")}])
+        await pg.wait_for_timeout(400)
+        check("Becker; Thomas" in await pg.locator("#grid").inner_text(), "CSV mit Semikolon geöffnet")
+
         # 1) Arbeitszeit
         await pg.select_option("#exampleSel", "Arbeitszeit_KW42.xlsx"); await pg.wait_for_timeout(300)
         check((await pg.locator('td[data-r="4"][data-k="3"]').inner_text()) == "07:00", "Uhrzeit wird als 07:00 angezeigt")

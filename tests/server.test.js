@@ -34,6 +34,12 @@ test("Server: Oberfläche, Health, Weiterleitung an Claude", async () => {
     assert.equal(seen.body.model, "claude-test", "Modell bestimmt der Server");
     assert.equal(seen.body.max_tokens, 8192, "max_tokens begrenzt");
 
+    const msg = JSON.stringify({ messages: [{ role: "user", content: "x" }] });
+    assert.equal((await fetch(base + "/api/messages", { method: "POST", headers: { "content-type": "text/plain" }, body: msg })).status, 415, "Formular-POST fremder Seiten abgelehnt");
+    assert.equal((await fetch(base + "/api/messages", { method: "POST", headers: { "content-type": "application/json", origin: "https://boese.example" }, body: msg })).status, 403, "fremde Origin abgelehnt");
+    assert.equal((await fetch(base + "/api/messages", { method: "POST", headers: { "content-type": "application/json", "sec-fetch-site": "cross-site" }, body: msg })).status, 403, "cross-site abgelehnt");
+    const rebind = await new Promise(ok => http.request(base + "/api/health", { headers: { host: "boese.example:80" } }, r => ok(r.statusCode)).end());
+    assert.equal(rebind, 421, "DNS-Rebinding: fremder Hostname abgelehnt");
     assert.equal((await fetch(base + "/%2e%2e/%2e%2e/etc/passwd")).status, 404);
     assert.equal((await fetch(base + "/.git/config")).status, 404);
   } finally {

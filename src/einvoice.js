@@ -204,6 +204,8 @@ function colOf(ZF,sh,names){ for(var i=0;i<names.length;i++){ var k=ZF.findCol(s
 function toOps(ZF, model, sheet, inv){
   var sh=sheet, calc=new ZF.Calc(model), ops=[], H=function(n){ return colOf(ZF,sh,n); };
   var hBestand=H(["Bestand","Lagerbestand","Menge im Lager"]), hArtikel=H(["Artikel","Bezeichnung","Artikelname"]), hNr=H(["Artikel-Nr","Artikelnummer","Art.-Nr"]);
+  // Gutschrift: Beträge negativ, Lagerbestand sinkt (Rücksendung) statt zu steigen.
+  var credit=inv.type==="Gutschrift", sg=function(x){ return x==null||x===""?x:(credit?-Math.abs(Number(x)):x); };
   var hRechNr=H(["Rechnungs-Nr","Rechnungsnummer","Beleg-Nr","Belegnummer","Re-Nr"]), hNetto=H(["Netto €","Netto","Nettobetrag"]), hMenge=H(["Menge"]);
   if(hBestand && hArtikel){ // Lager: Bestand erhöhen oder Artikel anlegen
     var kA=ZF.findCol(sh,hArtikel), kN=hNr?ZF.findCol(sh,hNr):-1;
@@ -212,7 +214,8 @@ function toOps(ZF, model, sheet, inv){
       sh.rows.forEach(function(r,i){ var row=ZF.dataRowNo(sh,i);
         if(kN>=0 && l.articleNo && String(calc.value(sh,row,sh.c0+kN)).trim()===l.articleNo){ best=row; score=2; return; }
         var sc=similar(l.name,calc.value(sh,row,sh.c0+kA)); if(sc>score){ score=sc; best=row; } });
-      if(best && score>=0.6){ var w={}; w[hBestand]={plus:l.qty}; ops.push({typ:"aendern",blatt:sh.name,zeile:best,werte:w}); }
+      if(best && score>=0.6){ var w={}; w[hBestand]={plus:sg(l.qty)}; ops.push({typ:"aendern",blatt:sh.name,zeile:best,werte:w}); }
+      else if(credit){ /* Gutschrift für unbekannten Artikel: nichts anlegen */ }
       else { var v={}; v[hArtikel]=l.name; v[hBestand]=l.qty;
         var hE=H(["Einheit"]), hP=H(["EK-Preis €","EK-Preis","Einkaufspreis","Preis"]), hL=H(["Lieferant"]);
         if(hE) v[hE]=l.unit; if(hP) v[hP]=l.price; if(hL) v[hL]=inv.seller.name; if(hNr&&l.articleNo) v[hNr]=l.articleNo;
@@ -227,15 +230,15 @@ function toOps(ZF, model, sheet, inv){
     set(["Projekt","Kommission","Baustelle"],inv.project||inv.buyerRef||inv.orderRef);
     return v; };
   if(hRechNr && hNetto && !hMenge){ // eine Zeile pro Rechnung
-    var v=base(); v[hNetto]=inv.net;
+    var v=base(); v[hNetto]=sg(inv.net);
     var hSatz=H(["MwSt-Satz","USt-Satz","Steuersatz"]), hTax=H(["MwSt €","USt €","MwSt","USt"]), hBr=H(["Brutto €","Brutto","Bruttobetrag"]);
-    if(hSatz) v[hSatz]=inv.rate!=null?inv.rate/100:null; if(hTax && hTax!==hSatz) v[hTax]=inv.tax; if(hBr) v[hBr]=inv.gross;
+    if(hSatz) v[hSatz]=inv.rate!=null?inv.rate/100:null; if(hTax && hTax!==hSatz) v[hTax]=sg(inv.tax); if(hBr) v[hBr]=sg(inv.gross);
     ops.push({typ:"neu",blatt:sh.name,werte:v}); return ops;
   }
   inv.lines.forEach(function(l){ // eine Zeile pro Position
     var v=base(), set=function(names,val){ var h=H(names); if(h && val!=null && val!=="") v[h]=val; };
     set(["Position","Artikel","Bezeichnung","Leistung"],l.name); set(["Menge","Anzahl"],l.qty); set(["Einheit"],l.unit);
-    set(["€ / Einh.","Einzelpreis","EK-Preis €","Preis"],l.price); set(["Summe €","Summe","Gesamt","Netto €","Netto","Betrag"],l.total);
+    set(["€ / Einh.","Einzelpreis","EK-Preis €","Preis"],l.price); set(["Summe €","Summe","Gesamt","Netto €","Netto","Betrag"],sg(l.total));
     ops.push({typ:"neu",blatt:sh.name,werte:v});
   });
   return ops;

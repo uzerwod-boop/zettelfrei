@@ -113,7 +113,7 @@ function abnahmePDF(jsPDF, d){
 
 /* ---------- Export für den Steuerberater (CSV, Excel-tauglich) ---------- */
 function csv(rows){
-  var cell=function(v){ if(v==null) return ""; if(typeof v==="number") return de(v,2).replace(/\./g,""); var s=String(v); return /[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+  var cell=function(v){ if(v==null) return ""; if(typeof v==="number") return de(v,2).replace(/\./g,""); var s=String(v); if(/^[=+\-@\t\r]/.test(s) && !/^-?\d/.test(s)) s="'"+s; /* Schutz vor Formel-Einschleusung beim Öffnen in Excel */ return /[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
   return "﻿"+rows.map(function(r){ return r.map(cell).join(";"); }).join("\r\n")+"\r\n";
 }
 function belegliste(ZF, model, sheet, art, monat){

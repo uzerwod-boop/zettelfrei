@@ -13,6 +13,8 @@
  *   ZF_MODEL           Modell, Standard claude-sonnet-5-5 bzw. anthropic/claude-sonnet-5.5 bei OpenRouter
  *   PORT               Standard 8787
  *   HOST               Standard 127.0.0.1 (nur dieser Rechner). 0.0.0.0 öffnet ihn im Netzwerk.
+ *   ZF_ALLOWED_HOSTS   weitere Hostnamen, unter denen der Server erreichbar sein darf (Komma-getrennt),
+ *                      z. B. "buero-pc,192.168.1.20". Schützt vor DNS-Rebinding.
  */
 "use strict";
 const http = require("http");
@@ -29,6 +31,18 @@ const KEY = ANTHROPIC_KEY || OPENROUTER_KEY;
 const MODEL = process.env.ZF_MODEL || (PROVIDER === "openrouter" ? "anthropic/claude-sonnet-5.5" : "claude-sonnet-5-5");
 const UPSTREAM = process.env.ZF_UPSTREAM || (PROVIDER === "openrouter" ? "https://openrouter.ai/api/v1/chat/completions" : "https://api.anthropic.com/v1/messages");
 const MAX_BODY = 25 * 1024 * 1024;
+const ALLOWED_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", HOST, ...(process.env.ZF_ALLOWED_HOSTS || "").split(",").map(h => h.trim().toLowerCase()).filter(Boolean)]);
+
+// Schutz für die KI-Schnittstelle: nur Aufrufe der eigenen Oberfläche, keine fremden Webseiten (CSRF, DNS-Rebinding).
+function hostName(h) { return String(h || "").toLowerCase().replace(/:\d+$/, ""); }
+function allowedHost(req) { return HOST === "0.0.0.0" && !process.env.ZF_ALLOWED_HOSTS ? true : ALLOWED_HOSTS.has(hostName(req.headers.host)); }
+function sameOrigin(req) {
+  const site = req.headers["sec-fetch-site"];
+  if (site && site !== "same-origin" && site !== "none") return false;
+  const origin = req.headers.origin;
+  if (origin) { try { if (new URL(origin).host.toLowerCase() !== String(req.headers.host || "").toLowerCase()) return false; } catch (e) { return false; } }
+  return true;
+}
 
 const TYPES = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
@@ -64,6 +78,8 @@ function toOpenAI(clean) {
 }
 
 async function proxy(req, res) {
+  if (!/^application\/json\b/i.test(req.headers["content-type"] || "")) return send(res, 415, { error: "Nur JSON" });
+  if (!sameOrigin(req)) return send(res, 403, { error: "Fremde Herkunft" });
   if (!KEY) return send(res, 503, { error: "Kein OPENROUTER_API_KEY oder ANTHROPIC_API_KEY auf dem Server gesetzt" });
   let body;
   try { body = JSON.parse(await readBody(req)); } catch (e) { return send(res, e.status || 400, { error: e.status ? "Anfrage zu groß" : "Ungültige Anfrage" }); }
@@ -101,13 +117,14 @@ function serveFile(req, res) {
   if (!file.startsWith(ROOT + path.sep) || /(^|[\\/])(\.|node_modules)/.test(path.relative(ROOT, file))) return send(res, 404, "Nicht gefunden", "text/plain");
   fs.stat(file, (err, st) => {
     if (err || !st.isFile()) return send(res, 404, "Nicht gefunden", "text/plain");
-    res.writeHead(200, { "content-type": TYPES[path.extname(file).toLowerCase()] || "application/octet-stream", "cache-control": "no-cache" });
+    res.writeHead(200, { "content-type": TYPES[path.extname(file).toLowerCase()] || "application/octet-stream", "cache-control": "no-cache", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "x-frame-options": "DENY" });
     fs.createReadStream(file).pipe(res);
   });
 }
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://x").pathname;
+  if (url.startsWith("/api/") && !allowedHost(req)) return send(res, 421, { error: "Unbekannter Hostname" });
   if (url === "/api/health" && req.method === "GET") return send(res, 200, { ok: !!KEY, provider: PROVIDER, model: KEY ? MODEL : null });
   if (url === "/api/messages" && req.method === "POST") return proxy(req, res);
   if (req.method !== "GET" && req.method !== "HEAD") return send(res, 405, { error: "Nicht erlaubt" });

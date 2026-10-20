@@ -15,7 +15,13 @@ function de(n,d){ return Number(n).toLocaleString("de-DE",{minimumFractionDigits
 function sheetObj(){ return model.sheets[cur]; }
 
 /* ---------- Speichern im Browser ---------- */
-function persist(){ try{ localStorage.setItem("zf2",JSON.stringify({model:model,history:history.slice(-15),protokoll:protokoll.slice(-2000),cur:cur})); }catch(e){} }
+var persistWarned=false;
+function persist(){
+  // Bei vollem Browser-Speicher erst weniger Verlauf sichern, dann einmal warnen statt still Daten zu verlieren.
+  var tries=[[15,2000],[3,500],[0,100]];
+  for(var i=0;i<tries.length;i++){ try{ localStorage.setItem("zf2",JSON.stringify({model:model,history:tries[i][0]?history.slice(-tries[i][0]):[],protokoll:protokoll.slice(-tries[i][1]),cur:cur})); return; }catch(e){ if(!/quota/i.test(String(e&&e.name)+String(e&&e.message))) return; } }
+  if(!persistWarned){ persistWarned=true; toast("Browser-Speicher voll: Änderungen bitte mit „Speichern“ als Excel sichern."); }
+}
 function persistOrig(){ try{ if(origBytes&&origBytes.length<3e6){ var s="",ch=0x8000; for(var i=0;i<origBytes.length;i+=ch) s+=String.fromCharCode.apply(null,origBytes.subarray(i,i+ch)); localStorage.setItem("zf2-orig",btoa(s)); } else localStorage.removeItem("zf2-orig"); }catch(e){} }
 function restore(){ try{ var s=JSON.parse(localStorage.getItem("zf2")||"null"); if(s&&s.model&&s.model.sheets){ model=s.model; history=s.history||[]; protokoll=s.protokoll||[]; cur=Math.min(s.cur||0,model.sheets.length-1);
   var o=localStorage.getItem("zf2-orig"); if(o) origBytes=b64(o); return true; } }catch(e){} return false; }
@@ -44,7 +50,18 @@ function commit(label){
 function b64(s){ var bin=atob(s), a=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) a[i]=bin.charCodeAt(i); return a; }
 function openData(data,name){
   if(!window.XLSX){ toast("Der Excel-Leser konnte nicht geladen werden. Bitte Seite neu laden."); return; }
-  try{ var m=ZF.loadWorkbook(XLSX,data,name); }catch(e){ toast("Diese Datei lässt sich nicht lesen."); return; }
+  if(data.length>25*1024*1024){ toast("Die Datei ist größer als 25 MB – bitte nur die benötigten Blätter speichern."); return; }
+  readWorkbook(data,name).then(function(m){ showWorkbook(m,data,name); },function(){ toast("Diese Datei lässt sich nicht lesen."); });
+}
+// .xlsx/.xlsm liest ExcelJS (gepflegt), CSV unser eigener Leser; SheetJS nur noch für alte .xls/.ods.
+function readWorkbook(data,name){
+  try{
+    if(/\.(csv|txt)$/i.test(name)) return Promise.resolve(ZF.loadCSV(XLSX,new TextDecoder("utf-8").decode(data),name));
+    if(/\.(xlsx|xlsm)$/i.test(name) && window.ExcelJS) return ZF.loadWorkbookExcelJS(XLSX,ExcelJS,data,name);
+    return Promise.resolve(ZF.loadWorkbook(XLSX,data,name));
+  }catch(e){ return Promise.reject(e); }
+}
+function showWorkbook(m,data,name){
   if(!m.sheets.length){ toast("Die Datei ist leer."); return; }
   model=m; cur=Math.max(0,m.sheets.findIndex(function(s){ return s.hr>=0; })); fresh={}; hits={}; aiIssues=[];
   history=[{t:Date.now(),label:"Geöffnet: "+name,snap:JSON.stringify(model)}];
@@ -153,7 +170,7 @@ grid.addEventListener("focusout",function(e){
   var sh=sheetObj(), r=+td.dataset.r, k=+td.dataset.k, txt=td.textContent.trim();
   if(td.dataset.cancel){ delete td.dataset.cancel; td.textContent=td.dataset.shown; return; }
   if(txt===td.dataset.raw){ td.textContent=td.dataset.shown; return; }
-  ZF.setCell(sh,r,k,txt);
+  ZF.setCell(sh,r,k,txt,{formula:true});
   if(sh.timeCol&&sh.timeCol[k]){ var tc=ZF.cellAt(sh,r,sh.c0+k); if(tc&&typeof tc.v==="number") tc.tm=1; }
   var nx=e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest("td[contenteditable]");
   var nr=nx?nx.dataset.r:null, nk=nx?nx.dataset.k:null;
@@ -385,7 +402,7 @@ function handleFile(f){
   if(!/pdf$/i.test(f.type)&&!/\.pdf$/i.test(f.name)){ toast("Bitte ein PDF oder Foto wählen."); return; }
   if(!window.pdfjsLib){ $("pdfOut").innerHTML='<p class="hint">Der PDF-Leser konnte nicht geladen werden.</p>'; return; }
   busy(st,"PDF wird geöffnet…");
-  f.arrayBuffer().then(function(buf){ return pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise; }).then(async function(pdf){
+  f.arrayBuffer().then(function(buf){ return pdfjsLib.getDocument({data:new Uint8Array(buf),isEvalSupported:false}).promise; }).then(async function(pdf){
     var att=null; try{ att=await ZFE.fromPdf(pdf); }catch(e){}
     if(att){ readEInvoiceText(att.xml,f.name); return; }
     var text="";

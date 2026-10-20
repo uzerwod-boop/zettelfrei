@@ -80,6 +80,21 @@ HOST=0.0.0.0                           # im Firmennetz erreichbar machen (Standa
 - An die KI geht nur, was Sie ausführen: der Tabelleninhalt als Text und ggf. das Dokument.
 - Wer Kundendaten verarbeitet, sollte mit dem KI-Anbieter einen AV-Vertrag haben oder ein lokales Modell nutzen. Bei OpenRouter hängt der Datenweg vom gewählten Modellanbieter ab.
 
+### Sicherheit (Version 0.2.1)
+
+Version 0.2.1 ist eine Prüf- und Härtungsversion. Gefunden und behoben:
+
+- **Formeln führen keinen Code aus.** Der Formelrechner lässt nur noch Zahlen, Rechenzeichen und die bekannten Funktionen zu.
+- **Keine Formel-Einschleusung.** Werte, die von der KI oder aus einer E-Rechnung kommen, werden immer als Text gespeichert – auch wenn sie mit `=` beginnen (Schutz vor DDE-Angriffen in Excel). Formeln entstehen nur, wenn ein Mensch sie in eine Zelle tippt. Der CSV-Export entschärft Zellen, die mit `=`, `+`, `-` oder `@` beginnen.
+- **Excel-Dateien liest jetzt ExcelJS** (`.xlsx`, `.xlsm`), CSV-Dateien ein eigener Leser mit deutschem Format (Semikolon, `1.234,50`, `12.10.2026`). Die alte SheetJS-Version 0.18.5 aus npm hat bekannte Lücken (CVE-2023-30533, CVE-2024-22363) und wird nur noch für alte `.xls`/`.ods`-Dateien genutzt – solche Dateien nur aus vertrauenswürdiger Quelle öffnen.
+- **PDF.js** läuft mit `isEvalSupported: false` (Schutz vor CVE-2024-4367).
+- **jsPDF** auf 4.2.1 aktualisiert (behebt u. a. CVE-2025-29907).
+- **Server:** Die KI-Schnittstelle nimmt nur JSON von der eigenen Oberfläche an. Fremde Webseiten (CSRF) und unbekannte Hostnamen (DNS-Rebinding) werden abgelehnt. Wer den Server im Netzwerk betreibt, trägt die Namen in `ZF_ALLOWED_HOSTS` ein.
+- **Gutschriften** aus E-Rechnungen werden mit negativen Beträgen gebucht und senken den Lagerbestand, statt ihn zu erhöhen.
+- **Voller Browser-Speicher** wird gemeldet, statt Änderungen still zu verlieren.
+
+API-Schlüssel, die im Browser eingetragen werden, liegen im `localStorage` dieses Browsers. Auf gemeinsam genutzten Rechnern besser den Server mit Schlüssel nutzen (`npm start`).
+
 ## Wie es funktioniert
 
 ```
@@ -106,7 +121,7 @@ Die Engine (`src/engine.js`) erkennt selbst:
 
 ```
 index.html            Oberfläche
-src/engine.js         Excel-Engine: lesen, rechnen, ändern, schreiben (ohne Abhängigkeiten außer SheetJS)
+src/engine.js         Excel-Engine: lesen, rechnen, ändern, schreiben (liest mit ExcelJS, CSV selbst, alte .xls mit SheetJS)
 src/ai.js             KI-Anbindung: OpenRouter, eigener Server, Claude API, lokales Modell
 src/app.js            Bedienung, Vorschau, Prüfen, Verlauf, Änderungsprotokoll
 src/einvoice.js       E-Rechnung: XRechnung (UBL) und ZUGFeRD (CII) lesen, XRechnung 3.0 schreiben
@@ -124,7 +139,7 @@ tests/                Tests für Engine, Server und Browser
 ## Tests
 
 ```bash
-npm test                          # Engine + Server, ohne Abhängigkeiten
+npm test                          # Engine, E-Rechnung, Sicherheit, Server – ohne Abhängigkeiten
 pip install playwright && python -m playwright install chromium
 python tests/browser_test.py      # Ende-zu-Ende im Browser: ohne KI, OpenRouter, Claude API, lokales Modell, Server
 python tests/browser_v2_test.py   # Version 0.2: E-Rechnung, ArbZG, Mahnung, Abnahme, Export, Formatierung

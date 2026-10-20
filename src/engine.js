@@ -115,6 +115,76 @@ function parseSheet(XLSX, ws, name){
   return {name:name, hr:hr, top:grid.slice(0,hr), headers:headers, rows:rows, foot:foot, c0:c0, ncol:ncol, widths:widths, merges:merges.filter(function(m){ return m[2]<hr; }), colFmt:colFmt, dateCol:dateCol, timeCol:timeCol, orig:{data:oldRows, foot:footOld}};
 }
 
+/* ---------- Lesen mit ExcelJS (sicherer als SheetJS 0.18.5 für fremde Dateien) ---------- */
+function excelSerial(d){ return (d.getTime()-Date.UTC(1899,11,30))/86400000; }
+function fromExcelJSCell(cell){
+  // liefert eine Zelle im SheetJS-Format {t,v,z,f}
+  var v=cell.value, z=cell.numFmt&&cell.numFmt!=="General"?cell.numFmt:undefined, o={};
+  if(v==null) return null;
+  if(cell.type===1) return null; // verbundene Zelle (Teil einer Zusammenführung)
+  if(typeof v==="object" && !(v instanceof Date)){
+    if(v.formula!=null || v.sharedFormula!=null){ o.f=String(cell.formula||v.formula||""); v=v.result; if(v&&typeof v==="object"&&v.error) v=String(v.error); }
+    else if(v.richText) v=v.richText.map(function(t){ return t.text; }).join("");
+    else if(v.text!=null) v=typeof v.text==="string"?v.text:(v.text.richText||[]).map(function(t){ return t.text; }).join("");
+    else if(v.error) { o.t="e"; o.w=String(v.error); o.v=0; return o; }
+    else v=null;
+  }
+  if(v instanceof Date){ o.t="n"; o.v=excelSerial(v); if(!z) z="dd.mm.yyyy"; }
+  else if(typeof v==="number"){ o.t="n"; o.v=v; }
+  else if(typeof v==="boolean"){ o.t="b"; o.v=v; }
+  else if(v==null){ if(!o.f) return null; o.t="s"; o.v=""; }
+  else { o.t="s"; o.v=String(v); }
+  if(z) o.z=z;
+  return o;
+}
+function loadWorkbookExcelJS(XLSX, ExcelJS, data, name){
+  var wb=new ExcelJS.Workbook();
+  return wb.xlsx.load(data).then(function(){
+    var sheets=[];
+    wb.worksheets.forEach(function(ws){
+      if(ws.state==="veryHidden") return;
+      var sj={}, maxR=0, maxC=0;
+      ws.eachRow({includeEmpty:false},function(row,r){ row.eachCell({includeEmpty:false},function(cell,c){
+        var o=fromExcelJSCell(cell); if(!o) return; sj[XLSX.utils.encode_cell({r:r-1,c:c-1})]=o; maxR=Math.max(maxR,r); maxC=Math.max(maxC,c); }); });
+      if(maxR) sj["!ref"]=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:maxR-1,c:maxC-1}});
+      var cols=[]; for(var c=1;c<=maxC;c++){ var w=ws.getColumn(c).width; cols.push(w?{wch:w}:{}); } sj["!cols"]=cols;
+      sj["!merges"]=((ws.model&&ws.model.merges)||[]).map(function(m){ return XLSX.utils.decode_range(m); });
+      sheets.push(parseSheet(XLSX, sj, ws.name));
+    });
+    return {name:name||"Tabelle.xlsx", sheets:sheets};
+  });
+}
+
+/* ---------- CSV (auch deutsches Format mit Semikolon) ---------- */
+function parseCSV(text){
+  text=String(text).replace(/^\uFEFF/,"");
+  var first=text.split(/\r?\n/)[0]||"", count=function(ch){ return first.split(ch).length-1; };
+  var d=[";",",","\t"].sort(function(a,b){ return count(b)-count(a); })[0];
+  var rows=[], row=[], cell="", q=false;
+  for(var i=0;i<text.length;i++){
+    var ch=text[i];
+    if(q){ if(ch==='"'){ if(text[i+1]==='"'){ cell+='"'; i++; } else q=false; } else cell+=ch; }
+    else if(ch==='"') q=true;
+    else if(ch===d){ row.push(cell); cell=""; }
+    else if(ch==="\n"||ch==="\r"){ if(ch==="\r"&&text[i+1]==="\n") i++; row.push(cell); rows.push(row); row=[]; cell=""; }
+    else cell+=ch;
+  }
+  if(cell!==""||row.length){ row.push(cell); rows.push(row); }
+  return rows.filter(function(r){ return r.some(function(c){ return String(c).trim()!==""; }); });
+}
+function loadCSV(XLSX, text, name){
+  var rows=parseCSV(text), sj={}, maxC=0;
+  rows.forEach(function(r,ri){ r.forEach(function(raw,ci){
+    var t=String(raw).trim(); if(t==="") return; var o;
+    var dm=t.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/), n=/^-?[\d.]*\d(,\d+)?\s*(€|%)?$/.test(t)||/^-?\d+(\.\d+)?$/.test(t)?parseNum(t.replace(/%$/,"")):null;
+    if(dm) o={t:"n",v:dateToSerial(normDate(t)),z:"dd.mm.yyyy"};
+    else if(n!=null) o={t:"n",v:/%$/.test(t)?n/100:n};
+    else o={t:"s",v:t};
+    sj[XLSX.utils.encode_cell({r:ri,c:ci})]=o; maxC=Math.max(maxC,ci+1); }); });
+  if(rows.length) sj["!ref"]=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:rows.length-1,c:Math.max(0,maxC-1)}});
+  return {name:name, sheets:[parseSheet(XLSX, sj, String(name).replace(/\.[^.]+$/,"").slice(0,31)||"Tabelle")]};
+}
+
 /* ---------- Adressen ---------- */
 function dataRowNo(sh,i){ return sh.hr+2+i; }
 function footRowNo(sh,j){ return sh.hr+2+sh.rows.length+j; }
@@ -170,8 +240,10 @@ Calc.prototype.formula=function(sh,f){
     var expr=out.replace(/;/g,",").replace(/\^/g,"**").replace(/(\d)%/g,"($1/100)")
       .replace(/\b(SUMME|SUM)\(/gi,"_s(").replace(/\b(MITTELWERT|AVERAGE)\(/gi,"_av(").replace(/\bMIN\(/gi,"_mi(").replace(/\bMAX\(/gi,"_ma(")
       .replace(/\b(RUNDEN|ROUND)\(/gi,"_r(").replace(/\bABS\(/gi,"_ab(").replace(/\b(ANZAHL|COUNT)\(/gi,"_n(");
-    var check=expr.replace(/_(s|av|mi|ma|r|ab|n)\(/g,"(");
-    if(!/^[\d\s.,+\-*/()\[\]eE]*$/.test(check)) return undefined;
+    // Sicherheit: nur Zahlen, Rechenzeichen, Klammern, Kommas und Zahlenlisten [1,2,3] sind erlaubt.
+    var NUM="\\s*-?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?\\s*";
+    var check=expr.replace(/_(s|av|mi|ma|r|ab|n)\(/g,"(").replace(new RegExp("\\[(?:"+NUM+"(?:,"+NUM+")*)?\\]","g"),"0");
+    if(!/^[\d\s.,+\-*/()eE]*$/.test(check)) return undefined;
     var flat=function(a){ var o=[]; a.forEach(function(x){ if(Array.isArray(x)) o.push.apply(o,x); else o.push(x); }); return o; };
     var fn=new Function("_s","_av","_mi","_ma","_r","_ab","_n","return ("+expr+");");
     var res=fn(
@@ -258,11 +330,12 @@ function coerce(sh,k,val){
   if(typeof val==="number") return val;
   return String(val);
 }
-function setCell(sh, excelRow, k, raw){
+function setCell(sh, excelRow, k, raw, opts){
   var i=excelRow-sh.hr-2, row;
   if(i>=0&&i<sh.rows.length) row=sh.rows[i]; else { var j=i-sh.rows.length; row=sh.foot[j]; }
   if(!row) return;
-  if(typeof raw==="string" && raw.trim().charAt(0)==="=") row[k]={f:raw.trim().slice(1).toUpperCase().replace(/"[^"]*"/g,function(s){ return s; })};
+  // Formeln nur, wenn ein Mensch sie in die Zelle tippt; Werte von KI oder E-Rechnung bleiben immer Text.
+  if(opts&&opts.formula && typeof raw==="string" && raw.trim().charAt(0)==="=") row[k]={f:splitStrings(raw.trim().slice(1)).map(function(p){ return p.str?p.t:p.t.toUpperCase(); }).join("")};
   else { var v=coerce(sh,k,raw); row[k]= v==null?null:{v:v}; }
 }
 
@@ -461,7 +534,7 @@ function buildWorkbook(XLSX, model){
 
 return {colLetter:colLetter,colIndex:colIndex,parseNum:parseNum,isDateStr:isDateStr,normDate:normDate,clone:clone,blank:blank,
   isTimeFmt:isTimeFmt,fmtTime:fmtTime,parseTime:parseTime,dateToSerial:dateToSerial,serialToDate:serialToDate,todaySerial:todaySerial,addColumn:addColumn,col:col,
-  loadWorkbook:loadWorkbook,parseSheet:parseSheet,Calc:Calc,display:display,dataRowNo:dataRowNo,footRowNo:footRowNo,cellAt:cellAt,
+  loadWorkbook:loadWorkbook,loadWorkbookExcelJS:loadWorkbookExcelJS,loadCSV:loadCSV,parseCSV:parseCSV,parseSheet:parseSheet,Calc:Calc,display:display,dataRowNo:dataRowNo,footRowNo:footRowNo,cellAt:cellAt,
   appendRow:appendRow,deleteRow:deleteRow,setCell:setCell,findCol:findCol,computedCols:computedCols,numericCol:numericCol,
   query:query,checks:checks,describe:describe,planOps:planOps,applyPlan:applyPlan,buildWorkbook:buildWorkbook,transformRefs:transformRefs};
 })();

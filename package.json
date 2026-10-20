@@ -1,6 +1,6 @@
 {
   "name": "zettelfrei",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Excel-Dateien eines Handwerksbetriebs mit ganzen Sätzen bedienen: eintragen, ändern, fragen, PDFs übernehmen, prüfen.",
   "license": "MIT",
   "author": "Bohdan Sychevskyi",
