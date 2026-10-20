@@ -61,6 +61,12 @@ Zettelfrei öffnet Stundenzettel, Lagerliste oder Auftragsliste und lässt sie m
   </picture>
 </p>
 
+### Echte Excel-Dateien (seit 0.2.2)
+
+- 🧩 **Wie im Büro gewachsen:** Überschriften über zwei Zeilen, Wochen-Zwischensummen, Nebentabellen, versteckte Blätter – Zettelfrei erkennt die Struktur und lässt sie, wie sie ist. Zeilennummern wie in Excel.
+- 🧮 **Formeln wie in Excel:** WENN, WENNFEHLER, SVERWEIS, SUMMEWENN, ZÄHLENWENN, TEILERGEBNIS – live gerechnet, mit eigenem Interpreter ohne `eval`. Bezüge zwischen Blättern ziehen mit.
+- 🔎 **Klügere Prüfungen:** Steuersatz 19 statt 19 %, Zahlen als Text, Nachschlagen ohne Treffer, Pausen wie „30 min“.
+
 ### Bürokratie, die sich selbst erledigt (seit 0.2)
 
 - 📥 **E-Rechnung empfangen**: XRechnung (XML) und ZUGFeRD/Factur-X (PDF mit eingebetteter XML) werden **exakt und ohne KI** gelesen. Lagerbestand steigt automatisch (Zuordnung über Artikelnummer), Eingangsrechnungen landen als Zeile in der Liste, Gutschriften mit Minus.
@@ -94,7 +100,7 @@ cd zettelfrei
 npm start
 ```
 
-Dann **http://localhost:8787** öffnen. Sechs Beispieldateien und zwei Beispiel-E-Rechnungen sind eingebaut – darunter „Stresstest Chaos Tabelle“, eine absichtlich unordentliche Datei mit zweizeiligen Überschriften, Zwischensummen, Daten in sieben Formaten und Zahlen als Text, wie sie in echten Betrieben vorkommt (oben „Beispiel öffnen…“), oder eine eigene Excel-Datei mit „Excel öffnen“ laden bzw. hineinziehen.
+Dann **http://localhost:8787** öffnen. Sieben Beispieldateien und zwei Beispiel-E-Rechnungen sind eingebaut – darunter „Stresstest Chaos Tabelle“, eine absichtlich unordentliche Datei mit zweizeiligen Überschriften, Zwischensummen, Daten in sieben Formaten und Zahlen als Text, wie sie in echten Betrieben vorkommt (oben „Beispiel öffnen…“), oder eine eigene Excel-Datei mit „Excel öffnen“ laden bzw. hineinziehen.
 
 Ohne KI funktioniert bereits: Datei öffnen, Zellen bearbeiten, Formeln rechnen, Zeilen hinzufügen und löschen, Prüfen, Verlauf, Speichern – und alles aus Version 0.2: E-Rechnungen lesen und schreiben, Arbeitszeit, Mahnwesen, Abnahme, Export, Wochenbericht. Die KI braucht es nur für freie Sätze, PDFs ohne E-Rechnung und Fotos.
 
@@ -213,6 +219,7 @@ Was als Nächstes kommt – Reihenfolge nach Rückmeldungen aus den Betrieben. [
 - [x] **0.1** Excel mit ganzen Sätzen bedienen, PDFs und Fotos einlesen
 - [x] **0.2** E-Rechnung lesen und schreiben, Arbeitszeit (ArbZG), Mahnwesen, Abnahme, Export
 - [x] **0.2.1** Sicherheitsprüfung, neuer Auftritt
+- [x] **0.2.2** Echte Excel-Dateien: zweizeilige Überschriften, Zwischensummen, SVERWEIS & Co.
 - [ ] **Installierbar** als App auf dem Rechner und Handy (PWA), danach Installer für Windows und Mac
 - [ ] **Google Sheets** öffnen und zurückspeichern (nur die ausgewählte Tabelle, kein Zugriff auf das ganze Drive)
 - [ ] **ZUGFeRD-PDF erzeugen** (PDF/A-3 mit eingebetteter XML) statt nur XRechnung
@@ -224,7 +231,8 @@ Was als Nächstes kommt – Reihenfolge nach Rückmeldungen aus den Betrieben. [
 - Formatierung bleibt erhalten, wenn eine `.xlsx`-Datei geöffnet wurde. Bei `.xls`/`.csv` werden nur Werte, Formeln und Zahlenformate gespeichert. Bedingte Formatierungen und verbundene Zellen innerhalb der Tabelle werden nicht angepasst.
 - E-Rechnungen werden als XRechnung (XML) erzeugt. Ein ZUGFeRD-PDF (PDF/A-3 mit eingebetteter XML) erzeugt der Prototyp noch nicht; das PDF dient nur der Ansicht.
 - Mehrere Nutzer gleichzeitig und Synchronisation mit OneDrive oder Google Drive sind noch nicht eingebaut.
-- Formeln mit `WENN`, `SVERWEIS` u. Ä. werden nicht live neu berechnet, es wird der zuletzt gespeicherte Wert angezeigt.
+- Seltene Excel-Funktionen (z. B. `XVERWEIS`, `SUMMEWENNS`, Matrixformeln) werden nicht live gerechnet; dann wird der zuletzt in Excel gespeicherte Wert angezeigt.
+- Text-Zahlen wie „4.250,00“ werden in Formeln nach deutscher Schreibweise gelesen (wie deutsches Excel).
 - Beim Löschen von Zeilen werden Bezüge aus *anderen* Blättern nicht verschoben.
 - Sehr große Dateien (viele tausend Zeilen) passen nicht vollständig in eine KI-Anfrage.
 
