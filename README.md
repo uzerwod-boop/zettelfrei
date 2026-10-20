@@ -180,4 +180,4 @@ Zettelfrei lets small trade businesses work with their existing Excel files in p
 
 ## Lizenz
 
-MIT © 2026 Bohdan Sychevskyi. Entwickelt gemeinsam mit Claude (Anthropic). Mitgelieferte Bibliotheken und Schriften stehen unter ihren eigenen Lizenzen (siehe `vendor/` und `fonts/`).
+© 2026 Bohdan Sychevskyi. Nach Wahl unter der [MIT-Lizenz](LICENSE-MIT) oder der [Apache-Lizenz 2.0](LICENSE-APACHE) nutzbar (MIT OR Apache-2.0). Beiträge werden, sofern nicht anders angegeben, unter beiden Lizenzen eingebracht. Entwickelt gemeinsam mit Claude (Anthropic). Mitgelieferte Bibliotheken und Schriften stehen unter ihren eigenen Lizenzen (siehe `vendor/` und `fonts/`).
