@@ -47,30 +47,26 @@
 
 Zettelfrei öffnet Stundenzettel, Lagerliste oder Auftragsliste und lässt sie mit ganzen Sätzen bedienen. Jede Änderung der KI wird vorher als „alt → neu“ angezeigt und erst nach Klick übernommen.
 
-| | |
-|---|---|
-| ✍️ **Eintragen** | „Mehmet heute 7 Stunden Bad Schneider, Wand gefliest“ wird eine neue Zeile. |
-| 🔁 **Ändern** | „Becker hat heute bezahlt“ setzt Status und Datum. |
-| 🧮 **Fragen** | „Wie viele Stunden hatte Kevin im Oktober?“ – die Summe rechnet die Tabelle, nicht die KI. |
-| 📄 **PDF & Foto** | Lieferantenrechnung hineinziehen, der Lagerbestand wird erhöht. Auch gescannte PDFs. |
-| 🔍 **Prüfen** | leere Pflichtfelder, doppelte Nummern, Text in Zahlenspalten, Formelfehler; fachliche Prüfung per KI. |
-| 🕓 **Verlauf** | jeder Stand lässt sich zurückholen. |
-| 💾 **Speichern** | zurück als `.xlsx` mit Formeln, Farben, Schriften und Zahlenformaten der Originaldatei. |
+- ✍️ **Eintragen**: „Mehmet heute 7 Stunden Bad Schneider, Wand gefliest“ wird eine neue Zeile.
+- 🔁 **Ändern**: „Becker hat heute bezahlt“ setzt Status und Datum.
+- 🧮 **Fragen**: „Wie viele Stunden hatte Kevin im Oktober?“ – die Summe rechnet die Tabelle, nicht die KI.
+- 📄 **PDF & Foto**: Lieferantenrechnung hineinziehen, der Lagerbestand wird erhöht. Auch gescannte PDFs.
+- 🔍 **Prüfen**: leere Pflichtfelder, doppelte Nummern, Text in Zahlenspalten, Formelfehler; fachliche Prüfung per KI.
+- 🕓 **Verlauf**: jeder Stand lässt sich zurückholen.
+- 💾 **Speichern**: zurück als `.xlsx` mit Formeln, Farben, Schriften und Zahlenformaten der Originaldatei.
 
 ### Bürokratie, die sich selbst erledigt (seit 0.2)
 
-| | |
-|---|---|
-| 📥 **E-Rechnung empfangen** | XRechnung (XML) und ZUGFeRD/Factur-X (PDF mit eingebetteter XML) werden **exakt und ohne KI** gelesen. Lagerbestand steigt automatisch (Zuordnung über Artikelnummer), Eingangsrechnungen landen als Zeile in der Liste, Gutschriften mit Minus. |
-| 📤 **E-Rechnung schreiben** | aus einer Auftragszeile eine **XRechnung 3.0** plus PDF zur Ansicht. Geprüft gegen die offiziellen Regeln EN 16931 und XRechnung (siehe unten). |
-| ⏱️ **Arbeitszeit nach ArbZG** | Beginn, Ende und Pause als Uhrzeit; Hinweise bei über 10 Stunden am Tag (§ 3), zu kurzer Pause (§ 4) und weniger als 11 Stunden Ruhezeit (§ 5). |
-| 📜 **Änderungsprotokoll** | wer hat wann welche Zelle geändert. Wird nie gelöscht und kann als eigenes Blatt in der Excel-Datei mitgespeichert werden. |
-| 💶 **Mahnwesen** | überfällige Rechnungen auf einen Blick; Zahlungserinnerung, 1. und 2. Mahnung als PDF-Brief, Mahnstufe wird eingetragen. |
-| ✅ **Abnahmeprotokoll** | auf dem Handy beim Kunden, mit Mängeln, Fotos und zwei Unterschriften; ergibt ein PDF und das Abnahmedatum in der Tabelle. |
-| 🧾 **Für den Steuerberater** | Belegliste als CSV (Excel-tauglich) je Monat. Kein DATEV-Format. |
-| ⚠️ **Prüfungen für Geld** | MwSt passt nicht zu 19 % oder 7 %, Rechnungen überfällig; die KI-Prüfung weist zusätzlich auf mögliche Fälle von § 13b UStG hin. |
-| 📊 **Wochenbericht** | Stunden je Projekt, Nachbestellungen, offene Rechnungen, Hinweise zur Arbeitszeit – zum Kopieren oder Teilen per WhatsApp. |
-| 🎙️ **Handy und Sprache** | große Bedienelemente, Eingabe per Mikrofon (Spracherkennung des Browsers). |
+- 📥 **E-Rechnung empfangen**: XRechnung (XML) und ZUGFeRD/Factur-X (PDF mit eingebetteter XML) werden **exakt und ohne KI** gelesen. Lagerbestand steigt automatisch (Zuordnung über Artikelnummer), Eingangsrechnungen landen als Zeile in der Liste, Gutschriften mit Minus.
+- 📤 **E-Rechnung schreiben**: aus einer Auftragszeile eine **XRechnung 3.0** plus PDF zur Ansicht. Geprüft gegen die offiziellen Regeln EN 16931 und XRechnung (siehe unten).
+- ⏱️ **Arbeitszeit nach ArbZG**: Beginn, Ende und Pause als Uhrzeit; Hinweise bei über 10 Stunden am Tag (§ 3), zu kurzer Pause (§ 4) und weniger als 11 Stunden Ruhezeit (§ 5).
+- 📜 **Änderungsprotokoll**: wer hat wann welche Zelle geändert. Wird nie gelöscht und kann als eigenes Blatt in der Excel-Datei mitgespeichert werden.
+- 💶 **Mahnwesen**: überfällige Rechnungen auf einen Blick; Zahlungserinnerung, 1. und 2. Mahnung als PDF-Brief, Mahnstufe wird eingetragen.
+- ✅ **Abnahmeprotokoll**: auf dem Handy beim Kunden, mit Mängeln, Fotos und zwei Unterschriften; ergibt ein PDF und das Abnahmedatum in der Tabelle.
+- 🧾 **Für den Steuerberater**: Belegliste als CSV (Excel-tauglich) je Monat. Kein DATEV-Format.
+- ⚠️ **Prüfungen für Geld**: MwSt passt nicht zu 19 % oder 7 %, Rechnungen überfällig; die KI-Prüfung weist zusätzlich auf mögliche Fälle von § 13b UStG hin.
+- 📊 **Wochenbericht**: Stunden je Projekt, Nachbestellungen, offene Rechnungen, Hinweise zur Arbeitszeit – zum Kopieren oder Teilen per WhatsApp.
+- 🎙️ **Handy und Sprache**: große Bedienelemente, Eingabe per Mikrofon (Spracherkennung des Browsers).
 
 <p align="center">
   <img src="docs/screenshot-dokumente.png" alt="Bereich Dokumente: E-Rechnung schreiben, Mahnwesen, Abnahmeprotokoll" width="900">
