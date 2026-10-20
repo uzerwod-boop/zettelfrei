@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 🌐 Online ausprobieren
+    url: https://uzerwod-boop.github.io/zettelfrei/
+    about: Zettelfrei direkt im Browser testen, ohne Installation.
+  - name: 🔒 Sicherheitslücke melden
+    url: https://github.com/uzerwod-boop/zettelfrei/security/advisories/new
+    about: Bitte nicht öffentlich als Issue, sondern vertraulich melden.

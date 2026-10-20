@@ -29,15 +29,14 @@
   <a href="#schnellstart">Schnellstart</a> ·
   <a href="#ki-einrichten">KI einrichten</a> ·
   <a href="#sicherheit-version-021">Sicherheit</a> ·
-  <a href="https://github.com/uzerwod-boop/zettelfrei/releases">Versionen</a>
+  <a href="#roadmap">Roadmap</a> ·
+  <a href="https://github.com/uzerwod-boop/zettelfrei/releases">Versionen</a> ·
+  <a href="README.en.md">English</a>
 </p>
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dunkel.png">
-    <img src="docs/screenshot-hell.png" alt="Zettelfrei: Lagerliste, daneben eine ZUGFeRD-Rechnung, die ohne KI gelesen wurde" width="900">
-  </picture>
-  <br><sub>Lieferantenrechnung (ZUGFeRD) hineinziehen – der Lagerbestand steigt, nach einem Klick auf „Übernehmen“.</sub>
+  <img src="docs/demo.gif" alt="Demo: ZUGFeRD-Rechnung einlesen, der Lagerbestand steigt nach einem Klick" width="900">
+  <br><sub>Lieferantenrechnung (ZUGFeRD) einlesen – exakt, ohne KI. Nach „Übernehmen“ steigt der Lagerbestand.</sub>
 </p>
 
 > [!NOTE]
@@ -54,6 +53,13 @@ Zettelfrei öffnet Stundenzettel, Lagerliste oder Auftragsliste und lässt sie m
 - 🔍 **Prüfen**: leere Pflichtfelder, doppelte Nummern, Text in Zahlenspalten, Formelfehler; fachliche Prüfung per KI.
 - 🕓 **Verlauf**: jeder Stand lässt sich zurückholen.
 - 💾 **Speichern**: zurück als `.xlsx` mit Formeln, Farben, Schriften und Zahlenformaten der Originaldatei.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dunkel.png">
+    <img src="docs/screenshot-hell.png" alt="Zettelfrei: Lagerliste, daneben eine ZUGFeRD-Rechnung, die ohne KI gelesen wurde" width="900">
+  </picture>
+</p>
 
 ### Bürokratie, die sich selbst erledigt (seit 0.2)
 
@@ -200,6 +206,19 @@ Beim Entwickeln wurden Rechnungen mit USt-IdNr., mit Steuernummer, mit Handelsre
 
 Die Browser-Tests bauen die KI-Antworten nach; ein echter Schlüssel ist nicht nötig.
 
+## Roadmap
+
+Was als Nächstes kommt – Reihenfolge nach Rückmeldungen aus den Betrieben. [Ideen sind willkommen.](https://github.com/uzerwod-boop/zettelfrei/issues/new?template=idee.yml)
+
+- [x] **0.1** Excel mit ganzen Sätzen bedienen, PDFs und Fotos einlesen
+- [x] **0.2** E-Rechnung lesen und schreiben, Arbeitszeit (ArbZG), Mahnwesen, Abnahme, Export
+- [x] **0.2.1** Sicherheitsprüfung, neuer Auftritt
+- [ ] **Installierbar** als App auf dem Rechner und Handy (PWA), danach Installer für Windows und Mac
+- [ ] **Google Sheets** öffnen und zurückspeichern (nur die ausgewählte Tabelle, kein Zugriff auf das ganze Drive)
+- [ ] **ZUGFeRD-PDF erzeugen** (PDF/A-3 mit eingebetteter XML) statt nur XRechnung
+- [ ] **DATEV-Export** für den Steuerberater
+- [ ] **Mehrere Nutzer** im Betrieb, z. B. über OneDrive oder einen gemeinsamen Ordner
+
 ## Grenzen des Prototyps
 
 - Formatierung bleibt erhalten, wenn eine `.xlsx`-Datei geöffnet wurde. Bei `.xls`/`.csv` werden nur Werte, Formeln und Zahlenformate gespeichert. Bedingte Formatierungen und verbundene Zellen innerhalb der Tabelle werden nicht angepasst.
@@ -215,7 +234,7 @@ Das Repository enthält einen Workflow, der die Seite auf GitHub Pages veröffen
 
 ## English summary
 
-Zettelfrei lets small trade businesses work with their existing Excel files in plain German sentences: add rows, update them, ask questions (totals are computed exactly by the sheet, not the model), import supplier invoices from PDF or photos, check for errors, and save back to `.xlsx` with formulas and formatting intact. Version 0.2 adds German paperwork: reading XRechnung/ZUGFeRD e-invoices without AI, writing validated XRechnung 3.0, working-time checks (ArbZG), an append-only change log, payment reminders, signed acceptance reports, a CSV export for the tax advisor and a weekly report. AI is optional and pluggable: OpenRouter (any model, one key), a tiny Node server holding the key, the Claude API from the browser, or a local OpenAI-compatible model. Run with `npm start`.
+Zettelfrei lets small trade businesses in Germany work with their existing Excel files in plain sentences, and handles German paperwork such as e-invoices (XRechnung/ZUGFeRD), working-time rules and payment reminders. **[Read the English README →](README.en.md)**
 
 ## Lizenz
 

@@ -1,0 +1,36 @@
+name: 💡 Idee vorschlagen
+description: Was würde Ihnen im Betrieb Zeit sparen?
+title: "[Idee] "
+labels: ["idee"]
+body:
+  - type: markdown
+    attributes:
+      value: Ideen aus der Praxis sind das Wertvollste für dieses Projekt. Je konkreter, desto besser.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Welche Aufgabe kostet Sie heute Zeit?
+      placeholder: "Jeden Freitag tippe ich die Stundenzettel der Kollegen ab …"
+    validations:
+      required: true
+  - type: textarea
+    id: wunsch
+    attributes:
+      label: Wie sollte Zettelfrei dabei helfen?
+    validations:
+      required: true
+  - type: dropdown
+    id: branche
+    attributes:
+      label: Ihre Branche
+      options:
+        - Fliesen / Bau / Ausbau
+        - Elektro / SHK
+        - Maler / Tischler
+        - Dienstleistung / Büro
+        - Anderes
+  - type: input
+    id: groesse
+    attributes:
+      label: Größe des Betriebs (optional)
+      placeholder: "z. B. 6 Mitarbeitende"
