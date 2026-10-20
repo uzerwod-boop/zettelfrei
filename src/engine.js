@@ -141,6 +141,8 @@ function parseSheet(XLSX, ws, name){
   var rows=parts.slice(0,lastData+1), kind=kinds.slice(0,lastData+1), foot=parts.slice(lastData+1);
   while(foot.length && foot[foot.length-1].every(blank)) foot.pop();
   var oldRows=rows.map(function(_,i){ return hr+2+i; }), footOld=foot.map(function(_,j){ return hr+2+rows.length+j; });
+  // Zellen links/rechts der Tabelle (z. B. Stundensätze) bleiben für Formeln erreichbar
+  var extra={}; for(r=hr;r<grid.length;r++){ var gr=grid[r]||[]; for(c=0;c<gr.length;c++){ if((c<c0||c>cEnd) && !blank(gr[c])) extra[(r+1)+":"+c]=gr[c]; } }
   // Spaltentypen (nur echte Datenzeilen)
   var colFmt=[], dateCol=[], timeCol=[];
   for(k=0;k<ncol;k++){
@@ -148,7 +150,7 @@ function parseSheet(XLSX, ws, name){
     rows.forEach(function(rw,i){ if(kind[i]) return; var c=rw[k]; if(c&&!blank(c)&&!c.f){ n2++; if(c.d||(typeof c.v==="string"&&anyDateSerial(c.v)!=null)) d++; if(c.tm||looksTime(c.v)) t++; if(!z&&c.z) z=c.z; } else if(c&&c.f&&!z&&c.z) z=c.z; });
     colFmt.push(z); dateCol.push(n2>0 && d/n2>=0.6); timeCol.push(n2>0 && t/n2>=0.6);
   }
-  return {name:name, hr:hr, top:grid.slice(0,hr), headers:headers, rows:rows, kind:kind, foot:foot, c0:c0, ncol:ncol, widths:widths, merges:merges.filter(function(m){ return m[2]<hr; }), colFmt:colFmt, dateCol:dateCol, timeCol:timeCol, twoRowHeader:two||undefined, orig:{data:oldRows, foot:footOld}};
+  return {name:name, hr:hr, top:grid.slice(0,hr), headers:headers, rows:rows, kind:kind, foot:foot, c0:c0, ncol:ncol, widths:widths, merges:merges.filter(function(m){ return m[2]<hr; }), colFmt:colFmt, dateCol:dateCol, timeCol:timeCol, twoRowHeader:two||undefined, extra:extra, orig:{data:oldRows, foot:footOld}};
 }
 
 /* ---------- Lesen mit ExcelJS (sicherer als SheetJS 0.18.5 für fremde Dateien) ---------- */
@@ -227,7 +229,7 @@ function footRowNo(sh,j){ return sh.hr+2+sh.rows.length+j; }
 function cellAt(sh,r,c){ // r 1-basiert, c absolute Spalte
   if(sh.hr<0){ var g=sh.top[r-1]; return g?g[c]||null:null; }
   if(r<=sh.hr){ var t=sh.top[r-1]; return t?t[c]||null:null; }
-  var k=c-sh.c0; if(k<0||k>=sh.ncol) return null;
+  var k=c-sh.c0; if(k<0||k>=sh.ncol) return sh.extra?sh.extra[r+":"+c]||null:null;
   if(r===sh.hr+1) return {v:sh.headers[k]};
   var i=r-sh.hr-2; if(i<sh.rows.length) return sh.rows[i][k]||null;
   var j=i-sh.rows.length; return sh.foot[j]?sh.foot[j][k]||null:null;
@@ -300,10 +302,11 @@ Calc.prototype.formula=function(sh,f){
     if(/^(wahr|true)$/i.test(v)) return true; if(/^(falsch|false)$/i.test(v)) return false; throw new FErr("#WERT!"); }
   function nums(args,opts){ var out=[]; args.forEach(function(a){
       if(a&&a.range){ rangeCells(a).forEach(function(x){ if(opts&&opts.skipSub){ var cl=cellAt(a.s,x.r,x.c); if(cl&&cl.f&&/(SUBTOTAL|TEILERGEBNIS)\s*\(/i.test(cl.f)) return; }
-        if(isErr(x.v)) throw x.v; if(typeof x.v==="number") out.push(x.v); else if(typeof x.v==="string"&&x.v!==""&&!isDateStr(x.v)){ var pn=parseNum(x.v); if(pn!=null) out.push(pn); } }); }
+        if(isErr(x.v)) throw x.v; if(typeof x.v==="number") out.push(x.v); }); }
       else if(a!==null&&a!==undefined) out.push(toNum(a)); }); return out; }
   function cmp(a,b){ // Excel-Vergleich: Zahlen < Text < Wahrheitswerte
     a=scalar(a); b=scalar(b); if(isErr(a)) throw a; if(isErr(b)) throw b;
+    if((a==null||a==="")&&(b==null||b==="")) return 0;
     var na=a==null||a===""?(typeof b==="string"?"":0):a, nb=b==null||b===""?(typeof a==="string"?"":0):b;
     if(typeof na==="string"&&isDateStr(na)&&typeof nb==="number") na=dateToSerial(na); if(typeof nb==="string"&&isDateStr(nb)&&typeof na==="number") nb=dateToSerial(nb);
     var ta=typeof na, tb=typeof nb, rank={number:0,string:1,boolean:2};
@@ -474,6 +477,8 @@ function coerce(sh,k,val){
   if(val==null||val==="") return null;
   if(sh.timeCol&&sh.timeCol[k]){ if(typeof val==="number") return val; var tt=parseTime(val); if(tt!=null) return tt; }
   if(sh.dateCol[k]){ var d=normDate(val); if(d) return d; }
+  if(typeof val==="string" && /^\s*-?[\d.,]+\s*%\s*$/.test(val)){ var pc=parseNum(val.replace("%","")); if(pc!=null) return Math.round(pc*1e6)/1e8; }  // 19 % -> 0,19
+  if(typeof val==="string" && /%/.test(sh.colFmt[k]||"") ){ var pv=parseNum(val); if(pv!=null) return pv>1?pv/100:pv; }
   if(numericCol(sh,k)){ var n=typeof val==="number"?val:parseNum(val); if(n!=null) return n; }
   if(typeof val==="number") return val;
   return String(val);
@@ -489,11 +494,13 @@ function setCell(sh, excelRow, k, raw, opts){
 
 /* ---------- Abfragen (exakt gerechnet) ---------- */
 function rowValues(model, sh, i, calc){ var r=dataRowNo(sh,i), o=[]; for(var k=0;k<sh.ncol;k++) o.push(calc.value(sh,r,sh.c0+k)); return o; }
-function cmp(a,b){ var da=isDateStr(a)?dateToSerial(a):null, db=isDateStr(b)?dateToSerial(normDate(b)||b):null;
+function cmp(a,b){ var da=typeof a==="string"?anyDateSerial(a):null, db=typeof b==="string"?anyDateSerial(b):null;
   if(da!=null&&db!=null) return da-db;
+  if(da!=null&&typeof b==="number"&&b>20000) return da-b; if(db!=null&&typeof a==="number"&&a>20000) return a-db;
   var na=typeof a==="number"?a:parseNum(a), nb=typeof b==="number"?b:parseNum(b);
   if(na!=null&&nb!=null) return na-nb;
-  return String(a==null?"":a).toLowerCase().localeCompare(String(b==null?"":b).toLowerCase(),"de"); }
+  var ns=function(x){ return String(x==null?"":x).trim().replace(/\s+/g," ").toLowerCase(); };
+  return ns(a).localeCompare(ns(b),"de"); }
 function matches(v, op, w){
   var e=(v==null||v==="");
   switch(op){
@@ -532,7 +539,8 @@ function checks(model,opts){
     var comp=computedCols(sh);
     for(var k=0;k<sh.ncol;k++){
       var n=0, filledC=0, nums=0, numLike=0; eachData(sh,function(r){ n++; var c=r[k]; if(c&&!blank(c)){ filledC++; if(typeof c.v==="number"||c.f) nums++; if(typeof c.v==="number"||c.f||(typeof c.v==="string"&&/\d/.test(c.v)&&!/[a-zäöü]{3,}/i.test(c.v.replace(/€|eur|stk|ca\.?/gi,""))&&!/^\d{1,2}[.:/]\d{1,2}([.:/]\d{2,4})?$/.test(c.v.trim()))) numLike++; } });
-      var key=/(^|[^a-z])(nr|nummer|id|artikel-?nr|auftrags-?nr|rechnungs-?nr)([^a-z]|$)/i.test(sh.headers[k]);
+      var keyRe=/(^|[^a-z])(nr|nummer|id|artikel-?nr|auftrags-?nr|rechnungs-?nr)([^a-z]|$)/i, key=keyRe.test(sh.headers[k]);
+      var firstKey=sh.headers.findIndex(function(h){ return keyRe.test(h); }), uniq=key && k===firstKey;
       var seen={};
       eachData(sh,function(r,i){
         var row=dataRowNo(sh,i), c=r[k], v=calc.value(sh,row,sh.c0+k);
@@ -543,7 +551,7 @@ function checks(model,opts){
           else if(nums>0 && !/^0\d/.test(c.v.trim()) && !/tel|telefon|handy|mobil|fax|plz|iban|bic/i.test(sh.headers[k])) out.push({blatt:sh.name,zeile:row,k:k,problem:"Zahl als Text gespeichert („"+c.v.trim()+"“) – Summen in Excel lassen sie weg"}); }
         if(c && c.f && typeof v==="string" && /\?\?\?|unbekannt|nicht gefunden/i.test(v)) out.push({blatt:sh.name,zeile:row,k:k,problem:"Nachschlagen ohne Treffer: „"+v+"“"});
         if(/(ust|mwst|steuer).*(%|satz)|steuersatz|^satz$/i.test(sh.headers[k]) && typeof v==="number" && v>1 && v<=100) out.push({blatt:sh.name,zeile:row,k:k,problem:"Steuersatz "+deNum(v)+" statt "+deNum(v)+" % – Excel rechnet mit "+deNum(v*100)+" %"});
-        if(key && v!=null && v!==""){ var s=String(v).trim().toLowerCase(); if(seen[s]) out.push({blatt:sh.name,zeile:row,k:k,problem:sh.headers[k]+" doppelt (auch Zeile "+seen[s]+")"}); else seen[s]=row; }
+        if(uniq && v!=null && v!==""){ var s=String(v).trim().toLowerCase(); if(seen[s]) out.push({blatt:sh.name,zeile:row,k:k,problem:sh.headers[k]+" doppelt (auch Zeile "+seen[s]+")"}); else seen[s]=row; }
       });
     }
     lawChecks(sh,calc,out,opts);

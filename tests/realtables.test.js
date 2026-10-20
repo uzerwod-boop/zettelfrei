@@ -75,3 +75,16 @@ test("Speichern: Struktur, Trennzeilen und Formeln bleiben erhalten", async () =
   assert.match(wb.getWorksheet("Übersicht").getCell("B3").value.formula, /H21$/);
   assert.equal(wb.getWorksheet("Kunden").state, "hidden", "verstecktes Blatt bleibt versteckt");
 });
+
+test("Großes Betriebsbuch: SVERWEIS auf Nebentabelle, Übersicht, gezielte Hinweise", async () => {
+  const f = path.join(__dirname, "..", "beispiele", "Krause_Betrieb_Oktober_2026.xlsx");
+  const m = await ZF.loadWorkbookExcelJS(XLSX, ExcelJS, fs.readFileSync(f), "b.xlsx"), c = new ZF.Calc(m);
+  const st = S(m, "Stunden Oktober");
+  assert.equal(st.ncol, 9, "Stundensätze rechts sind Nebentabelle");
+  assert.equal(c.value(st, 7, 8), 442, "Lohn = 8,5 Std. × 52 € aus der Nebentabelle");
+  const total = c.value(st, 31, 7); assert.ok(total > 100, "GESAMT Oktober");
+  assert.equal(c.value(S(m, "Übersicht"), 5, 3), total, "Übersicht übernimmt die Stunden");
+  const p = ZF.checks(m, { today: new Date(2026, 9, 20) }).map(i => i.blatt + "|" + i.zeile + "|" + i.problem);
+  assert.ok(!p.some(x => /Kd-Nr doppelt|#NV/.test(x)), p.join("\n"));
+  assert.ok(p.some(x => /Aufträge\|9\|Steuersatz 19/.test(x)) && p.some(x => /Stunden Oktober\|22\|Ruhezeit/.test(x)));
+});
