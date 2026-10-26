@@ -88,3 +88,24 @@ test("Großes Betriebsbuch: SVERWEIS auf Nebentabelle, Übersicht, gezielte Hinw
   assert.ok(!p.some(x => /Kd-Nr doppelt|#NV/.test(x)), p.join("\n"));
   assert.ok(p.some(x => /Aufträge\|9\|Steuersatz 19/.test(x)) && p.some(x => /Stunden Oktober\|22\|Ruhezeit/.test(x)));
 });
+
+test("Abfragen: gruppieren, rechnen mit Ergebnissen, Blätter verknüpfen", async () => {
+  const f = path.join(__dirname, "..", "beispiele", "Krause_Betrieb_Oktober_2026.xlsx");
+  const m = await ZF.loadWorkbookExcelJS(XLSX, ExcelJS, fs.readFileSync(f), "b.xlsx");
+  const r = ZF.runQueries(m, [
+    { id: "q1", blatt: "Stunden Oktober", spalte: "Stunden", art: "summe", gruppieren: "Baustelle" },
+    { id: "q2", blatt: "Stunden Oktober", spalte: "Stunden", art: "summe", gruppieren: "Datum:woche" },
+    { id: "q3", blatt: "Stunden Oktober", spalte: "Stunden", art: "summe", filter: [{ spalte: "Baustelle", op: "=", wert: "Neubau Weber" }] },
+    { id: "q4", blatt: "Stunden Oktober", spalte: "Stunden", art: "summe" },
+    { id: "q5", ausdruck: "q3/q4*100", prozent: true },
+    { id: "q6", blatt: "Aufträge", spalte: "Baustelle", art: "liste", filter: [{ spalte: "Status", op: "=", wert: "offen" }] },
+    { id: "q7", blatt: "Stunden Oktober", spalte: "Stunden", art: "summe", filter: [{ spalte: "Baustelle", op: "in", wert: "{q6}" }] },
+    { id: "q8", blatt: "Stunden Oktober", spalte: "Mitarbeiter", art: "anzahl", gruppieren: "Mitarbeiter" }
+  ]);
+  assert.equal(r.q1.groups[0].key, "Neubau Weber", "größte Baustelle zuerst");
+  assert.equal(r.q1.groups.reduce((a, g) => a + g.value, 0), r.q4.value, "Gruppen ergeben die Gesamtsumme");
+  assert.deepEqual(r.q2.groups.map(g => g.key), ["KW 40/2026", "KW 41/2026", "KW 42/2026", "KW 43/2026"], "Wochen in zeitlicher Reihenfolge");
+  assert.equal(r.q5.value, Math.round(r.q3.value / r.q4.value * 10000) / 100);
+  assert.equal(r.q7.value, 26.25, "Stunden auf Baustellen mit offener Rechnung (Praxis Dr. Hahn)");
+  assert.ok(r.q8.groups.some(g => g.key === "Mehmet" && g.count === 7), "„mehmet “ zählt zu Mehmet");
+});

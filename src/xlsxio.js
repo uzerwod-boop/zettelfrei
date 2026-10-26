@@ -23,7 +23,10 @@ function save(ExcelJS, ZF, origBytes, model, opts){
     });
     model.sheets.forEach(function(sh){
       if(sh.hr<0) return;
-      var ws=wb.getWorksheet(sh.name); if(!ws) return;
+      var ws=wb.getWorksheet(sh.name);
+      if(!ws){ if(!sh.isNew) return;   // neue Auswertungsblätter anlegen
+        ws=wb.addWorksheet(sh.name);
+        sh.headers.forEach(function(h,k){ var c=ws.getCell(sh.hr+1,sh.c0+1+k); c.value=h; c.font={bold:true}; c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFDDE7E3"}}; ws.getColumn(sh.c0+1+k).width=(sh.widths&&sh.widths[k])||16; }); }
       var C0=sh.c0+1, N=sh.ncol, orig=sh.orig||{data:[],foot:[]};
       // Stile der Originalzeilen sichern, bevor überschrieben wird
       var grab=function(r){ var a=[]; for(var k=0;k<N;k++) a.push(cloneStyle(ws.getCell(r,C0+k).style)); return a; };

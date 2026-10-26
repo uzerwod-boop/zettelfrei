@@ -2,6 +2,15 @@
 
 Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.4.0] – 2026-10-26 · Auswertungen
+
+### Neu
+- Fragen „je/pro/nach …“: Auswertungen gruppiert nach Spalte oder Zeitraum (Tag, Woche, Monat, Jahr), sortiert, Top-N – als Balkendiagramm im Chat.
+- Rechnen mit Ergebnissen: Unterschiede, Anteile, Prozent (z. B. „Anteil Neubau Weber an allen Stunden“), sicher gerechnet ohne eval.
+- Blätter verknüpfen: z. B. Stunden nur für Baustellen mit offener Rechnung (Filter „in“ mit dem Ergebnis einer anderen Abfrage).
+- Auswertung als neues Blatt in die Excel-Datei übernehmen, inklusive Summenformel.
+- Rund 40 weitere Excel-Funktionen: XVERWEIS, WVERWEIS, SUMMEWENNS, ZÄHLENWENNS, MITTELWERTWENN(S), MAXWENNS/MINWENNS, INDEX, VERGLEICH, WENNS, ERSTERWERT, WENNNV, SUMMENPRODUKT, PRODUKT, MEDIAN, GANZZAHL, REST, OBERGRENZE, UNTERGRENZE, EDATUM, MONATSENDE, KALENDERWOCHE, NETTOARBEITSTAGE, DATEDIF, TEXT, TEIL, FINDEN, SUCHEN, WECHSELN, TEXTVERKETTEN u. a.
+
 ## [0.3.0] – 2026-10-26 · Neuer Arbeitsplatz
 
 ### Neu
@@ -63,7 +72,8 @@ Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog]
 - KI wahlweise über OpenRouter, eigenen Server, Claude API oder lokales Modell.
 - PDFs und Fotos von Lieferantenrechnungen per KI einlesen.
 
-[0.3.0]: https://github.com/uzerwod-boop/zettelfrei/compare/v0.2.1...main
+[0.4.0]: https://github.com/uzerwod-boop/zettelfrei/compare/v0.2.1...main
+[0.3.0]: https://github.com/uzerwod-boop/zettelfrei/commit/9e32630
 [0.2.2]: https://github.com/uzerwod-boop/zettelfrei/commit/ef087fa
 [0.2.1]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.2.1
 [0.2.0]: https://github.com/uzerwod-boop/zettelfrei/commit/831d49f

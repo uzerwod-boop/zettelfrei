@@ -287,10 +287,13 @@ function aiError(e){
   if(c==="invalid_json") return "Die Antwort war unvollständig. Bitte noch einmal versuchen oder einfacher formulieren.";
   return "Die KI hat nicht geantwortet. Bitte noch einmal versuchen.";
 }
-var RULES = 'Antworte NUR mit JSON in genau dieser Form:\n{"aenderungen":[ {"typ":"neu","blatt":"…","werte":{"Spaltenname":Wert}} | {"typ":"aendern","blatt":"…","zeile":Excel-Zeilennummer,"werte":{"Spaltenname":Wert}} | {"typ":"loeschen","blatt":"…","zeile":Excel-Zeilennummer} ],\n "abfragen":[{"id":"q1","blatt":"…","spalte":"…","art":"summe|anzahl|mittelwert|min|max|liste","filter":[{"spalte":"…","op":"=|!=|enthält|>|<|>=|<=|leer|nicht leer","wert":"…"}]}],\n "antwort":"kurzer deutscher Text, Ergebnisse von Abfragen als {q1} einsetzen",\n "rueckfrage":null}\nRegeln:\n- Rechne Summen, Anzahlen und Mittelwerte NIE selbst. Lege dafür immer eine Abfrage an und setze {id} in die Antwort ein. Für Listen von Namen/Artikeln nutze art "liste".\n- Zu- und Abgänge (z. B. Bestand) als {"plus": Zahl} angeben, z. B. {"Bestand":{"plus":-3}}.\n- Spalten mit „berechnet“ niemals setzen, die Tabelle rechnet sie.\n- Spaltennamen und Blattnamen exakt wie angegeben. Datum als TT.MM.JJJJ, Zahlen als Zahl.\n- Zeilennummern sind Excel-Zeilennummern aus der Spalte „Zeile“.\n- Ändere nur, was verlangt ist. Erfinde keine Werte. Ist unklar, welche Zeile gemeint ist, oder fehlen Pflichtangaben, stelle eine kurze rueckfrage und ändere nichts.\n- Leere Listen weglassen ist erlaubt.';
+var RULES = 'Antworte NUR mit JSON in genau dieser Form:\n{"aenderungen":[ {"typ":"neu","blatt":"…","werte":{"Spaltenname":Wert}} | {"typ":"aendern","blatt":"…","zeile":Excel-Zeilennummer,"werte":{"Spaltenname":Wert}} | {"typ":"loeschen","blatt":"…","zeile":Excel-Zeilennummer} ],\n "abfragen":[{"id":"q1","blatt":"…","spalte":"…","art":"summe|anzahl|mittelwert|min|max|liste","filter":[{"spalte":"…","op":"=|!=|enthält|>|<|>=|<=|leer|nicht leer|in|nicht in","wert":"…"}],"gruppieren":"Spalte oder Datumsspalte:tag|woche|monat|jahr (optional)","sortierung":"absteigend|aufsteigend|zeit (optional)","limit":Zahl (optional)} | {"id":"q3","ausdruck":"q1-q2 oder q1/q2*100","prozent":true|false,"euro":true|false}],\n "antwort":"kurzer deutscher Text, Ergebnisse von Abfragen als {q1} einsetzen",\n "rueckfrage":null}\nRegeln:\n- Rechne Summen, Anzahlen und Mittelwerte NIE selbst. Lege dafür immer eine Abfrage an und setze {id} in die Antwort ein. Für Listen von Namen/Artikeln nutze art "liste".\n- „Je/pro/nach …“ (z. B. Stunden je Baustelle, Umsatz pro Monat, Top 5 Kunden): eine Abfrage mit "gruppieren" statt vieler Einzelabfragen. Zeiträume: "Datum:monat" usw.\n- Unterschiede, Anteile, Prozent: zuerst die Werte als Abfragen, dann eine Abfrage mit "ausdruck" (nur q-IDs, Zahlen, + - * / und Klammern).\n- Verknüpfen von Blättern: erst eine Liste (art "liste") aus Blatt A, dann in Blatt B filtern mit {"op":"in","wert":"{q1}"}.\n- Zu- und Abgänge (z. B. Bestand) als {"plus": Zahl} angeben, z. B. {"Bestand":{"plus":-3}}.\n- Spalten mit „berechnet“ niemals setzen, die Tabelle rechnet sie.\n- Spaltennamen und Blattnamen exakt wie angegeben. Datum als TT.MM.JJJJ, Zahlen als Zahl.\n- Zeilennummern sind Excel-Zeilennummern aus der Spalte „Zeile“.\n- Ändere nur, was verlangt ist. Erfinde keine Werte. Ist unklar, welche Zeile gemeint ist, oder fehlen Pflichtangaben, stelle eine kurze rueckfrage und ändere nichts.\n- Leere Listen weglassen ist erlaubt.';
 function context(){ return "Heute ist "+TODAY+" ("+WEEKDAY+"). Du arbeitest in der Excel-Datei eines kleinen deutschen Handwerksbetriebs.\n\n"+ZF.describe(model,180000); }
 function fmtQuery(res,q){
   if(res.error) return "(?)";
+  if(res.groups){ var gs=res.groups.slice(0,8).map(function(g){ return g.key+": "+de(g.value,res.money?2:null)+(res.money?" €":""); }); return gs.join(" · ")+(res.groups.length>8?" …":""); }
+  if(res.expr&&res.percent) return de(res.value,1)+" %";
+  if(res.expr&&res.money) return de(res.value,2)+" €";
   if(res.list){ var l=res.list.map(function(v){ return typeof v==="number"?de(v):String(v); }); if(!l.length) return "keine"; return l.length>15? l.slice(0,15).join(", ")+" und "+(l.length-15)+" weitere" : l.join(", "); }
   if(res.value==null) return "–";
   return de(res.value,res.money?2:null);
@@ -299,9 +302,11 @@ function handleResult(res,box,label,stillRunningLabel){
   box.innerHTML="";
   if(!res||typeof res!=="object"){ box.innerHTML='<p class="hint">Keine verwertbare Antwort.</p>'; return; }
   var sheetHits={}, txt=res.antwort||"";
+  var results=ZF.runQueries(model,res.abfragen||[]), groupCards=[];
   (res.abfragen||[]).forEach(function(q){
-    var r=ZF.query(model,q); txt=txt.split("{"+q.id+"}").join(fmtQuery(r,q));
-    if(r.rows&&r.rows.length){ var sh=(model.sheets.find(function(s){ return s.name.toLowerCase()===String(q.blatt).toLowerCase(); })||sheetObj()).name; sheetHits[sh]=(sheetHits[sh]||[]).concat(r.rows); }
+    var r=results[q.id]; if(!r) return; txt=txt.split("{"+q.id+"}").join(fmtQuery(r,q));
+    if(r.groups) groupCards.push(r);
+    if(r.rows&&r.rows.length&&q.blatt){ var sh=(model.sheets.find(function(s){ return s.name.toLowerCase()===String(q.blatt).toLowerCase(); })||sheetObj()).name; sheetHits[sh]=(sheetHits[sh]||[]).concat(r.rows).filter(function(x,i,a){ return a.indexOf(x)===i; }); }
   });
   if(txt){ var a=document.createElement("div"); a.className="answer"; a.textContent=txt;
     var names=Object.keys(sheetHits);
@@ -312,10 +317,39 @@ function handleResult(res,box,label,stillRunningLabel){
         var si=model.sheets.findIndex(function(s){ return s.name===names[0]; }); if(si>=0) cur=si; renderAll(); goTo(names[0],sheetHits[names[0]][0]); };
       a.appendChild(sp); }
     box.appendChild(a); }
+  groupCards.forEach(function(r){ box.appendChild(groupView(r)); });
   if(res.rueckfrage){ var q=document.createElement("div"); q.className="ask"; q.textContent=res.rueckfrage; box.appendChild(q); }
   var plan=ZF.planOps(model,res.aenderungen||[]);
   if(plan.length) box.appendChild(planView(plan,label));
   if(!txt&&!res.rueckfrage&&!plan.length) box.innerHTML='<p class="hint">Dazu gab es nichts zu tun. Versuchen Sie es mit einer genaueren Anweisung.</p>';
+}
+/* Auswertung: Tabelle, Balkendiagramm, als Blatt speichern */
+function groupView(r){
+  var card=document.createElement("div"); card.className="gcard";
+  var unit=r.money?" €":"", fmt=function(v){ return v==null?"–":de(v,r.money?2:null)+unit; };
+  var shown=r.groups.slice(0,12), max=Math.max.apply(null,shown.map(function(g){ return Math.abs(g.value||0); }).concat([1e-9]));
+  var bars=shown.map(function(g){ var w=Math.max(1,Math.round(Math.abs(g.value||0)/max*100));
+    return '<div class="gbar"><span class="gk" title="'+esc(String(g.key))+'">'+esc(String(g.key))+'</span><span class="gtrack"><span class="gfill" style="width:'+w+'%"></span></span><b>'+esc(fmt(g.value))+"</b></div>"; }).join("");
+  var total=r.groups.reduce(function(a,g){ return a+(g.value||0); },0);
+  card.innerHTML='<div class="gh"><span>'+esc(r.of)+" je "+esc(r.by)+'</span><span class="hint">'+r.groups.length+" Gruppe"+(r.groups.length===1?"":"n")+"</span></div>"+
+    '<div class="gchart" role="img" aria-label="Balkendiagramm '+esc(r.of)+" je "+esc(r.by)+'">'+bars+"</div>"+
+    (r.groups.length>12?'<p class="hint">Diagramm zeigt die ersten 12 von '+r.groups.length+".</p>":"")+
+    (r.art==="summe"||r.art==="anzahl"?'<div class="gsum"><span>Gesamt</span><b>'+esc(fmt(Math.round(total*100)/100))+"</b></div>":"")+
+    '<div class="row"><button type="button" class="btn quiet small" data-sheet>Als Blatt in die Excel-Datei</button></div>';
+  card.querySelector("[data-sheet]").onclick=function(){
+    var name=addResultSheet(r); this.disabled=true; this.textContent="Blatt „"+name+"“ angelegt";
+  };
+  return card;
+}
+function addResultSheet(r){
+  var base=("Auswertung "+r.by).replace(/[\\/?*\[\]:]/g," ").slice(0,28), name=base, n=2;
+  while(model.sheets.some(function(s){ return s.name.toLowerCase()===name.toLowerCase(); })) name=(base.slice(0,26)+" "+(n++));
+  var money=r.money, rows=r.groups.map(function(g){ return [{v:typeof g.key==="number"?g.key:String(g.key)},{v:g.value}]; });
+  var last=rows.length+1, sumF=r.art==="summe"||r.art==="anzahl";
+  model.sheets.push({name:name,hr:0,top:[],headers:[r.by,r.of],rows:rows,kind:rows.map(function(){ return ""; }),
+    foot:sumF?[[{v:"Gesamt"},{f:"SUM(B2:B"+last+")"}]]:[],c0:0,ncol:2,widths:[28,16],merges:[],colFmt:[null,money?'#,##0.00 "€"':"#,##0.##"],dateCol:[false,false],timeCol:[false,false],extra:{},isNew:true,orig:{data:[],foot:[]}});
+  cur=model.sheets.length-1; commit("Auswertung als Blatt „"+name+"“"); toast("Blatt „"+name+"“ angelegt – wird beim Speichern in die Excel-Datei übernommen");
+  return name;
 }
 function fv(v,sheetName,k){ if(v==null||v==="") return "leer";
   var sh=sheetName&&model.sheets.find(function(x){ return x.name===sheetName; });

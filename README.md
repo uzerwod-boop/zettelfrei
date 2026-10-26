@@ -64,7 +64,8 @@ Zettelfrei öffnet Stundenzettel, Lagerliste oder Auftragsliste und lässt sie m
 ### Echte Excel-Dateien (seit 0.2.2)
 
 - 🧩 **Wie im Büro gewachsen:** Überschriften über zwei Zeilen, Wochen-Zwischensummen, Nebentabellen, versteckte Blätter – Zettelfrei erkennt die Struktur und lässt sie, wie sie ist. Zeilennummern wie in Excel.
-- 🧮 **Formeln wie in Excel:** WENN, WENNFEHLER, SVERWEIS, SUMMEWENN, ZÄHLENWENN, TEILERGEBNIS – live gerechnet, mit eigenem Interpreter ohne `eval`. Bezüge zwischen Blättern ziehen mit.
+- 🧮 **Formeln wie in Excel:** rund 80 Funktionen wie WENN, SVERWEIS, XVERWEIS, SUMMEWENNS, INDEX/VERGLEICH, TEILERGEBNIS und Datumsfunktionen – live gerechnet, mit eigenem Interpreter ohne `eval`. Bezüge zwischen Blättern ziehen mit.
+- 📊 **Auswertungen (seit 0.4):** „Stunden je Baustelle“, „Umsatz pro Monat“, „Anteil in Prozent“, „Stunden auf Baustellen mit offener Rechnung“ – gruppiert, verknüpft und als Diagramm im Chat; auf Wunsch als neues Blatt in der Excel-Datei.
 - 🔎 **Klügere Prüfungen:** Steuersatz 19 statt 19 %, Zahlen als Text, Nachschlagen ohne Treffer, Pausen wie „30 min“.
 
 ### Bürokratie, die sich selbst erledigt (seit 0.2)
@@ -194,6 +195,7 @@ npm test                          # Engine, E-Rechnung, Sicherheit, Server – o
 pip install playwright && python -m playwright install chromium
 python tests/browser_test.py      # Ende-zu-Ende im Browser: ohne KI, OpenRouter, Claude API, lokales Modell, Server
 python tests/browser_v2_test.py   # Version 0.2: E-Rechnung, ArbZG, Mahnung, Abnahme, Export, Formatierung
+python tests/browser_v3_test.py   # Version 0.3/0.4: Arbeitsplatz, Chat, Auswertungen, Diagramm, Auswertungsblatt
 ```
 
 ### XRechnung prüfen
@@ -221,6 +223,8 @@ Was als Nächstes kommt – Reihenfolge nach Rückmeldungen aus den Betrieben. [
 - [x] **0.2.1** Sicherheitsprüfung, neuer Auftritt
 - [x] **0.2.2** Echte Excel-Dateien: zweizeilige Überschriften, Zwischensummen, SVERWEIS & Co.
 - [x] **0.3** Neuer Arbeitsplatz: Aufbau wie Excel, Assistent als Chat, Kennzahlen über der Tabelle
+- [x] **0.4** Auswertungen: gruppieren, Prozent und Unterschiede, Blätter verknüpfen, Diagramme, 40 weitere Excel-Funktionen
+- [ ] **Mehrere Mitarbeitende:** Stunden, Material und Fotos vom Handy per Link, das Büro übernimmt sie in dieselbe Excel-Datei
 - [ ] **Installierbar** als App auf dem Rechner und Handy (PWA), danach Installer für Windows und Mac
 - [ ] **Google Sheets** öffnen und zurückspeichern (nur die ausgewählte Tabelle, kein Zugriff auf das ganze Drive)
 - [ ] **ZUGFeRD-PDF erzeugen** (PDF/A-3 mit eingebetteter XML) statt nur XRechnung
@@ -232,7 +236,7 @@ Was als Nächstes kommt – Reihenfolge nach Rückmeldungen aus den Betrieben. [
 - Formatierung bleibt erhalten, wenn eine `.xlsx`-Datei geöffnet wurde. Bei `.xls`/`.csv` werden nur Werte, Formeln und Zahlenformate gespeichert. Bedingte Formatierungen und verbundene Zellen innerhalb der Tabelle werden nicht angepasst.
 - E-Rechnungen werden als XRechnung (XML) erzeugt. Ein ZUGFeRD-PDF (PDF/A-3 mit eingebetteter XML) erzeugt der Prototyp noch nicht; das PDF dient nur der Ansicht.
 - Mehrere Nutzer gleichzeitig und Synchronisation mit OneDrive oder Google Drive sind noch nicht eingebaut.
-- Seltene Excel-Funktionen (z. B. `XVERWEIS`, `SUMMEWENNS`, Matrixformeln) werden nicht live gerechnet; dann wird der zuletzt in Excel gespeicherte Wert angezeigt.
+- Seltene Excel-Funktionen (z. B. Matrixformeln, `LET`, `LAMBDA`, `FILTER`) werden nicht live gerechnet; dann wird der zuletzt in Excel gespeicherte Wert angezeigt.
 - Text-Zahlen wie „4.250,00“ werden in Formeln nach deutscher Schreibweise gelesen (wie deutsches Excel).
 - Beim Löschen von Zeilen werden Bezüge aus *anderen* Blättern nicht verschoben.
 - Sehr große Dateien (viele tausend Zeilen) passen nicht vollständig in eine KI-Anfrage.
