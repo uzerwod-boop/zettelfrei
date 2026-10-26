@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { S, commit, emit, issues, mark, openExample, openFile, persist, saveExcel, selectSheet, setPane, sheet, toast, useStore, type Pane } from "../store";
-import { de, fmtVal, rawOf } from "../util";
+import { HIER, IS_APP, de, fmtVal, rawOf } from "../util";
 import { Icon, Mark } from "./Icons";
 
 /* ---------- Leiste links ---------- */
@@ -186,7 +186,7 @@ export function Sheet() {
           {s.model.sheets.map((x: any, i: number) => <button key={x.name} role="tab" aria-selected={i === s.cur} title={x.name} onClick={() => selectSheet(i)}>{x.name}</button>)}
         </div>
       </div>
-      <p className="foot">Zelle anklicken und lostippen, Enter speichert und springt nach unten, Esc bricht ab, mit „=“ beginnt eine Formel. Beim Speichern bleiben Werte, Formeln, Farben und Zahlenformate der Originaldatei erhalten. Die Datei bleibt in diesem Browser; an die KI geht nur, was Sie ausführen.</p>
+      <p className="foot">Zelle anklicken und lostippen, Enter speichert und springt nach unten, Esc bricht ab, mit „=“ beginnt eine Formel. Beim Speichern bleiben Werte, Formeln, Farben und Zahlenformate der Originaldatei erhalten. Die Datei bleibt {HIER}; an die KI geht nur, was Sie ausführen.</p>
     </section>);
 }
 
@@ -196,7 +196,7 @@ function Empty() {
     <div className="empty">
       <Mark />
       <h2>Excel bleibt. Das Tippen fällt weg.</h2>
-      <p>Öffnen Sie Ihre Excel-Datei oder ziehen Sie sie hierher. Sie bleibt in Ihrem Browser.</p>
+      <p>Öffnen Sie Ihre Excel-Datei oder ziehen Sie sie hierher. Sie bleibt {IS_APP ? "auf Ihrem Rechner" : "in Ihrem Browser"}.</p>
       <div className="row center">{ex.slice(0, 5).map(n => <button key={n} className="btn quiet small" onClick={() => openExample(n)}>{n.replace(/_/g, " ").replace(/\.xlsx$/, "")}</button>)}</div>
     </div>);
 }

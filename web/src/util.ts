@@ -25,3 +25,7 @@ export function rawOf(cell: any): string {
   if (typeof cell.v === "number") return String(cell.v).replace(".", ",");
   return cell.v == null ? "" : String(cell.v);
 }
+
+/** Läuft Zettelfrei als installiertes Programm (Tauri) statt im Browser? */
+export const IS_APP = !!(window as any).__TAURI__;
+export const HIER = IS_APP ? "auf diesem Rechner" : "in diesem Browser";

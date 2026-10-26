@@ -8,13 +8,15 @@
     "sync": "node scripts/sync-lib.mjs",
     "dev": "npm run sync && vite",
     "build": "npm run sync && tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tauri": "tauri"
   },
   "dependencies": {
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.12.4",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",

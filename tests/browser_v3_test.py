@@ -39,7 +39,7 @@ async def main():
             await r.fulfill(status=200, content_type="application/json", body=json.dumps({"choices": [{"message": {"content": json.dumps(answer(m.group(1) if m else ""))}}]}))
         await ctx.route("https://openrouter.ai/**", route)
         pg = await ctx.new_page(); pg.on("pageerror", lambda e: errs.append(str(e)))
-        await pg.goto(f"http://127.0.0.1:{port}/"); await pg.wait_for_timeout(600)
+        await pg.goto(f"http://127.0.0.1:{port}/klassisch/"); await pg.wait_for_timeout(600)
         await pg.select_option("#exampleSel", "Krause_Betrieb_Oktober_2026.xlsx"); await pg.wait_for_timeout(600)
         check(await pg.locator(".rail #t-cmd[aria-selected=true]").count() == 1, "Leiste links, Assistent aktiv")
         check(await pg.locator(".sheet #sheetTabs button").count() == 5, "Blätter unten in der Tabelle")

@@ -106,6 +106,10 @@ let downloads: any = null;
 if (window.claude?.use) window.claude.use("downloads").then((d: any) => { downloads = d; }, () => {});
 export function saveFile(name: string, data: BlobPart | Blob, mime?: string): Promise<void> {
   const blob = data instanceof Blob ? data : new Blob([data], { type: mime || "application/octet-stream" });
+  const tauri = (window as any).__TAURI__;
+  if (tauri?.core) // Desktop-Programm: „Speichern unter“-Dialog des Systems
+    return blob.arrayBuffer().then(b => tauri.core.invoke("save_file", { name, data: toB64(new Uint8Array(b)) }))
+      .then((p: string | null) => { if (p) toast(name + " gespeichert"); }, () => toast("Speichern fehlgeschlagen."));
   if (downloads) return downloads.save({ filename: name, data: blob }).then(() => toast(name + " gespeichert"), (e: any) => { if (e?.code !== "declined") toast("Speichern ist hier nicht möglich."); });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); toast(name + " gespeichert"); return Promise.resolve();

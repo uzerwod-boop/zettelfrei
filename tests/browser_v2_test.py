@@ -31,7 +31,7 @@ async def main():
         ctx = await b.new_context(accept_downloads=True, viewport={"width": 1300, "height": 900})
         pg = await ctx.new_page()
         pg.on("pageerror", lambda e: errs.append(str(e)))
-        await pg.goto(f"http://127.0.0.1:{port}/"); await pg.wait_for_timeout(700)
+        await pg.goto(f"http://127.0.0.1:{port}/klassisch/"); await pg.wait_for_timeout(700)
 
         # 0) CSV im deutschen Format öffnen (eigener Leser)
         await pg.set_input_files("#openInput", files=[{"name": "Export.csv", "mimeType": "text/csv",

@@ -110,12 +110,17 @@ async function proxy(req, res) {
   }
 }
 
+const HAS_WEB = !process.env.ZF_KLASSISCH && fs.existsSync(path.join(ROOT, "web", "dist", "index.html"));
+
 function serveFile(req, res) {
   let p = decodeURIComponent(new URL(req.url, "http://x").pathname);
-  if (p === "/") p = "/index.html";
-  // neue Oberfläche (React-Build aus web/dist) unter /app/
-  if (p === "/app") { res.writeHead(301, { location: "/app/" }); return res.end(); }
-  if (p.startsWith("/app/")) p = "/web/dist/" + (p.slice(5) || "index.html");
+  // Startseite: neue Oberfläche (web/dist), sobald sie gebaut ist (cd web && npm ci && npm run build),
+  // sonst die klassische. Die klassische bleibt unter /klassisch/ erreichbar, /app/ von 0.5.0-Vorschau leitet um.
+  if (p === "/app" || p === "/app/" || p === "/klassisch") { res.writeHead(301, { location: p === "/klassisch" ? "/klassisch/" : "/" }); return res.end(); }
+  if (p.startsWith("/klassisch/")) p = p.slice(10) === "/" ? "/index.html" : p.slice(10);
+  else if (p.startsWith("/app/")) p = "/web/dist/" + p.slice(5);
+  else if (HAS_WEB && !/^\/(beispiele|docs)\//.test(p)) p = "/web/dist" + (p === "/" ? "/index.html" : p);
+  else if (p === "/") p = "/index.html";
   const file = path.normalize(path.join(ROOT, p));
   if (!file.startsWith(ROOT + path.sep) || /(^|[\\/])(\.|node_modules)/.test(path.relative(ROOT, file))) return send(res, 404, "Nicht gefunden", "text/plain");
   fs.stat(file, (err, st) => {
@@ -127,7 +132,8 @@ function serveFile(req, res) {
 
 const server = http.createServer((req, res) => {
   let url = new URL(req.url, "http://x").pathname;
-  if (url.startsWith("/app/api/")) url = url.slice(4);   // KI-Schnittstelle auch für die neue Oberfläche
+  if (url.startsWith("/app/api/")) url = url.slice(4);
+  if (url.startsWith("/klassisch/api/")) url = url.slice(10);   // KI-Schnittstelle auch für die neue Oberfläche
   if (url.startsWith("/api/") && !allowedHost(req)) return send(res, 421, { error: "Unbekannter Hostname" });
   if (url === "/api/health" && req.method === "GET") return send(res, 200, { ok: !!KEY, provider: PROVIDER, model: KEY ? MODEL : null });
   if (url === "/api/messages" && req.method === "POST") return proxy(req, res);

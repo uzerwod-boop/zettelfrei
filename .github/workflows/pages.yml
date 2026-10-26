@@ -28,9 +28,13 @@ jobs:
           npm run build
       - name: Seite zusammenstellen
         run: |
-          mkdir _site
-          cp -r index.html src vendor fonts beispiele docs _site/
-          cp -r web/dist _site/app
+          # Startseite: neue Oberfläche. Die klassische bleibt unter /klassisch/,
+          # /app/ (Vorschau aus 0.5) leitet auf die Startseite um.
+          cp -r web/dist _site
+          mkdir -p _site/klassisch _site/app
+          cp -r index.html src vendor fonts _site/klassisch/
+          cp -r beispiele docs _site/
+          printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=../"><link rel="canonical" href="../"><a href="../">Zettelfrei</a>' > _site/app/index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

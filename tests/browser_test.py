@@ -67,7 +67,7 @@ async def main():
     time.sleep(0.8)
     async with async_playwright() as p:
         b = await p.chromium.launch()
-        base = f"http://127.0.0.1:{port}/"
+        base = f"http://127.0.0.1:{port}/klassisch/"
         await scenario(b, base, "ohne KI")
 
         async def set_claude(pg):
@@ -106,7 +106,7 @@ async def main():
         port2 = free_port()
         env2 = dict(os.environ, PORT=str(port2), ANTHROPIC_API_KEY="server-key", ZF_UPSTREAM=f"http://127.0.0.1:{fake_port}/v1/messages")
         srv2 = subprocess.Popen(["node", "server.js"], cwd=ROOT, env=env2, stdout=subprocess.DEVNULL); time.sleep(0.8)
-        await scenario(b, f"http://127.0.0.1:{port2}/", "eigener Server")
+        await scenario(b, f"http://127.0.0.1:{port2}/klassisch/", "eigener Server")
         srv2.terminate()
         await b.close()
     fake.shutdown()

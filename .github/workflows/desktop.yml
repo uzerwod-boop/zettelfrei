@@ -1,0 +1,51 @@
+name: Desktop-Programm
+
+# Baut Zettelfrei für macOS (Apple Silicon + Intel) und Windows und legt die
+# Installationsdateien in einen Release-Entwurf. Läuft, wenn sich die Version in
+# web/src-tauri/tauri.conf.json ändert, oder von Hand über „Run workflow“.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["web/src-tauri/tauri.conf.json"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target universal-apple-darwin
+          - platform: windows-latest
+            args: ""
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: web/src-tauri -> target
+      - run: npm ci
+        working-directory: web
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: web
+          tagName: v__VERSION__
+          releaseName: Zettelfrei __VERSION__
+          releaseBody: "Installationsdateien für Windows und macOS. Beschreibung folgt."
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}

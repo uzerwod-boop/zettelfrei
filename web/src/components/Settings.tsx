@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { toast } from "../store";
+import { HIER } from "../util";
 import { aiError } from "./Assistant";
 
 // Eigener kleiner Zustand: ist der Dialog offen?
@@ -11,8 +12,8 @@ type Prov = "auto" | "server" | "openrouter" | "claude" | "local" | "off";
 const HELP = (p: Prov, server: boolean) => ({
   auto: `Nutzt den eigenen Server, wenn Zettelfrei mit „npm start“ läuft${server ? " (gefunden)" : " (nicht gefunden)"}, sonst OpenRouter mit dem Schlüssel unten.`,
   server: `Schlüssel liegt nur auf dem Server: OPENROUTER_API_KEY=… npm start oder ANTHROPIC_API_KEY=… npm start. Am besten für Betriebe mit mehreren Rechnern.${server ? " Server gefunden." : " Kein Server gefunden."}`,
-  openrouter: "Ein Schlüssel für viele Modelle: Claude, GPT, Gemini, Mistral. Schlüssel auf openrouter.ai/keys anlegen und mit Guthaben aufladen. Der Schlüssel bleibt in diesem Browser.",
-  claude: "Schlüssel aus console.anthropic.com. Er wird nur in diesem Browser gespeichert und direkt an Anthropic geschickt. Nur für den eigenen Rechner.",
+  openrouter: `Ein Schlüssel für viele Modelle: Claude, GPT, Gemini, Mistral. Schlüssel auf openrouter.ai/keys anlegen und mit Guthaben aufladen. Der Schlüssel bleibt ${HIER}.`,
+  claude: `Schlüssel aus console.anthropic.com. Er wird nur ${HIER} gespeichert und direkt an Anthropic geschickt. Nur für den eigenen Rechner.`,
   local: "Daten verlassen den Rechner nicht. Für Ollama: OLLAMA_ORIGINS=* ollama serve, Adresse http://localhost:11434/v1. Für Fotos und Scans ein Modell mit Bildverständnis wählen.",
   off: "Tabelle öffnen, bearbeiten, prüfen und speichern funktioniert ohne KI." }[p]);
 
@@ -35,11 +36,11 @@ export function Settings() {
     <dialog ref={dlg} id="settings" onClose={close}>
       <form method="dialog" onSubmit={e => { const v = (e.nativeEvent as any).submitter?.value; if (v === "save") { AI.save(cfg()); toast("KI-Einstellungen gespeichert"); } }}>
         <h2>KI-Einstellungen</h2>
-        <p className="note">Ohne KI funktioniert alles außer Assistent, Auslesen von PDFs ohne E-Rechnung und fachlicher Prüfung. Einstellungen bleiben nur in diesem Browser.</p>
+        <p className="note">Ohne KI funktioniert alles außer Assistent, Auslesen von PDFs ohne E-Rechnung und fachlicher Prüfung. Einstellungen bleiben nur {HIER}.</p>
         <label>Anbieter
           <select id="setProvider" value={prov} onChange={e => setProv(e.target.value as Prov)}>
             <option value="auto">Automatisch</option><option value="server">Eigener Server (npm start mit API-Schlüssel)</option>
-            <option value="openrouter">OpenRouter, ein Schlüssel für viele Modelle</option><option value="claude">Claude API, Schlüssel in diesem Browser</option>
+            <option value="openrouter">OpenRouter, ein Schlüssel für viele Modelle</option><option value="claude">Claude API, Schlüssel {HIER}</option>
             <option value="local">Lokales Modell (Ollama, LM Studio; OpenAI-kompatibel)</option><option value="off">Aus</option>
           </select></label>
         {kp && <label>{kp === "local" ? "API-Schlüssel (meist leer lassen)" : kp === "openrouter" ? "OpenRouter-Schlüssel" : "Claude-API-Schlüssel"}
