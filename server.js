@@ -113,6 +113,9 @@ async function proxy(req, res) {
 function serveFile(req, res) {
   let p = decodeURIComponent(new URL(req.url, "http://x").pathname);
   if (p === "/") p = "/index.html";
+  // neue Oberfläche (React-Build aus web/dist) unter /app/
+  if (p === "/app") { res.writeHead(301, { location: "/app/" }); return res.end(); }
+  if (p.startsWith("/app/")) p = "/web/dist/" + (p.slice(5) || "index.html");
   const file = path.normalize(path.join(ROOT, p));
   if (!file.startsWith(ROOT + path.sep) || /(^|[\\/])(\.|node_modules)/.test(path.relative(ROOT, file))) return send(res, 404, "Nicht gefunden", "text/plain");
   fs.stat(file, (err, st) => {
@@ -123,7 +126,8 @@ function serveFile(req, res) {
 }
 
 const server = http.createServer((req, res) => {
-  const url = new URL(req.url, "http://x").pathname;
+  let url = new URL(req.url, "http://x").pathname;
+  if (url.startsWith("/app/api/")) url = url.slice(4);   // KI-Schnittstelle auch für die neue Oberfläche
   if (url.startsWith("/api/") && !allowedHost(req)) return send(res, 421, { error: "Unbekannter Hostname" });
   if (url === "/api/health" && req.method === "GET") return send(res, 200, { ok: !!KEY, provider: PROVIDER, model: KEY ? MODEL : null });
   if (url === "/api/messages" && req.method === "POST") return proxy(req, res);

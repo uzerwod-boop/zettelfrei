@@ -9,3 +9,15 @@ jobs:
         with:
           node-version: 20
       - run: npm test
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Neue Oberfläche bauen und Typen prüfen
+        run: |
+          cd web
+          npm ci
+          npm run build

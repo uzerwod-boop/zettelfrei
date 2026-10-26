@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Zettelfrei</title>
+<meta name="description" content="Excel bleibt. Das Tippen fällt weg. Excel-Dateien im Handwerk mit ganzen Sätzen bedienen, E-Rechnung, Arbeitszeit, Mahnwesen.">
+<meta name="theme-color" content="#0f6b5c">
+<link rel="icon" href="./favicon.svg">
+<style>
+@font-face{font-family:"Archivo";src:url("./lib/fonts/Archivo.ttf") format("truetype");font-weight:100 900;font-display:swap}
+@font-face{font-family:"IBM Plex Sans";src:url("./lib/fonts/IBMPlexSans.ttf") format("truetype");font-weight:100 700;font-display:swap}
+@font-face{font-family:"IBM Plex Mono";src:url("./lib/fonts/IBMPlexMono-Regular.ttf") format("truetype");font-display:swap}
+</style>
+<!-- Kernmodule und Bibliotheken: dieselben Dateien wie die klassische Oberfläche -->
+<script src="./lib/vendor/xlsx.full.min.js"></script>
+<script src="./lib/vendor/pdf.min.js"></script>
+<script src="./lib/vendor/exceljs.min.js"></script>
+<script src="./lib/vendor/jspdf.umd.min.js"></script>
+<script src="./lib/engine.js"></script>
+<script src="./lib/einvoice.js"></script>
+<script src="./lib/docs.js"></script>
+<script src="./lib/xlsxio.js"></script>
+<script src="./lib/examples.js"></script>
+<script src="./lib/ai.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="module" src="/src/main.tsx"></script>
+</body>
+</html>

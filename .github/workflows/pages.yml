@@ -18,10 +18,19 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Neue Oberfläche bauen (React)
+        run: |
+          cd web
+          npm ci
+          npm run build
       - name: Seite zusammenstellen
         run: |
           mkdir _site
           cp -r index.html src vendor fonts beispiele docs _site/
+          cp -r web/dist _site/app
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
