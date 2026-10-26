@@ -220,6 +220,7 @@ Was als Nächstes kommt – Reihenfolge nach Rückmeldungen aus den Betrieben. [
 - [x] **0.2** E-Rechnung lesen und schreiben, Arbeitszeit (ArbZG), Mahnwesen, Abnahme, Export
 - [x] **0.2.1** Sicherheitsprüfung, neuer Auftritt
 - [x] **0.2.2** Echte Excel-Dateien: zweizeilige Überschriften, Zwischensummen, SVERWEIS & Co.
+- [x] **0.3** Neuer Arbeitsplatz: Aufbau wie Excel, Assistent als Chat, Kennzahlen über der Tabelle
 - [ ] **Installierbar** als App auf dem Rechner und Handy (PWA), danach Installer für Windows und Mac
 - [ ] **Google Sheets** öffnen und zurückspeichern (nur die ausgewählte Tabelle, kein Zugriff auf das ganze Drive)
 - [ ] **ZUGFeRD-PDF erzeugen** (PDF/A-3 mit eingebetteter XML) statt nur XRechnung

@@ -117,6 +117,7 @@ function renderTabs(){
   var opts=model.sheets.map(function(s,i){ return s.hr>=0?'<option value="'+i+'">'+esc(s.name)+'</option>':""; }).join("");
   var sel=$("pdfTarget"), keep=sel.value; sel.innerHTML=opts; if(keep&&sel.querySelector('option[value="'+keep+'"]')) sel.value=keep; else sel.value=String(cur);
 }
+$("sumbar").addEventListener("click",function(e){ var b=e.target.closest("button[data-pane]"); if(b) selectTab(b.dataset.pane); });
 $("sheetTabs").addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b) return; cur=+b.dataset.i; persist(); renderAll(); });
 function renderGrid(){
   var sh=sheetObj(), calc=new ZF.Calc(model), issues=issuesFor().filter(function(x){ return x.blatt===sh.name; });
@@ -127,7 +128,7 @@ function renderGrid(){
     var h='<thead><tr><th class="rn"></th>'; for(var c=0;c<w;c++) h+="<th>"+ZF.colLetter(c)+"</th>"; h+="</tr></thead><tbody>";
     sh.top.forEach(function(r,ri){ h+='<tr class="top"><th class="rn">'+(ri+1)+"</th>"; for(var c=0;c<w;c++){ var v=calc.value(sh,ri+1,c); h+="<td>"+esc(fmtVal(sh,-1,v,r[c]))+"</td>"; } h+="</tr>"; });
     $("grid").innerHTML=h+"</tbody>";
-    $("sumbar").innerHTML="<span>In diesem Blatt wurde keine Tabelle mit Überschriften erkannt. Es wird beim Speichern unverändert übernommen.</span>";
+    $("sumbar").innerHTML='<p class="note">In diesem Blatt wurde keine Tabelle mit Überschriften erkannt. Es wird beim Speichern unverändert übernommen.</p>';
     return;
   }
   var C=sh.c0+sh.ncol, comp=ZF.computedCols(sh), numc=sh.headers.map(function(_,k){ return comp[k]||ZF.numericCol(sh,k); });
@@ -154,10 +155,17 @@ function renderGrid(){
   sh.foot.forEach(function(row,j){ var r=ZF.footRowNo(sh,j); h+='<tr class="foot"><th class="rn">'+r+"</th>"+cellsHtml(row,r,true)+"<td></td></tr>"; });
   $("grid").innerHTML=h+"</tbody>";
   var nIss=issues.length;
-  var s="<span>Zeilen <b>"+ZF.dataCount(sh)+"</b></span><span>Spalten <b>"+sh.ncol+"</b></span>";
-  var fcount=comp.filter(Boolean).length; if(fcount) s+="<span>Berechnete Spalten <b>"+fcount+"</b></span>";
-  s+= nIss? '<span class="warnc">'+nIss+" Hinweis"+(nIss===1?"":"e")+" zum Prüfen</span>" : "<span>Keine Auffälligkeiten</span>";
+  // Kennzahlen über der Tabelle: Zeilen, Spalten, Summe der ersten Euro-Spalte, Hinweise
+  var kp=function(label,val,cls,tag){ return "<"+(tag||"div")+' class="kpi '+(cls||"")+'"'+(tag==="button"?' type="button" data-pane="p-check"':"")+"><span>"+esc(label)+"</span><b>"+esc(val)+"</b></"+(tag||"div")+">"; };
+  var s=kp("Zeilen",String(ZF.dataCount(sh)))+kp("Spalten",String(sh.ncol));
+  var pick=function(re){ return sh.headers.findIndex(function(hd,k){ return re.test(hd) && !/preis|satz|%/i.test(hd) && numc[k]; }); };
+  var mk=pick(/wert|lohn|betrag|brutto|summe|gesamt/i); if(mk<0) mk=pick(/netto|€|eur/i);
+  if(mk>=0){ var tot=0; ZF.eachData(sh,function(_,i){ var v=calc.value(sh,ZF.dataRowNo(sh,i),sh.c0+mk); if(typeof v==="number") tot+=v; }); s+=kp("Summe "+sh.headers[mk].replace(/\s*€\s*$/,""),de(tot,2)+" €"); }
+  else { var fcount=comp.filter(Boolean).length; s+=kp("Berechnete Spalten",String(fcount)); }
+  s+= nIss? kp("Zum Prüfen",nIss+" Hinweis"+(nIss===1?"":"e"),"warn","button") : kp("Zum Prüfen","alles ok","ok");
   $("sumbar").innerHTML=s;
+  var last=history.length?history[history.length-1]:null;
+  $("saveState").textContent=last?"· gesichert "+new Date(last.t).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}):"";
   var sa=$("showAll"); if(sa) sa.onclick=function(){ sh._showAll=true; renderGrid(); };
   $("addRow").onclick=function(){ var r=ZF.appendRow(sh,[],model); mark(fresh,sh.name,[r]); commit("Leere Zeile "+r+" hinzugefügt"); var td=document.querySelector('td[data-r="'+r+'"]:not(.fxc)'); if(td) td.focus(); };
 }
@@ -309,7 +317,10 @@ function handleResult(res,box,label,stillRunningLabel){
   if(plan.length) box.appendChild(planView(plan,label));
   if(!txt&&!res.rueckfrage&&!plan.length) box.innerHTML='<p class="hint">Dazu gab es nichts zu tun. Versuchen Sie es mit einer genaueren Anweisung.</p>';
 }
-function fv(v){ if(v==null||v==="") return "leer"; return typeof v==="number"?de(v):String(v); }
+function fv(v,sheetName,k){ if(v==null||v==="") return "leer";
+  var sh=sheetName&&model.sheets.find(function(x){ return x.name===sheetName; });
+  if(sh&&k>=0&&typeof v==="number") return fmtVal(sh,k,v,null);
+  return typeof v==="number"?de(v):String(v); }
 function planView(plan,label){
   var div=document.createElement("div"); div.className="plan";
   var ok=plan.filter(function(p){ return !p.error; });
@@ -321,7 +332,7 @@ function planView(plan,label){
     var head = p.typ==="neu"?"Neue Zeile in „"+p.sheet+"“" : p.typ==="loeschen"?"Zeile "+p.row+" löschen" : "Zeile "+p.row+" ändern";
     var body = p.typ==="loeschen" ? '<div class="hint">'+esc(p.summary)+"</div>" :
       '<dl class="diff">'+p.changes.map(function(c){ return c.error? "<dt>"+esc(c.name)+'</dt><dd class="err">'+esc(c.error)+"</dd>" :
-        "<dt>"+esc(c.name)+"</dt><dd>"+(p.typ==="neu"?"<ins>"+esc(fv(c.nv))+"</ins>":"<del>"+esc(fv(c.old))+"</del> → <ins>"+esc(fv(c.nv))+"</ins>")+"</dd>"; }).join("")+"</dl>";
+        "<dt>"+esc(c.name)+"</dt><dd>"+(p.typ==="neu"?"<ins>"+esc(fv(c.nv,p.sheet,c.k))+"</ins>":"<del>"+esc(fv(c.old,p.sheet,c.k))+"</del> → <ins>"+esc(fv(c.nv,p.sheet,c.k))+"</ins>")+"</dd>"; }).join("")+"</dl>";
     li.innerHTML='<input type="checkbox" checked id="pl'+i+'_'+Date.now()+'" data-i="'+i+'" aria-label="'+esc(head)+'"><div><div class="what">'+esc(head)+"</div>"+body+"</div>";
     ul.appendChild(li);
   });
@@ -343,7 +354,7 @@ function busy(el,text){ el.innerHTML=text?'<span class="busy">'+esc(text)+"</spa
 /* Assistent */
 var cmdCtl;
 $("cmdStop").addEventListener("click",function(){ if(cmdCtl) cmdCtl.abort(); });
-$("cmdText").addEventListener("keydown",function(e){ if(e.key==="Enter"&&(e.metaKey||e.ctrlKey)) runCmd(); });
+$("cmdText").addEventListener("keydown",function(e){ if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){ e.preventDefault(); runCmd(); } });
 $("cmdBtn").addEventListener("click",runCmd);
 (function(){
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition, btn=$("micBtn"); if(!SR||!btn) return;
@@ -360,14 +371,20 @@ $("cmdBtn").addEventListener("click",runCmd);
 })();
 function runCmd(){
   var text=$("cmdText").value.trim(); if(!text||!model) return;
-  var out=$("cmdOut");
-  if(!AI.active()){ out.innerHTML='<p class="hint">'+NO_AI+'</p>'; return; }
-  cmdCtl=new AbortController(); $("cmdBtn").disabled=true; $("cmdStop").hidden=false; busy($("cmdBusy"),"Liest die Tabelle…"); out.innerHTML="";
+  // Chat: jede Anweisung bleibt als Nachricht stehen, die Antwort darunter
+  var msg=document.createElement("div"); msg.className="msg";
+  var me=document.createElement("div"); me.className="me"; me.textContent=text;
+  var out=document.createElement("div"); out.className="bot";
+  msg.appendChild(me); msg.appendChild(out); $("cmdOut").appendChild(msg);
+  var scrollDown=function(){ var t=$("thread"); t.scrollTop=t.scrollHeight; };
+  $("cmdText").value=""; scrollDown();
+  if(!AI.active()){ out.innerHTML='<p class="hint">'+NO_AI+'</p>'; scrollDown(); return; }
+  cmdCtl=new AbortController(); $("cmdBtn").disabled=true; $("cmdStop").hidden=false; busy($("cmdBusy"),"Liest die Tabelle…"); busy(out,"Liest die Tabelle…");
   var prompt=context()+"\n\nAnweisung oder Frage des Nutzers: \"\"\""+text+"\"\"\"\n\n"+RULES;
   AI.json(prompt,{signal:cmdCtl.signal}).then(function(res){
     handleResult(res,out,"Assistent: „"+(text.length>50?text.slice(0,50)+"…":text)+"“");
-  },function(e){ var m=aiError(e); if(m) out.innerHTML='<p class="hint" style="color:var(--warn)">'+esc(m)+"</p>"; })
-  .then(function(){ $("cmdBtn").disabled=false; $("cmdStop").hidden=true; busy($("cmdBusy"),""); });
+  },function(e){ var m=aiError(e); out.innerHTML=m?'<p class="hint" style="color:var(--warn)">'+esc(m)+"</p>":'<p class="hint">Abgebrochen.</p>'; })
+  .then(function(){ $("cmdBtn").disabled=false; $("cmdStop").hidden=true; busy($("cmdBusy"),""); scrollDown(); });
 }
 
 /* PDF & Foto */

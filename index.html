@@ -11,46 +11,68 @@
 <link rel="stylesheet" href="src/styles.css">
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <div class="brand">
-      <h1><svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><g transform="translate(0 0)"><rect x="0.0" y="0.0" width="13.0" height="13.0" rx="3.5" class="mk-f"/><rect x="17.0" y="0.0" width="13.0" height="13.0" rx="3.5" class="mk-f"/><rect x="34.0" y="0.0" width="13.0" height="13.0" rx="3.5" class="mk-f"/><rect x="51.0" y="0.0" width="13.0" height="13.0" rx="3.5" class="mk-f"/><rect x="1.1" y="18.1" width="10.8" height="10.8" rx="2.4" fill="none" class="mk-l" stroke-width="2.2"/><rect x="18.1" y="18.1" width="10.8" height="10.8" rx="2.4" fill="none" class="mk-l" stroke-width="2.2"/><rect x="34.0" y="17.0" width="13.0" height="13.0" rx="3.5" fill="#f6dd6a"/><rect x="52.1" y="18.1" width="10.8" height="10.8" rx="2.4" fill="none" class="mk-l" stroke-width="2.2"/><rect x="1.1" y="35.1" width="10.8" height="10.8" rx="2.4" fill="none" class="mk-l" stroke-width="2.2"/><rect x="17.0" y="34.0" width="13.0" height="13.0" rx="3.5" class="mk-f"/><rect x="35.1" y="35.1" width="10.8" height="10.8" rx="2.4" fill="none" class="mk-l" stroke-width="2.2"/><rect x="52.1" y="35.1" width="10.8" height="10.8" rx="2.4" fill="none" class="mk-l" stroke-width="2.2"/><rect x="0.0" y="51.0" width="13.0" height="13.0" rx="3.5" class="mk-f"/><rect x="17.0" y="51.0" width="13.0" height="13.0" rx="3.5" class="mk-f"/><rect x="34.0" y="51.0" width="13.0" height="13.0" rx="3.5" class="mk-f"/><rect x="51.0" y="51.0" width="13.0" height="13.0" rx="3.5" class="mk-f"/></g></svg><span>Zettel<span class="frei">frei</span></span></h1>
-      <p>Ihre Excel-Datei, bedient mit ganzen Sätzen.</p>
-    </div>
-    <div class="filebar">
-      <span class="chip" title="Geöffnete Datei"><span class="file" id="fileName">–</span></span>
-      <select id="exampleSel" aria-label="Beispiel öffnen">
-        <option value="">Beispiel öffnen…</option>
-      </select>
-      <button class="btn quiet" id="openBtn">Excel öffnen</button>
-      <input type="file" id="openInput" accept=".xlsx,.xlsm,.xls,.csv,.ods" hidden>
-      <button class="btn" id="saveBtn">Als Excel speichern</button>
-      <button type="button" class="chip click" id="aiChip" title="KI-Einstellungen"><span class="dot"></span><span id="aiText">KI wird verbunden…</span></button>
-    </div>
-  </header>
+<div class="app">
+  <nav class="rail tabs" role="tablist" aria-label="Bereiche" aria-orientation="vertical">
+    <div class="rail-logo" title="Zettelfrei"><svg class="mark dark" viewBox="0 0 64 64" aria-hidden="true"><g transform="translate(0 0)"><rect x="0.0" y="0.0" width="13.0" height="13.0" rx="3.5" class="mk-f"/><rect x="17.0" y="0.0" width="13.0" height="13.0" rx="3.5" class="mk-f"/><rect x="34.0" y="0.0" width="13.0" height="13.0" rx="3.5" class="mk-f"/><rect x="51.0" y="0.0" width="13.0" height="13.0" rx="3.5" class="mk-f"/><rect x="1.1" y="18.1" width="10.8" height="10.8" rx="2.4" fill="none" class="mk-l" stroke-width="2.2"/><rect x="18.1" y="18.1" width="10.8" height="10.8" rx="2.4" fill="none" class="mk-l" stroke-width="2.2"/><rect x="34.0" y="17.0" width="13.0" height="13.0" rx="3.5" fill="#f6dd6a"/><rect x="52.1" y="18.1" width="10.8" height="10.8" rx="2.4" fill="none" class="mk-l" stroke-width="2.2"/><rect x="1.1" y="35.1" width="10.8" height="10.8" rx="2.4" fill="none" class="mk-l" stroke-width="2.2"/><rect x="17.0" y="34.0" width="13.0" height="13.0" rx="3.5" class="mk-f"/><rect x="35.1" y="35.1" width="10.8" height="10.8" rx="2.4" fill="none" class="mk-l" stroke-width="2.2"/><rect x="52.1" y="35.1" width="10.8" height="10.8" rx="2.4" fill="none" class="mk-l" stroke-width="2.2"/><rect x="0.0" y="51.0" width="13.0" height="13.0" rx="3.5" class="mk-f"/><rect x="17.0" y="51.0" width="13.0" height="13.0" rx="3.5" class="mk-f"/><rect x="34.0" y="51.0" width="13.0" height="13.0" rx="3.5" class="mk-f"/><rect x="51.0" y="51.0" width="13.0" height="13.0" rx="3.5" class="mk-f"/></g></svg></div>
+    <button role="tab" aria-selected="true" data-pane="p-cmd" id="t-cmd"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4zM8 9h8M8 12h5"/></svg><span>Assistent</span></button>
+    <button role="tab" aria-selected="false" data-pane="p-pdf" id="t-pdf"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l5 5v13H7zM14 3v5h5"/></svg><span>Belege</span></button>
+    <button role="tab" aria-selected="false" data-pane="p-docs" id="t-docs"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18H6zM9 8h6M9 12h6M9 16h4"/></svg><span>Dokumente</span></button>
+    <button role="tab" aria-selected="false" data-pane="p-check" id="t-check"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4v5c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V7zM9 12l2 2 4-4"/></svg><span>Prüfen</span><span class="n" id="issueN" hidden></span></button>
+    <button role="tab" aria-selected="false" data-pane="p-hist" id="t-hist"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v5l3 2M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg><span>Verlauf</span></button>
+  </nav>
 
-  <div class="layout">
-    <section class="panel" aria-label="Assistent">
-      <div class="tabs" role="tablist">
-        <button role="tab" aria-selected="true" data-pane="p-cmd" id="t-cmd">Assistent</button>
-        <button role="tab" aria-selected="false" data-pane="p-pdf" id="t-pdf">Belege</button>
-        <button role="tab" aria-selected="false" data-pane="p-docs" id="t-docs">Dokumente</button>
-        <button role="tab" aria-selected="false" data-pane="p-check" id="t-check">Prüfen<span class="n" id="issueN" hidden></span></button>
-        <button role="tab" aria-selected="false" data-pane="p-hist" id="t-hist">Verlauf</button>
+  <main class="center">
+    <header class="top">
+      <div class="fileinfo">
+        <h1 class="vh">Zettelfrei</h1>
+        <span class="fname" id="fileName" title="Geöffnete Datei">–</span>
+        <span class="saved" id="saveState"></span>
       </div>
+      <div class="filebar">
+        <select id="exampleSel" aria-label="Beispiel öffnen">
+          <option value="">Beispiel öffnen…</option>
+        </select>
+        <button class="btn quiet" id="openBtn">Excel öffnen</button>
+        <input type="file" id="openInput" accept=".xlsx,.xlsm,.xls,.csv,.ods" hidden>
+        <button class="btn" id="saveBtn">Als Excel speichern</button>
+      </div>
+    </header>
 
-      <div class="pane" id="p-cmd">
-        <h2>Was soll in der Tabelle passieren?</h2>
-        <p class="hint">Eintragen, ändern, löschen oder fragen. Summen rechnet die Tabelle selbst, nicht die KI. Jede Änderung sehen Sie vorher.</p>
-        <div class="cmdwrap"><textarea id="cmdText" rows="3" placeholder="z. B. Becker hat heute bezahlt"></textarea>
-        <button type="button" class="mic" id="micBtn" hidden aria-pressed="false" title="Sprechen (Spracherkennung des Browsers)" aria-label="Sprechen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12h-2Z"/></svg></button></div>
+    <div class="kpis" id="sumbar" aria-live="polite"></div>
+
+    <section class="sheetwrap" aria-label="Tabelle">
+      <div class="sheet">
+        <div class="fxbar" aria-live="polite"><span class="addr" id="fxAddr">–</span><span class="fx">fx</span><span class="val" id="fxVal"></span></div>
+        <div class="scroll" id="scroll"><table id="grid"></table></div>
+        <div class="sheettabs" role="tablist" aria-label="Blätter" id="sheetTabs"></div>
+      </div>
+      <p class="foot">Zellen direkt anklicken und tippen, mit „=“ beginnt eine Formel, Uhrzeiten als 7:30. Beim Speichern bleiben Werte, Formeln, Farben, Schriften und Zahlenformate der Originaldatei erhalten. Die Datei bleibt in diesem Browser; an die KI geht nur, was Sie ausführen.</p>
+    </section>
+  </main>
+
+  <aside class="panel" aria-label="Seitenbereich">
+    <div class="pane chat" id="p-cmd">
+      <div class="panehead"><h2>Assistent</h2><button type="button" class="chip click" id="aiChip" title="KI-Einstellungen"><span class="dot"></span><span id="aiText">KI wird verbunden…</span></button></div>
+      <div class="thread" id="thread">
+        <div class="welcome">
+          <p><b>Sagen Sie einfach, was passiert ist.</b></p>
+          <p class="hint">Eintragen, ändern, löschen oder fragen. Summen rechnet die Tabelle selbst, nicht die KI. Jede Änderung sehen Sie vorher als „alt → neu“.</p>
+        </div>
+        <div id="cmdOut" class="msgs"></div>
+      </div>
+      <div class="composer">
         <div class="examples" id="cmdEx"></div>
-        <div class="row"><button class="btn" id="cmdBtn">Ausführen</button><button class="btn quiet" id="cmdStop" hidden>Stopp</button><span id="cmdBusy"></span></div>
-        <div id="cmdOut" style="display:grid;gap:10px"></div>
+        <div class="cmdwrap">
+          <label for="cmdText" class="vh">Nachricht an den Assistenten</label>
+          <textarea id="cmdText" rows="2" placeholder="Was ist passiert? z. B. „Becker hat heute bezahlt“"></textarea>
+          <button type="button" class="mic" id="micBtn" hidden aria-pressed="false" title="Sprechen (Spracherkennung des Browsers)" aria-label="Sprechen"><svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path fill="currentColor" d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12h-2Z"/></svg></button>
+          <button class="btn send" id="cmdBtn" aria-label="Ausführen" title="Ausführen (Strg+Enter)"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button>
+        </div>
+        <div class="row busyrow"><button class="btn quiet small" id="cmdStop" hidden>Stopp</button><span id="cmdBusy"></span></div>
       </div>
-
+    </div>
       <div class="pane" id="p-pdf" hidden>
-        <h2>Belege übernehmen</h2>
+        <div class="panehead"><h2>Belege übernehmen</h2></div>
         <p class="hint">E-Rechnungen (XRechnung, ZUGFeRD) werden exakt und ohne KI gelesen. Andere PDFs, Scans und Fotos liest die KI. Sie sehen vorher, welche Zeilen sich ändern.</p>
         <label class="hint" for="pdfTarget">In welches Blatt?</label>
         <select id="pdfTarget"></select>
@@ -62,19 +84,19 @@
       </div>
 
       <div class="pane" id="p-docs" hidden>
-        <h2>Dokumente</h2>
+        <div class="panehead"><h2>Dokumente</h2></div>
         <div id="docs" class="docs"></div>
       </div>
 
       <div class="pane" id="p-check" hidden>
-        <h2>Was stimmt nicht?</h2>
+        <div class="panehead"><h2>Was stimmt nicht?</h2></div>
         <p class="hint">Leere Pflichtfelder, doppelte Nummern, Text in Zahlenspalten und Formelfehler findet die Tabelle selbst. Fachliches prüft die KI.</p>
         <div class="row"><button class="btn ghost" id="aiCheckBtn">Fachlich prüfen lassen</button><span id="checkBusy"></span></div>
         <ul class="issues" id="issues"></ul>
       </div>
 
       <div class="pane" id="p-hist" hidden>
-        <h2>Verlauf</h2>
+        <div class="panehead"><h2>Verlauf</h2></div>
         <p class="hint">Jede Änderung ist ein Stand. Ein Klick holt einen früheren zurück.</p>
         <ul class="histlist" id="hist"></ul>
         <h2 style="margin-top:6px">Änderungsprotokoll</h2>
@@ -83,18 +105,7 @@
         <div class="row"><button class="btn quiet small" type="button" id="protCsv">Protokoll als CSV</button></div>
         <ul class="histlist prot" id="protList"></ul>
       </div>
-    </section>
-
-    <section class="sheetwrap" aria-label="Tabelle">
-      <div class="sheettabs" role="tablist" id="sheetTabs"></div>
-      <div class="sheet">
-        <div class="fxbar" aria-live="polite"><span class="addr" id="fxAddr">–</span><span class="fx">fx</span><span class="val" id="fxVal"></span></div>
-        <div class="sumbar" id="sumbar"></div>
-        <div class="scroll" id="scroll"><table id="grid"></table></div>
-      </div>
-      <p class="foot">Zellen direkt anklicken und tippen, mit „=“ beginnt eine Formel, Uhrzeiten als 7:30. Neue Zeilen übernehmen die Formeln der Zeile darüber, Summenzeilen wachsen mit. Beim Speichern bleiben Werte, Formeln, Farben, Schriften und Zahlenformate der Originaldatei erhalten. Die Datei bleibt in diesem Browser; an die KI geht nur, was Sie ausführen.</p>
-    </section>
-  </div>
+  </aside>
 </div>
 <div class="toast" id="toast" hidden></div>
 

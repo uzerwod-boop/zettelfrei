@@ -2,6 +2,15 @@
 
 Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.3.0] – 2026-10-26 · Neuer Arbeitsplatz
+
+### Neu
+- Neuer Aufbau wie in Excel: dunkle Leiste links (Assistent, Belege, Dokumente, Prüfen, Verlauf), Tabelle in der Mitte mit Spaltenbuchstaben, Formelleiste und Blättern unten, Seitenbereich rechts.
+- Assistent als Chat: Fragen und Anweisungen bleiben als Verlauf stehen, Antworten und Vorschauen darunter; Enter sendet, Umschalt+Enter macht eine neue Zeile.
+- Kennzahlen über der Tabelle: Zeilen, Spalten, Summe der wichtigsten Euro-Spalte, Hinweise zum Prüfen (ein Klick öffnet „Prüfen“).
+- Vorschau zeigt Uhrzeiten und Daten im richtigen Format.
+- Am Handy: Leiste oben, Tabelle und Assistent untereinander.
+
 ## [0.2.2] – 2026-10-20 · Echte Excel-Dateien
 
 ### Neu
@@ -54,7 +63,8 @@ Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog]
 - KI wahlweise über OpenRouter, eigenen Server, Claude API oder lokales Modell.
 - PDFs und Fotos von Lieferantenrechnungen per KI einlesen.
 
-[0.2.2]: https://github.com/uzerwod-boop/zettelfrei/compare/v0.2.1...main
+[0.3.0]: https://github.com/uzerwod-boop/zettelfrei/compare/v0.2.1...main
+[0.2.2]: https://github.com/uzerwod-boop/zettelfrei/commit/ef087fa
 [0.2.1]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.2.1
 [0.2.0]: https://github.com/uzerwod-boop/zettelfrei/commit/831d49f
 [0.1.0]: https://github.com/uzerwod-boop/zettelfrei/commit/ce33163
