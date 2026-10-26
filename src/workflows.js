@@ -100,7 +100,7 @@ function makeInvoice(){
     var J=jsPDF(); if(J) return A().saveFile("Rechnung_"+inv.number+".pdf",ZFD.invoicePDF(J,inv,res.totals).output("blob"),"application/pdf"); });
   var ops=[{typ:"aendern",blatt:o.sheet,zeile:o.row,werte:{}}]; ensureCols(o.sheet,["Rechnung am"]); ops[0].werte["Rechnung am"]=today();
   apply(ops,"E-Rechnung "+inv.number+" an "+o.kunde+" erstellt ("+ZFD.eur(res.totals.gross)+")");
-  msg.innerHTML='<p class="hint okc">XRechnung '+esc(inv.number)+' über '+ZFD.eur(res.totals.gross)+' erstellt. „Rechnung am“ ist eingetragen.</p>';
+  $("invMsg").innerHTML='<p class="hint okc">XRechnung '+esc(inv.number)+' über '+ZFD.eur(res.totals.gross)+' erstellt. „Rechnung am“ ist eingetragen.</p>';
 }
 function makeMahnung(sheet,row){
   var o=allOrders().find(function(x){ return x.sheet===sheet&&x.row===row; }); if(!o) return;

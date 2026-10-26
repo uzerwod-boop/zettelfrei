@@ -110,7 +110,7 @@ export function PlanCard({ plan, state, label, onDone }: { plan: any[]; state?: 
     </div>);
 }
 
-function Bot({ m }: { m: Msg }) {
+export function Bot({ m }: { m: Msg }) {
   if (m.status === "busy") return <div className="bot"><span className="busy">Liest die Tabelle…</span></div>;
   if (m.noAi) return <div className="bot"><p className="hint">Dafür braucht Zettelfrei eine KI. <button type="button" className="linkbtn" onClick={openSettings}>KI einrichten</button></p></div>;
   if (m.status === "error") return <div className="bot"><p className="hint warnc">{m.error}</p></div>;

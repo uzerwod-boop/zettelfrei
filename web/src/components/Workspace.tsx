@@ -77,6 +77,7 @@ const KIND: Record<string, string> = { leer: "Leerzeile", summe: "Zwischensumme"
 export function Sheet() {
   const s = useStore(); const sh = sheet();
   const [sel, setSel] = useState<Sel>(null), [edit, setEdit] = useState<string | null>(null), [showAll, setShowAll] = useState(false);
+  const editDone = useRef(false);
   const wrap = useRef<HTMLDivElement>(null), inp = useRef<HTMLInputElement>(null), drag = useRef(0);
   const [over, setOver] = useState(false);
   useEffect(() => { setSel(null); setEdit(null); setShowAll(false); }, [s.cur, s.model]);
@@ -95,13 +96,14 @@ export function Sheet() {
   }, [s.rev, s.cur]);
   if (!s.model || !sh || !view) return <section className="sheetwrap"><div className="sheet empty-state"><Empty /></div></section>;
   const { calc, flag, numc } = view;
+  if (edit == null) editDone.current = false;
   const C = sh.hr < 0 ? Math.max(1, ...sh.top.map((r: any[]) => (r || []).length)) : sh.c0 + sh.ncol;
   const editable = (r: number) => { if (sh.hr < 0 || r <= sh.hr + 1) return false; const i = r - sh.hr - 2; return !(i < sh.rows.length && sh.kind && sh.kind[i] === "leer"); };
   const lastRow = sh.hr < 0 ? sh.top.length : sh.hr + 1 + sh.rows.length + sh.foot.length;
   const selCell = sel ? ZF.cellAt(sh, sel.r, sh.c0 + sel.k) : null;
 
   const commitEdit = (move?: [number, number]) => {
-    if (!sel || edit == null) return;
+    if (!sel || edit == null || editDone.current) return; editDone.current = true;
     const before = rawOf(selCell);
     if (edit.trim() !== before) {
       ZF.setCell(sh, sel.r, sel.k, edit.trim(), { formula: true });
