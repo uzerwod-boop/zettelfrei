@@ -106,7 +106,7 @@ export function Belege() {
       <p className="hint">E-Rechnungen (XRechnung, ZUGFeRD) werden exakt und ohne KI gelesen. Andere PDFs, Scans und Fotos liest die KI. Sie sehen vorher, welche Zeilen sich ändern.</p>
       <label className="fl">In welches Blatt?
         <select id="pdfTarget" value={target >= 0 ? target : s.cur} onChange={e => setTarget(+e.target.value)} disabled={!s.model}>
-          {tables.map((o: any) => <option key={o.i} value={o.i}>{o.x.name}</option>)}</select></label>
+          {tables.length ? tables.map((o: any) => <option key={o.i} value={o.i}>{o.x.name}</option>) : <option value={0}>Zuerst eine Excel-Datei öffnen</option>}</select></label>
       <label className={"drop" + (over ? " over" : "")} htmlFor="pdfInput"
         onDragOver={e => { e.preventDefault(); e.stopPropagation(); setOver(true); }} onDragLeave={() => setOver(false)}
         onDrop={e => { e.preventDefault(); e.stopPropagation(); setOver(false); const f = e.dataTransfer.files[0]; if (f) handle(f); }}>
