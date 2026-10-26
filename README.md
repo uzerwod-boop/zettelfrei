@@ -229,7 +229,6 @@ Was als Nächstes kommt – Reihenfolge nach Rückmeldungen aus den Betrieben. [
 - [ ] **Google Sheets** öffnen und zurückspeichern (nur die ausgewählte Tabelle, kein Zugriff auf das ganze Drive)
 - [ ] **ZUGFeRD-PDF erzeugen** (PDF/A-3 mit eingebetteter XML) statt nur XRechnung
 - [ ] **DATEV-Export** für den Steuerberater
-- [ ] **Mehrere Nutzer** im Betrieb, z. B. über OneDrive oder einen gemeinsamen Ordner
 
 ## Grenzen des Prototyps
 
