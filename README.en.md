@@ -33,8 +33,8 @@
 
 | Platform | File | |
 |---|---|---|
-| **macOS** 11+ (Apple Silicon & Intel) | [Zettelfrei_0.5.0_universal.dmg](https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.0/Zettelfrei_0.5.0_universal.dmg) | ~7 MB |
-| **Windows** 10/11 (64-bit) | [Zettelfrei_0.5.0_x64-setup.exe](https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.0/Zettelfrei_0.5.0_x64-setup.exe) · [.msi](https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.0/Zettelfrei_0.5.0_x64_en-US.msi) | ~3 MB |
+| **macOS** 11+ (Apple Silicon & Intel) | [Zettelfrei_0.5.1_universal.dmg](https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.1/Zettelfrei_0.5.1_universal.dmg) | ~7 MB |
+| **Windows** 10/11 (64-bit) | [Zettelfrei_0.5.1_x64-setup.exe](https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.1/Zettelfrei_0.5.1_x64-setup.exe) · [.msi](https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.1/Zettelfrei_0.5.1_x64_en-US.msi) | ~3 MB |
 | **Browser** | [uzerwod-boop.github.io/zettelfrei](https://uzerwod-boop.github.io/zettelfrei/) | no install |
 
 > [!TIP]

@@ -46,8 +46,8 @@
 
 <table>
 <tr>
-<td align="center" width="33%"><b>macOS</b><br><sub>Apple Silicon und Intel · ab macOS 11</sub><br><br><a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.0/Zettelfrei_0.5.0_universal.dmg"><b>Zettelfrei_0.5.0_universal.dmg</b></a><br><sub>ca. 7 MB</sub></td>
-<td align="center" width="33%"><b>Windows</b><br><sub>Windows 10 und 11 · 64 Bit</sub><br><br><a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.0/Zettelfrei_0.5.0_x64-setup.exe"><b>Zettelfrei_0.5.0_x64-setup.exe</b></a><br><sub>ca. 3 MB · auch als <a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.0/Zettelfrei_0.5.0_x64_en-US.msi">.msi</a></sub></td>
+<td align="center" width="33%"><b>macOS</b><br><sub>Apple Silicon und Intel · ab macOS 11</sub><br><br><a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.1/Zettelfrei_0.5.1_universal.dmg"><b>Zettelfrei_0.5.1_universal.dmg</b></a><br><sub>ca. 7 MB</sub></td>
+<td align="center" width="33%"><b>Windows</b><br><sub>Windows 10 und 11 · 64 Bit</sub><br><br><a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.1/Zettelfrei_0.5.1_x64-setup.exe"><b>Zettelfrei_0.5.1_x64-setup.exe</b></a><br><sub>ca. 3 MB · auch als <a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.1/Zettelfrei_0.5.1_x64_en-US.msi">.msi</a></sub></td>
 <td align="center" width="33%"><b>Browser</b><br><sub>ohne Installation · Chrome, Edge, Firefox, Safari</sub><br><br><a href="https://uzerwod-boop.github.io/zettelfrei/"><b>uzerwod-boop.github.io/zettelfrei</b></a><br><sub>sofort loslegen</sub></td>
 </tr>
 </table>

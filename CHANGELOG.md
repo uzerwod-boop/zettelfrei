@@ -2,6 +2,16 @@
 
 Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.5.1] – 2026-10-26 · Feinschliff
+
+### Geändert
+- Auswahlfelder sehen auf macOS, Windows und im Browser gleich aus: flach, mit eigenem Pfeil, in hellem und dunklem Design.
+- Schmale Scrollbalken in den Farben der Oberfläche statt der grauen Systembalken.
+- „In welches Blatt?“ zeigt ohne geöffnete Datei einen Hinweis statt eines leeren Feldes.
+
+### Behoben
+- Die Bereiche rechts ließen sich seitlich verschieben (Scrollbalken unter den Beispiel-Knöpfen).
+
 ## [0.5.0] – 2026-10-26 · Jetzt als Programm
 
 ### Neu
@@ -91,6 +101,7 @@ Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog]
 - KI wahlweise über OpenRouter, eigenen Server, Claude API oder lokales Modell.
 - PDFs und Fotos von Lieferantenrechnungen per KI einlesen.
 
+[0.5.1]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.5.1
 [0.5.0]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.5.0
 [0.4.0]: https://github.com/uzerwod-boop/zettelfrei/commit/472ebad
 [0.3.0]: https://github.com/uzerwod-boop/zettelfrei/commit/9e32630
