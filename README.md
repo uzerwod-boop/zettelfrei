@@ -11,20 +11,23 @@
 
 <p align="center">
   Die Excel-Dateien, die ein Handwerksbetrieb sowieso hat, bedient mit ganzen Sätzen –<br>
-  plus E-Rechnung, Arbeitszeit, Mahnwesen und Abnahme. Läuft im Browser, die Datei bleibt bei Ihnen.
+  plus E-Rechnung, Arbeitszeit, Mahnwesen und Abnahme. Als Programm für Mac und Windows oder im Browser.<br>
+  Kostenlos, Open Source, und die Datei bleibt bei Ihnen.
 </p>
 
 <p align="center">
   <a href="https://github.com/uzerwod-boop/zettelfrei/releases"><img alt="Version" src="https://img.shields.io/github/package-json/v/uzerwod-boop/zettelfrei?style=flat-square&label=Version&color=0f6b5c"></a>
   <a href="https://github.com/uzerwod-boop/zettelfrei/actions/workflows/tests.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/uzerwod-boop/zettelfrei/tests.yml?style=flat-square&label=Tests"></a>
   <img alt="XRechnung 3.0" src="https://img.shields.io/badge/XRechnung-3.0%20gepr%C3%BCft-1d2528?style=flat-square">
-  <img alt="Ohne Installation" src="https://img.shields.io/badge/l%C3%A4uft%20im-Browser-26282e?style=flat-square">
+  <a href="#herunterladen"><img alt="macOS · Windows · Browser" src="https://img.shields.io/badge/macOS%20%C2%B7%20Windows%20%C2%B7%20Browser-26282e?style=flat-square"></a>
   <a href="#lizenz"><img alt="Lizenz" src="https://img.shields.io/badge/Lizenz-MIT%20%7C%20Apache--2.0-3a3a3a?style=flat-square"></a>
   <img alt="Status" src="https://img.shields.io/badge/Status-Prototyp-f6dd6a?style=flat-square&labelColor=3a3a3a">
 </p>
 
 <p align="center">
+  <a href="#herunterladen"><b>Herunterladen</b></a> ·
   <a href="https://uzerwod-boop.github.io/zettelfrei/"><b>Online ausprobieren</b></a> ·
+  <a href="#neu-in-05">Neu in 0.5</a> ·
   <a href="#was-es-kann">Was es kann</a> ·
   <a href="#schnellstart">Schnellstart</a> ·
   <a href="#ki-einrichten">KI einrichten</a> ·
@@ -35,9 +38,34 @@
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif" alt="Demo: ZUGFeRD-Rechnung einlesen, der Lagerbestand steigt nach einem Klick" width="900">
-  <br><sub>Lieferantenrechnung (ZUGFeRD) einlesen – exakt, ohne KI. Nach „Übernehmen“ steigt der Lagerbestand.</sub>
+  <img src="docs/demo-app.gif" alt="Zettelfrei startet aus dem Dock, eine Excel-Datei wird aus dem Ordner ins Fenster gezogen" width="900">
+  <br><sub>Aus dem Dock starten, Excel-Datei aus dem Ordner hineinziehen – fertig. Die Datei bleibt auf dem Rechner.</sub>
 </p>
+
+## Herunterladen
+
+<table>
+<tr>
+<td align="center" width="33%"><b>macOS</b><br><sub>Apple Silicon und Intel · ab macOS 11</sub><br><br><a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.0/Zettelfrei_0.5.0_universal.dmg"><b>Zettelfrei_0.5.0_universal.dmg</b></a><br><sub>ca. 7 MB</sub></td>
+<td align="center" width="33%"><b>Windows</b><br><sub>Windows 10 und 11 · 64 Bit</sub><br><br><a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.0/Zettelfrei_0.5.0_x64-setup.exe"><b>Zettelfrei_0.5.0_x64-setup.exe</b></a><br><sub>ca. 3 MB · auch als <a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.0/Zettelfrei_0.5.0_x64_en-US.msi">.msi</a></sub></td>
+<td align="center" width="33%"><b>Browser</b><br><sub>ohne Installation · Chrome, Edge, Firefox, Safari</sub><br><br><a href="https://uzerwod-boop.github.io/zettelfrei/"><b>uzerwod-boop.github.io/zettelfrei</b></a><br><sub>sofort loslegen</sub></td>
+</tr>
+</table>
+
+Alle Versionen: [Releases](https://github.com/uzerwod-boop/zettelfrei/releases). Die Programme werden automatisch aus diesem Repository gebaut (GitHub Actions, [desktop.yml](.github/workflows/desktop.yml)).
+
+> [!TIP]
+> **Erster Start:** Die Programme sind noch nicht bei Apple bzw. Microsoft signiert. Das System fragt deshalb einmal nach.
+> - **macOS:** `.dmg` öffnen, Zettelfrei in „Programme“ ziehen. Beim ersten Start „Fertig“ wählen, dann **Systemeinstellungen → Datenschutz & Sicherheit → „Dennoch öffnen“**. Danach startet es normal aus dem Dock.
+> - **Windows:** Bei „Der Computer wurde durch Windows geschützt“ auf **„Weitere Informationen“ → „Trotzdem ausführen“** klicken. Installiert wird nur für den eigenen Benutzer, ohne Admin-Rechte.
+
+## Neu in 0.5
+
+- 🖥️ **Programm für Mac und Windows.** Installieren, im Dock oder Startmenü öffnen. Kein Server, kein Konto, die Datei bleibt auf dem Rechner. Gespeichert wird über den gewohnten „Sichern unter“-Dialog.
+- ✨ **Neue Oberfläche.** Die Tabelle steht im Mittelpunkt: anklicken und lostippen wie in Excel (Enter, Tab, Pfeiltasten, Entf, F2), links die Bereiche, rechts der Assistent. Chat und Belege bleiben beim Wechseln erhalten.
+- 📂 **Hineinziehen.** Excel-Datei aus dem Ordner ins Fenster ziehen – sie öffnet sich. Eine Rechnung (XRechnung, ZUGFeRD, PDF, Foto) auf die Tabelle ziehen – sie wird gelesen und als Vorschau angezeigt.
+- 🌐 **Gleiche Oberfläche überall.** Programm, Browser und `npm start` zeigen dieselbe Oberfläche. Die bisherige Ansicht bleibt unter [/klassisch/](https://uzerwod-boop.github.io/zettelfrei/klassisch/) erreichbar.
+- 🆓 **Weiter kostenlos und Open Source** – MIT oder Apache-2.0, nach Wahl.
 
 > [!NOTE]
 > Prototyp von **Bohdan Sychevskyi**, entwickelt gemeinsam mit einem guten Freund: **Claude** von Anthropic. Die Idee und die Produktentscheidungen kommen von mir, Code und Tests haben wir zusammen geschrieben. Feedback von Handwerksbetrieben ist sehr willkommen.
@@ -59,6 +87,10 @@ Zettelfrei öffnet Stundenzettel, Lagerliste oder Auftragsliste und lässt sie m
     <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dunkel.png">
     <img src="docs/screenshot-hell.png" alt="Zettelfrei: Lagerliste, daneben eine ZUGFeRD-Rechnung, die ohne KI gelesen wurde" width="900">
   </picture>
+</p>
+
+<p align="center">
+  <img src="docs/desktop.png" alt="Zettelfrei als Programm auf dem Mac: Stundenzettel, daneben der Assistent" width="900">
 </p>
 
 ### Echte Excel-Dateien (seit 0.2.2)
@@ -93,21 +125,24 @@ Zettelfrei öffnet Stundenzettel, Lagerliste oder Auftragsliste und lässt sie m
 
 ## Schnellstart
 
-Voraussetzung: [Node.js](https://nodejs.org) ab Version 18. Keine weiteren Pakete nötig.
+Am einfachsten: [Programm herunterladen](#herunterladen) oder [im Browser öffnen](https://uzerwod-boop.github.io/zettelfrei/).
+
+Selbst starten (z. B. im Firmennetz mit eigenem KI-Schlüssel) – Voraussetzung: [Node.js](https://nodejs.org) ab Version 20:
 
 ```bash
 git clone https://github.com/uzerwod-boop/zettelfrei.git
 cd zettelfrei
+cd web && npm ci && npm run build && cd ..   # Oberfläche bauen (einmalig)
 npm start
 ```
 
-Dann **http://localhost:8787** öffnen. Sieben Beispieldateien und zwei Beispiel-E-Rechnungen sind eingebaut – darunter „Stresstest Chaos Tabelle“, eine absichtlich unordentliche Datei mit zweizeiligen Überschriften, Zwischensummen, Daten in sieben Formaten und Zahlen als Text, wie sie in echten Betrieben vorkommt (oben „Beispiel öffnen…“), oder eine eigene Excel-Datei mit „Excel öffnen“ laden bzw. hineinziehen.
+Dann **http://localhost:8787** öffnen. Ohne den Bau-Schritt startet die klassische Ansicht; sie bleibt immer unter `/klassisch/` erreichbar. Sieben Beispieldateien und zwei Beispiel-E-Rechnungen sind eingebaut – darunter „Stresstest Chaos Tabelle“, eine absichtlich unordentliche Datei mit zweizeiligen Überschriften, Zwischensummen, Daten in sieben Formaten und Zahlen als Text, wie sie in echten Betrieben vorkommt (oben „Beispiel öffnen…“), oder eine eigene Excel-Datei mit „Excel öffnen“ laden bzw. hineinziehen.
 
 Ohne KI funktioniert bereits: Datei öffnen, Zellen bearbeiten, Formeln rechnen, Zeilen hinzufügen und löschen, Prüfen, Verlauf, Speichern – und alles aus Version 0.2: E-Rechnungen lesen und schreiben, Arbeitszeit, Mahnwesen, Abnahme, Export, Wochenbericht. Die KI braucht es nur für freie Sätze, PDFs ohne E-Rechnung und Fotos.
 
 ## KI einrichten
 
-Ein Klick auf den KI-Status oben rechts öffnet die Einstellungen. Vier Wege:
+Ein Klick auf den KI-Status im Assistenten öffnet die Einstellungen. Vier Wege:
 
 | Weg | Wofür | So geht's |
 |---|---|---|
@@ -128,7 +163,7 @@ HOST=0.0.0.0                           # im Firmennetz erreichbar machen (Standa
 
 ### Datenschutz
 
-- Die Excel-Datei wird im Browser verarbeitet und nicht hochgeladen.
+- Die Excel-Datei wird auf dem eigenen Rechner verarbeitet (im Programm oder im Browser) und nicht hochgeladen.
 - An die KI geht nur, was Sie ausführen: der Tabelleninhalt als Text und ggf. das Dokument.
 - Wer Kundendaten verarbeitet, sollte mit dem KI-Anbieter einen AV-Vertrag haben oder ein lokales Modell nutzen. Bei OpenRouter hängt der Datenweg vom gewählten Modellanbieter ab.
 
@@ -172,7 +207,9 @@ Die Engine (`src/engine.js`) erkennt selbst:
 ## Projektaufbau
 
 ```
-index.html            Oberfläche
+web/                  Oberfläche (React + TypeScript, Vite) – für Browser und Programm
+web/src-tauri/        Programm für macOS und Windows (Tauri, Rust): Fenster, „Sichern unter“-Dialog
+index.html            klassische Oberfläche (unter /klassisch/)
 src/engine.js         Excel-Engine: lesen, rechnen, ändern, schreiben (liest mit ExcelJS, CSV selbst, alte .xls mit SheetJS)
 src/ai.js             KI-Anbindung: OpenRouter, eigener Server, Claude API, lokales Modell
 src/app.js            Bedienung, Vorschau, Prüfen, Verlauf, Änderungsprotokoll
@@ -196,6 +233,14 @@ pip install playwright && python -m playwright install chromium
 python tests/browser_test.py      # Ende-zu-Ende im Browser: ohne KI, OpenRouter, Claude API, lokales Modell, Server
 python tests/browser_v2_test.py   # Version 0.2: E-Rechnung, ArbZG, Mahnung, Abnahme, Export, Formatierung
 python tests/browser_v3_test.py   # Version 0.3/0.4: Arbeitsplatz, Chat, Auswertungen, Diagramm, Auswertungsblatt
+python tests/browser_web_test.py  # Version 0.5: neue Oberfläche – Zellen, Assistent, Belege, Prüfen, Verlauf, Dokumente
+```
+
+### Programm selbst bauen
+
+```bash
+cd web && npm ci
+npm run tauri build               # braucht Rust (rustup.rs); unter Linux zusätzlich webkit2gtk
 ```
 
 ### XRechnung prüfen
@@ -224,14 +269,16 @@ Was als Nächstes kommt – Reihenfolge nach Rückmeldungen aus den Betrieben. [
 - [x] **0.2.2** Echte Excel-Dateien: zweizeilige Überschriften, Zwischensummen, SVERWEIS & Co.
 - [x] **0.3** Neuer Arbeitsplatz: Aufbau wie Excel, Assistent als Chat, Kennzahlen über der Tabelle
 - [x] **0.4** Auswertungen: gruppieren, Prozent und Unterschiede, Blätter verknüpfen, Diagramme, 40 weitere Excel-Funktionen
+- [x] **0.5** Programm für macOS und Windows, neue Oberfläche, Dateien hineinziehen
 - [ ] **Mehrere Mitarbeitende:** Stunden, Material und Fotos vom Handy per Link, das Büro übernimmt sie in dieselbe Excel-Datei
-- [ ] **Installierbar** als App auf dem Rechner und Handy (PWA), danach Installer für Windows und Mac
+- [ ] **Signierte Programme** (Apple Developer ID, Windows-Zertifikat) und automatische Updates
 - [ ] **Google Sheets** öffnen und zurückspeichern (nur die ausgewählte Tabelle, kein Zugriff auf das ganze Drive)
 - [ ] **ZUGFeRD-PDF erzeugen** (PDF/A-3 mit eingebetteter XML) statt nur XRechnung
 - [ ] **DATEV-Export** für den Steuerberater
 
 ## Grenzen des Prototyps
 
+- Die Programme sind noch nicht signiert; beim ersten Start fragt das System einmal nach (siehe [Herunterladen](#herunterladen)). Updates kommen noch nicht automatisch.
 - Formatierung bleibt erhalten, wenn eine `.xlsx`-Datei geöffnet wurde. Bei `.xls`/`.csv` werden nur Werte, Formeln und Zahlenformate gespeichert. Bedingte Formatierungen und verbundene Zellen innerhalb der Tabelle werden nicht angepasst.
 - E-Rechnungen werden als XRechnung (XML) erzeugt. Ein ZUGFeRD-PDF (PDF/A-3 mit eingebetteter XML) erzeugt der Prototyp noch nicht; das PDF dient nur der Ansicht.
 - Mehrere Nutzer gleichzeitig und Synchronisation mit OneDrive oder Google Drive sind noch nicht eingebaut.
@@ -242,7 +289,7 @@ Was als Nächstes kommt – Reihenfolge nach Rückmeldungen aus den Betrieben. [
 
 ## Online ausprobieren (GitHub Pages)
 
-Das Repository enthält einen Workflow, der die Seite auf GitHub Pages veröffentlicht (Einstellungen → Pages → Quelle „GitHub Actions“). Dort läuft alles außer dem eigenen Server; die KI wird am einfachsten mit einem OpenRouter-Schlüssel eingerichtet.
+Das Repository enthält einen Workflow, der die Seite auf GitHub Pages veröffentlicht (Einstellungen → Pages → Quelle „GitHub Actions“): die neue Oberfläche als Startseite, die klassische unter `/klassisch/`. Dort läuft alles außer dem eigenen Server; die KI wird am einfachsten mit einem OpenRouter-Schlüssel eingerichtet.
 
 ## English summary
 

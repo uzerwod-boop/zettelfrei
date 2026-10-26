@@ -2,6 +2,25 @@
 
 Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.5.0] – 2026-10-26 · Jetzt als Programm
+
+### Neu
+- Zettelfrei als Programm für macOS (Apple Silicon und Intel, `.dmg`) und Windows (`.exe`, `.msi`), gebaut mit Tauri. Kein Server, kein Konto; gespeichert wird über den „Sichern unter“-Dialog des Systems.
+- Neue Oberfläche in React und TypeScript (`web/`) – dieselbe im Programm, im Browser und bei `npm start`. Zellen anklicken und tippen wie in Excel (Enter, Tab, Pfeiltasten, Entf, F2, Esc).
+- Excel-Datei ins Fenster ziehen öffnet sie, auch auf der leeren Startseite. Rechnungen und Fotos auf die Tabelle ziehen öffnet „Belege“.
+- Chat und Belege behalten ihren Stand beim Wechseln der Bereiche.
+- GitHub Actions baut die Programme automatisch in einen Release-Entwurf (`.github/workflows/desktop.yml`).
+- App-Symbol aus dem Logo.
+- Neuer Ende-zu-Ende-Test für die neue Oberfläche (`tests/browser_web_test.py`).
+
+### Geändert
+- Startseite (GitHub Pages und `npm start`) ist die neue Oberfläche. Die bisherige liegt unter `/klassisch/`, `/app/` leitet um.
+- Texte sagen „auf diesem Rechner“ statt „im Browser“, wenn Zettelfrei als Programm läuft.
+
+### Behoben
+- Eine Zelländerung wurde im Verlauf doppelt eingetragen.
+- Nach „E-Rechnung schreiben“ blieb die Bestätigung leer (auch in der klassischen Ansicht).
+
 ## [0.4.0] – 2026-10-26 · Auswertungen
 
 ### Neu
@@ -72,7 +91,8 @@ Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog]
 - KI wahlweise über OpenRouter, eigenen Server, Claude API oder lokales Modell.
 - PDFs und Fotos von Lieferantenrechnungen per KI einlesen.
 
-[0.4.0]: https://github.com/uzerwod-boop/zettelfrei/compare/v0.2.1...main
+[0.5.0]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.5.0
+[0.4.0]: https://github.com/uzerwod-boop/zettelfrei/commit/472ebad
 [0.3.0]: https://github.com/uzerwod-boop/zettelfrei/commit/9e32630
 [0.2.2]: https://github.com/uzerwod-boop/zettelfrei/commit/ef087fa
 [0.2.1]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.2.1

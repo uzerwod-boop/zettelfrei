@@ -5,10 +5,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); D = os.path.
 VER = sys.argv[1] if len(sys.argv) > 1 else "0.2.1"
 F = "file://" + os.path.join(ROOT, "fonts")
 logo = open(os.path.join(D, "brand", "zettelfrei-logo.svg")).read()
-ITEMS = [("Sicherheit", "Formeln führen keinen Code aus, keine Formel-Einschleusung, Server nur für die eigene Oberfläche"),
+ITEMS_021 = [("Sicherheit", "Formeln führen keinen Code aus, keine Formel-Einschleusung, Server nur für die eigene Oberfläche"),
          ("Neue Leser", "Excel über ExcelJS, CSV im deutschen Format, PDF.js und jsPDF abgesichert"),
          ("Gutschriften", "werden mit Minus gebucht und senken den Lagerbestand"),
          ("Neuer Auftritt", "Logo, README, Lizenz nach Wahl MIT oder Apache-2.0")]
+ITEMS_050 = [("Programm für Mac und Windows", "Installieren, im Dock oder Startmenü öffnen – die Datei bleibt auf dem Rechner"),
+         ("Neue Oberfläche", "Wie Excel: anklicken und tippen, Assistent rechts, alles in einem Fenster"),
+         ("Hineinziehen", "Excel-Dateien und Rechnungen aus dem Ordner direkt ins Fenster ziehen"),
+         ("Kostenlos", "Open Source, MIT oder Apache-2.0 – auch weiter im Browser nutzbar")]
+ITEMS = ITEMS_050 if VER.startswith("0.5") else ITEMS_021
+HEAD = "Jetzt als <em>Programm</em>." if VER.startswith("0.5") else "Geprüft und <em>gehärtet</em>."
 cells = "".join(f'<div class="it"><b>{t}</b><span>{d}</span></div>' for t, d in ITEMS)
 html = f"""<html><head><style>
 @font-face{{font-family:A;src:url('{F}/Archivo.ttf');font-weight:100 900}}
@@ -26,7 +32,7 @@ h2{{font:800 58px/1.05 A;letter-spacing:-.02em;margin:44px 0 34px}} h2 em{{font-
 .it b{{font:700 22px P}} .it span{{font:400 18px/1.35 P;color:#5d686b}}
 </style></head><body><div class="grid"></div><div class="card">
 <div class="top">{logo}<span class="ver">Version {VER}</span></div>
-<h2>Geprüft und <em>gehärtet</em>.</h2><div class="items">{cells}</div></div></body></html>"""
+<h2>{HEAD}</h2><div class="items">{cells}</div></div></body></html>"""
 async def main():
     p = os.path.join(D, "_banner.html"); open(p, "w").write(html)
     async with async_playwright() as pw:

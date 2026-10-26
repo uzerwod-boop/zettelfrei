@@ -10,11 +10,16 @@ def free_port():
 
 async def app_shot(b, port, scheme, out):
     ctx = await b.new_context(viewport={"width": 1360, "height": 820}, device_scale_factor=2, color_scheme=scheme)
+    await ctx.add_init_script("try{localStorage.clear()}catch(e){}")
     pg = await ctx.new_page(); await pg.goto(f"http://127.0.0.1:{port}/"); await pg.wait_for_timeout(600)
-    await pg.select_option("#exampleSel", "Material_Lager.xlsx"); await pg.wait_for_timeout(400)
+    await pg.select_option('select[aria-label="Beispiel öffnen"]', "Material_Lager.xlsx"); await pg.wait_for_timeout(500)
     await pg.click("#t-pdf"); await pg.click('[data-sampledoc="Rechnung_Kaiser_RE-2026-4502_ZUGFeRD.pdf"]'); await pg.wait_for_timeout(1500)
-    await pg.add_style_tag(content=".toast,#toast{display:none!important}")
-    await pg.screenshot(path=out); await ctx.close()
+    await pg.add_style_tag(content=".toast{display:none!important}")
+    await pg.screenshot(path=out)
+    if scheme == "light":  # Bereich Dokumente
+        await pg.select_option('select[aria-label="Beispiel öffnen"]', "Auftraege_2026.xlsx"); await pg.wait_for_timeout(600)
+        await pg.click("#t-docs"); await pg.wait_for_timeout(700); await pg.screenshot(path=os.path.join(D, "screenshot-dokumente.png"))
+    await ctx.close()
 
 async def social(b, out):
     mark = open(os.path.join(D, "brand", "zettelfrei-mark.svg")).read()
@@ -32,7 +37,7 @@ h1{{font:800 96px/1 A;letter-spacing:-.02em;margin:26px 0 18px}}
 .s{{position:absolute;left:690px;top:70px;width:760px;border-radius:14px;box-shadow:0 20px 60px rgba(15,60,50,.25);border:1px solid #d9ddd6}}
 </style></head><body><div class="l"><div class="mk">{mark}</div><h1>Zettel<span style="color:#0f6b5c">frei</span></h1>
 <p class="t">Excel bleibt.<br><b>Das Tippen fällt weg.</b></p>
-<div class="chips"><span>E-Rechnung</span><span>Arbeitszeit</span><span>Mahnwesen</span><span>Abnahme</span></div></div>
+<div class="chips"><span>macOS</span><span>Windows</span><span>Browser</span><span>E-Rechnung</span><span>Arbeitszeit</span><span>Mahnwesen</span></div></div>
 <img class="s" src="file://{D}/screenshot-hell.png"><div class="by">Open Source · Bohdan Sychevskyi</div></body></html>"""
     p = os.path.join(D, "_social.html"); open(p, "w").write(html)
     ctx = await b.new_context(viewport={"width": 1280, "height": 640}, device_scale_factor=1)

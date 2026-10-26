@@ -11,10 +11,12 @@
 
 <p align="center">
   Small trade businesses run on spreadsheets – timesheets, stock lists, job lists.<br>
-  Zettelfrei lets them work with those files in plain sentences and takes care of German paperwork.
+  Zettelfrei lets them work with those files in plain sentences and takes care of German paperwork.<br>
+  Desktop app for macOS and Windows, or right in the browser. Free and open source.
 </p>
 
 <p align="center">
+  <a href="#download"><b>Download</b></a> ·
   <a href="https://uzerwod-boop.github.io/zettelfrei/"><b>Try it online</b></a> ·
   <a href="#what-it-does">What it does</a> ·
   <a href="#quick-start">Quick start</a> ·
@@ -23,9 +25,27 @@
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif" alt="Demo: a ZUGFeRD e-invoice is read without AI and the stock level goes up after one click" width="900">
-  <br><sub>Drop in a supplier e-invoice (ZUGFeRD) – read exactly, no AI. Click “Übernehmen” and stock goes up.</sub>
+  <img src="docs/demo-app.gif" alt="Zettelfrei launches from the Dock and an Excel file is dragged in from a folder" width="900">
+  <br><sub>Launch from the Dock, drag in your Excel file – done. The file stays on your computer.</sub>
 </p>
+
+## Download
+
+| Platform | File | |
+|---|---|---|
+| **macOS** 11+ (Apple Silicon & Intel) | [Zettelfrei_0.5.0_universal.dmg](https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.0/Zettelfrei_0.5.0_universal.dmg) | ~7 MB |
+| **Windows** 10/11 (64-bit) | [Zettelfrei_0.5.0_x64-setup.exe](https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.0/Zettelfrei_0.5.0_x64-setup.exe) · [.msi](https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.0/Zettelfrei_0.5.0_x64_en-US.msi) | ~3 MB |
+| **Browser** | [uzerwod-boop.github.io/zettelfrei](https://uzerwod-boop.github.io/zettelfrei/) | no install |
+
+> [!TIP]
+> The apps are not code-signed yet. **macOS:** on first launch choose “Done”, then *System Settings → Privacy & Security → Open Anyway*. **Windows:** in the SmartScreen dialog click *More info → Run anyway*. Built automatically from this repository by GitHub Actions.
+
+## New in 0.5
+
+- 🖥️ **Desktop app for macOS and Windows** (Tauri): no server, no account, your file stays on your computer; saving uses the native “Save as” dialog.
+- ✨ **New interface** (React + TypeScript): click a cell and type like in Excel, sections on the left, assistant on the right.
+- 📂 **Drag and drop:** drag an Excel file into the window to open it, drag an invoice (XRechnung, ZUGFeRD, PDF, photo) onto the sheet to read it.
+- 🆓 Still **free and open source** (MIT or Apache-2.0). The previous interface remains at `/klassisch/`.
 
 > [!NOTE]
 > The user interface is in German, because the product is built for German businesses. Prototype by **Bohdan Sychevskyi**, built together with a good friend: **Claude** by Anthropic.
@@ -43,7 +63,7 @@ German *Handwerk* businesses (tilers, electricians, plumbers …) keep their ope
 - 📤 **E-invoices out:** generates XRechnung 3.0, validated against the official EN 16931 and XRechnung Schematron rules.
 - ⏱️ **Working time:** flags violations of the German Working Hours Act (over 10 h/day, missing breaks, under 11 h rest).
 - 💶 **Paperwork:** payment reminders as PDF letters, signed acceptance reports on the phone, CSV export for the tax advisor, weekly report.
-- 💾 **Your file stays yours:** saved back to `.xlsx` with formulas, colours, fonts and number formats intact. Files are processed in the browser, not uploaded.
+- 💾 **Your file stays yours:** saved back to `.xlsx` with formulas, colours, fonts and number formats intact. Files are processed on your own computer (app or browser), not uploaded.
 
 Most of it works **without any AI**. AI is only needed for free-form sentences, scanned PDFs and photos.
 

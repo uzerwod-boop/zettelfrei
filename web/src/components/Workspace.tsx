@@ -94,7 +94,14 @@ export function Sheet() {
     const comp = sh.hr >= 0 ? ZF.computedCols(sh) : [], numc = sh.hr >= 0 ? sh.headers.map((_: any, k: number) => comp[k] || ZF.numericCol(sh, k)) : [];
     return { calc, flag, numc };
   }, [s.rev, s.cur]);
-  if (!s.model || !sh || !view) return <section className="sheetwrap"><div className="sheet empty-state"><Empty /></div></section>;
+  // Datei auf die Tabelle ziehen: Excel/CSV öffnen, alles andere als Beleg lesen
+  const dz = {
+    onDragOver: (e: React.DragEvent) => { if ([...e.dataTransfer.items].some(i => i.kind === "file")) { e.preventDefault(); drag.current++; setOver(true); } },
+    onDragLeave: () => setOver(false),
+    onDrop: (e: React.DragEvent) => { const f = e.dataTransfer.files[0]; setOver(false); if (!f) return; e.preventDefault();
+      if (/\.(xlsx|xlsm|xls|csv|ods)$/i.test(f.name) || !S.model) openFile(f); else { setPane("pdf"); window.dispatchEvent(new CustomEvent("zf-beleg", { detail: f })); } },
+  };
+  if (!s.model || !sh || !view) return <section className="sheetwrap" aria-label="Tabelle" {...dz}><div className={"sheet empty-state" + (over ? " over" : "")}><Empty /></div></section>;
   const { calc, flag, numc } = view;
   if (edit == null) editDone.current = false;
   const C = sh.hr < 0 ? Math.max(1, ...sh.top.map((r: any[]) => (r || []).length)) : sh.c0 + sh.ncol;
@@ -144,10 +151,7 @@ export function Sheet() {
 
   return (
     <section className="sheetwrap" aria-label="Tabelle"
-      onDragOver={e => { if ([...e.dataTransfer.items].some(i => i.kind === "file")) { e.preventDefault(); drag.current++; setOver(true); } }}
-      onDragLeave={() => setOver(false)}
-      onDrop={e => { const f = e.dataTransfer.files[0]; setOver(false); if (!f) return; e.preventDefault();
-        if (/\.(xlsx|xlsm|xls|csv|ods)$/i.test(f.name)) openFile(f); else { setPane("pdf"); window.dispatchEvent(new CustomEvent("zf-beleg", { detail: f })); } }}>
+      {...dz}>
       <div className={"sheet" + (over ? " over" : "")}>
         <div className="fxbar" aria-live="polite">
           <span className="addr">{sel ? ZF.colLetter(sh.c0 + sel.k) + sel.r : "–"}</span><span className="fx">fx</span>
