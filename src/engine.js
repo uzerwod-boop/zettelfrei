@@ -568,7 +568,7 @@ function appendRow(sh, values, model){
 }
 function deleteRow(sh, excelRow, model){
   var i=excelRow-sh.hr-2; if(i<0||i>=sh.rows.length) return false;
-  sh.rows.splice(i,1); if(sh.kind) sh.kind.splice(i,1);
+  sh.rows.splice(i,1); if(sh.kind) sh.kind.splice(i,1); if(sh.orig&&sh.orig.data&&sh.orig.data.length>i) sh.orig.data.splice(i,1);
   var fn=function(row,col,part){
     if(row<excelRow) return row;
     if(row===excelRow){ if(part==="single") return null; if(part==="start") return row; return row-1; }
@@ -576,6 +576,91 @@ function deleteRow(sh, excelRow, model){
   };
   shiftSheet(sh,fn); if(model) shiftOthers(model,sh,fn);
   return true;
+}
+
+/* ---------- Bearbeiten wie in Excel: Zeile einfügen, sortieren, Blätter, Spalten ---------- */
+// Leere Datenzeile vor excelRow einfügen; berechnete Spalten bekommen die Formel der Nachbarzeile.
+function insertRowAt(sh, excelRow, values, model){
+  var i=excelRow-sh.hr-2; if(i>=sh.rows.length) return appendRow(sh,values,model);
+  if(i<0){ i=0; excelRow=dataRowNo(sh,0); }
+  var fn=function(row){ return row>=excelRow?row+1:row; };
+  shiftSheet(sh,fn); if(model) shiftOthers(model,sh,fn);
+  var comp=computedCols(sh);
+  sh.rows.splice(i,0,[]); if(sh.kind) sh.kind.splice(i,0,""); if(sh.orig&&sh.orig.data&&sh.orig.data.length>=i) sh.orig.data.splice(i,0,null);
+  var cells=[];
+  for(var k=0;k<sh.ncol;k++){
+    var src=null;
+    if(comp[k]){ for(var a=i-1;a>=0&&!src;a--) if(isData(sh,a)&&sh.rows[a][k]&&sh.rows[a][k].f) src=a;
+                 for(var b=i+1;b<sh.rows.length&&src==null;b++) if(isData(sh,b)&&sh.rows[b][k]&&sh.rows[b][k].f) src=b; }
+    if(src!=null){ var d=excelRow-dataRowNo(sh,src); cells.push({f:transformRefs(sh.rows[src][k].f,function(row,col,part,abs){ return abs?row:row+d; })}); }
+    else cells.push(values&&values[k]!=null&&values[k]!==""?{v:values[k]}:null);
+  }
+  sh.rows[i]=cells; return excelRow;
+}
+// Datenzeilen nach einer Spalte sortieren. Nicht bei Zwischensummen/Abschnitten (Bedeutung ginge verloren).
+function sortRows(model, sh, k, desc){
+  if(sh.kind&&sh.kind.some(function(x){ return x==="summe"||x==="abschnitt"; })) return {error:"Die Tabelle hat Zwischensummen oder Abschnitte – Sortieren würde sie durcheinanderbringen."};
+  var calc=new Calc(model), idx=[]; eachData(sh,function(r,i){ idx.push(i); });
+  if(idx.length<2) return {count:idx.length};
+  var vals={}; idx.forEach(function(i){ vals[i]=calc.value(sh,dataRowNo(sh,i),sh.c0+k); });
+  var sorted=idx.slice().sort(function(a,b){ var x=vals[a],y=vals[b], ex=x==null||x==="", ey=y==null||y==="";
+    if(ex||ey) return ex===ey?a-b:(ex?1:-1); var c=cmp(x,y); return (desc?-c:c)||a-b; });
+  var oldRows=sh.rows.slice(), oldOrig=sh.orig&&sh.orig.data?sh.orig.data.slice():null;
+  idx.forEach(function(target,n){ var from=sorted[n], d=dataRowNo(sh,target)-dataRowNo(sh,from), fromRow=dataRowNo(sh,from);
+    // Formeln, die auf die eigene Zeile zeigen (z. B. =E5*F5), wandern mit
+    sh.rows[target]=oldRows[from].map(function(c){ return c&&c.f?{f:transformRefs(c.f,function(row,col,part,abs){ return !abs&&row===fromRow?row+d:row; })}:c; });
+    if(oldOrig) sh.orig.data[target]=oldOrig[from]; });
+  return {count:idx.length};
+}
+function quoteSheet(n){ return /^[A-Za-zÄÖÜäöüß_][\wÄÖÜäöüß.]*$/.test(n)?n:"'"+String(n).replace(/'/g,"''")+"'"; }
+function renameRefs(f, oldName, newName){
+  var esc=oldName.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+  return splitStrings(f).map(function(seg){ return seg.str?seg.t:seg.t.replace(new RegExp("('"+esc.replace(/'/g,"''")+"'|(^|[^A-Za-z0-9_'])"+esc+")!","g"),function(all,a,pre){ return (pre||"")+quoteSheet(newName)+"!"; }); }).join("");
+}
+function allFormulaCells(model,fn){ model.sheets.forEach(function(sh){ eachFormulaCell(sh,function(c){ fn(c,sh); }); Object.keys(sh.extra||{}).forEach(function(key){ var c=sh.extra[key]; if(c&&c.f) fn(c,sh); }); }); }
+function renameSheet(model, sh, name){
+  name=String(name||"").trim().replace(/[\\\/?*[\]:]/g," ").slice(0,31);
+  if(!name) return {error:"Der Name darf nicht leer sein."};
+  if(model.sheets.some(function(o){ return o!==sh&&o.name.toLowerCase()===name.toLowerCase(); })) return {error:"Ein Blatt „"+name+"“ gibt es schon."};
+  var old=sh.name; if(old===name) return {ok:true};
+  allFormulaCells(model,function(c){ c.f=renameRefs(c.f,old,name); });
+  if(!sh.isNew&&!sh.origName) sh.origName=old;
+  model.renamed=model.renamed||{}; sh.name=name; return {ok:true};
+}
+// Wie viele Formeln in anderen Blättern beziehen sich auf dieses Blatt?
+function sheetRefCount(model, sh){
+  var n=0, re=new RegExp("('"+sh.name.replace(/[.*+?^${}()|[\]\\]/g,"\\$&").replace(/'/g,"''")+"'|\\b"+sh.name.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")!");
+  allFormulaCells(model,function(c,o){ if(o!==sh&&re.test(c.f)) n++; }); return n;
+}
+function deleteSheet(model, sh){
+  var i=model.sheets.indexOf(sh); if(i<0) return {error:"Blatt nicht gefunden"};
+  if(model.sheets.length<2) return {error:"Das letzte Blatt kann nicht gelöscht werden."};
+  model.sheets.splice(i,1);
+  if(!sh.isNew){ model.deleted=model.deleted||[]; model.deleted.push(sh.origName||sh.name); }
+  return {ok:true};
+}
+function newSheet(model, name){
+  var base=name||"Tabelle", n=1, nm=base; while(model.sheets.some(function(o){ return o.name.toLowerCase()===nm.toLowerCase(); })) nm=base+" "+(++n);
+  var heads=["Spalte A","Spalte B","Spalte C","Spalte D"], rows=[]; for(var r=0;r<5;r++) rows.push(heads.map(function(){ return null; }));
+  var sh={name:nm, hr:0, top:[], headers:heads, rows:rows, kind:rows.map(function(){ return ""; }), foot:[], c0:0, ncol:heads.length, widths:[16,16,16,16], merges:[],
+    colFmt:heads.map(function(){ return null; }), dateCol:heads.map(function(){ return false; }), timeCol:heads.map(function(){ return false; }), extra:{}, isNew:true, orig:{data:[],foot:[]}};
+  model.sheets.push(sh); return sh;
+}
+function renameColumn(sh, k, name){
+  name=String(name||"").trim(); if(!name) return {error:"Der Name darf nicht leer sein."};
+  if(sh.headers.some(function(h,j){ return j!==k&&String(h).toLowerCase()===name.toLowerCase(); })) return {error:"Eine Spalte „"+name+"“ gibt es schon."};
+  sh.headers[k]=name; return {ok:true};
+}
+// Nur die letzte Spalte, und nur wenn keine Formel auf sie zeigt (Spalten davor würden sonst verrutschen)
+function deleteLastColumn(model, sh){
+  var k=sh.ncol-1, col=sh.c0+k, used=false;
+  eachFormulaCell(sh,function(c){ transformRefs(c.f,function(row,cc,part){ if(cc===col||(part==="end"&&cc>=col)) used=true; return row; }); });
+  model.sheets.forEach(function(o){ if(o===sh) return; eachFormulaCell(o,function(c){ transformExtRefs(c.f,sh.name,function(row,cc,part){ if(cc===col||(part==="end"&&cc>=col)) used=true; return row; }); }); });
+  if(used) return {error:"Auf die Spalte „"+sh.headers[k]+"“ beziehen sich Formeln – sie wird nicht gelöscht."};
+  sh.headers.pop(); sh.ncol--; sh.colFmt.pop(); sh.dateCol.pop(); if(sh.timeCol) sh.timeCol.pop();
+  sh.rows.forEach(function(r){ r.length=Math.min(r.length,sh.ncol); }); sh.foot.forEach(function(r){ r.length=Math.min(r.length,sh.ncol); });
+  model.cutCols=model.cutCols||{}; (model.cutCols[sh.origName||sh.name]=model.cutCols[sh.origName||sh.name]||[]).push(col+1);
+  return {ok:true};
 }
 
 /* ---------- Spalte anhängen ---------- */
@@ -994,7 +1079,7 @@ function buildWorkbook(XLSX, model){
 return {colLetter:colLetter,colIndex:colIndex,parseNum:parseNum,isDateStr:isDateStr,normDate:normDate,clone:clone,blank:blank,
   isTimeFmt:isTimeFmt,fmtTime:fmtTime,parseTime:parseTime,dateToSerial:dateToSerial,serialToDate:serialToDate,todaySerial:todaySerial,addColumn:addColumn,col:col,
   loadWorkbook:loadWorkbook,runQueries:runQueries,isData:isData,eachData:eachData,dataCount:dataCount,anyDateSerial:anyDateSerial,timeNum:timeNum,looksTime:looksTime,loadWorkbookExcelJS:loadWorkbookExcelJS,normalizeOOXML:normalizeOOXML,openXlsx:openXlsx,loadCSV:loadCSV,parseCSV:parseCSV,parseSheet:parseSheet,Calc:Calc,display:display,dataRowNo:dataRowNo,footRowNo:footRowNo,cellAt:cellAt,
-  appendRow:appendRow,deleteRow:deleteRow,setCell:setCell,findCol:findCol,computedCols:computedCols,numericCol:numericCol,
+  appendRow:appendRow,deleteRow:deleteRow,insertRowAt:insertRowAt,sortRows:sortRows,renameSheet:renameSheet,deleteSheet:deleteSheet,newSheet:newSheet,sheetRefCount:sheetRefCount,renameColumn:renameColumn,deleteLastColumn:deleteLastColumn,setCell:setCell,findCol:findCol,computedCols:computedCols,numericCol:numericCol,
   query:query,filterRows:filterRows,ambiguity:ambiguity,duplicateKey:duplicateKey,INJECT:INJECT,checks:checks,describe:describe,planOps:planOps,applyPlan:applyPlan,buildWorkbook:buildWorkbook,transformRefs:transformRefs};
 })();
 if(typeof module!=="undefined") module.exports=ZF;

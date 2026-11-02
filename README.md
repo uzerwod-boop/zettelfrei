@@ -46,8 +46,8 @@
 
 <table>
 <tr>
-<td align="center" width="33%"><b>macOS</b><br><sub>Apple Silicon und Intel · ab macOS 11</sub><br><br><a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.6.2/Zettelfrei_0.6.2_universal.dmg"><b>Zettelfrei_0.6.2_universal.dmg</b></a><br><sub>ca. 7 MB</sub></td>
-<td align="center" width="33%"><b>Windows</b><br><sub>Windows 10 und 11 · 64 Bit</sub><br><br><a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.6.2/Zettelfrei_0.6.2_x64-setup.exe"><b>Zettelfrei_0.6.2_x64-setup.exe</b></a><br><sub>ca. 3 MB · auch als <a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.6.2/Zettelfrei_0.6.2_x64_en-US.msi">.msi</a></sub></td>
+<td align="center" width="33%"><b>macOS</b><br><sub>Apple Silicon und Intel · ab macOS 11</sub><br><br><a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.7.0/Zettelfrei_0.7.0_universal.dmg"><b>Zettelfrei_0.7.0_universal.dmg</b></a><br><sub>ca. 7 MB</sub></td>
+<td align="center" width="33%"><b>Windows</b><br><sub>Windows 10 und 11 · 64 Bit</sub><br><br><a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.7.0/Zettelfrei_0.7.0_x64-setup.exe"><b>Zettelfrei_0.7.0_x64-setup.exe</b></a><br><sub>ca. 3 MB · auch als <a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.7.0/Zettelfrei_0.7.0_x64_en-US.msi">.msi</a></sub></td>
 <td align="center" width="33%"><b>Browser</b><br><sub>ohne Installation · Chrome, Edge, Firefox, Safari</sub><br><br><a href="https://uzerwod-boop.github.io/zettelfrei/"><b>uzerwod-boop.github.io/zettelfrei</b></a><br><sub>sofort loslegen</sub></td>
 </tr>
 </table>
@@ -83,6 +83,7 @@ Zettelfrei öffnet Stundenzettel, Lagerliste oder Auftragsliste und lässt sie m
 - 🧮 **Fragen**: „Wie viele Stunden hatte Kevin im Oktober?“ – die Summe rechnet die Tabelle, nicht die KI.
 - 📄 **PDF & Foto**: Lieferantenrechnung hineinziehen, der Lagerbestand wird erhöht. Auch gescannte PDFs.
 - 🔍 **Prüfen**: leere Pflichtfelder, doppelte Nummern, Text in Zahlenspalten, Formelfehler; fachliche Prüfung per KI.
+- 📋 **Wie Excel bedienen** (seit 0.7): Bereiche markieren mit Summe/Anzahl, Kopieren und Einfügen von und nach Excel, ⌘/Strg+Z, Rechtsklick für Zeilen einfügen/löschen, sortieren, Spalten und Blätter umbenennen, neue Blätter.
 - 🕓 **Verlauf**: jeder Stand lässt sich zurückholen.
 - 💾 **Speichern**: zurück als `.xlsx` mit Formeln, Farben, Schriften und Zahlenformaten der Originaldatei.
 

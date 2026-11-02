@@ -14,6 +14,7 @@ export const S = {
   fresh: {} as Record<string, Record<number, 1>>, hits: {} as Record<string, Record<number, 1>>, aiIssues: [] as any[],
   pane: "cmd" as Pane, msgs: [] as Msg[], toast: "", rev: 0, focus: null as null | { sheet: string; r: number; k: number | null; n: number },
   protSheet: true, ai: { on: false, label: "KI wird verbunden…" },
+  redo: [] as HistEntry[], savedT: 0,
 };
 const subs = new Set<() => void>();
 export function emit() { S.rev++; subs.forEach(f => f()); }
@@ -69,7 +70,29 @@ export function commit(label: string) {
   const prev = S.history.length ? S.history[S.history.length - 1].snap : null;
   S.protokoll.push({ zeit: stamp(), wer: firma().bearbeiter || "", aktion: label, details: prev ? diffDetails(prev, S.model) : [] });
   S.history.push({ t: Date.now(), label, snap: JSON.stringify(S.model) }); if (S.history.length > 40) S.history = S.history.slice(-40);
-  persist(); emit();
+  S.redo = []; persist(); emit();
+}
+/* ---------- Rückgängig / Wiederholen (Strg+Z / Strg+Y) ---------- */
+export const canUndo = () => S.history.length > 1, canRedo = () => S.redo.length > 0;
+export function undo() {
+  if (!canUndo()) { toast("Nichts rückgängig zu machen"); return; }
+  const cur = S.history.pop()!; S.redo.push(cur); const prev = S.history[S.history.length - 1];
+  S.model = JSON.parse(prev.snap); S.cur = Math.min(S.cur, S.model.sheets.length - 1); S.fresh = {}; S.hits = {};
+  S.protokoll.push({ zeit: stamp(), wer: firma().bearbeiter || "", aktion: "Rückgängig: " + cur.label, details: [] });
+  persist(); emit(); toast("Rückgängig: " + cur.label);
+}
+export function redo() {
+  const nx = S.redo.pop(); if (!nx) { toast("Nichts zu wiederholen"); return; }
+  S.history.push(nx); S.model = JSON.parse(nx.snap); S.cur = Math.min(S.cur, S.model.sheets.length - 1); S.fresh = {}; S.hits = {};
+  S.protokoll.push({ zeit: stamp(), wer: firma().bearbeiter || "", aktion: "Wiederholt: " + nx.label, details: [] });
+  persist(); emit(); toast("Wiederholt: " + nx.label);
+}
+/* ---------- Datei schließen ---------- */
+export const unsaved = () => !!S.model && S.history.length > 0 && S.history[S.history.length - 1].t > S.savedT;
+export function closeFile() {
+  S.model = null; S.history = []; S.redo = []; S.origBytes = null; S.msgs = []; S.fresh = {}; S.hits = {}; S.aiIssues = []; S.cur = 0; S.savedT = 0;
+  try { localStorage.removeItem(KEY); localStorage.removeItem(KEY_ORIG); } catch { /* egal */ }
+  emit();
 }
 export function restoreVersion(i: number) {
   const h = S.history[i]; if (!h) return;
@@ -93,7 +116,7 @@ export function openData(data: Uint8Array, name: string) {
   readWorkbook(data, name).then(m => {
     if (!m.sheets.length) { toast("Die Datei ist leer."); return; }
     S.model = m; S.cur = Math.max(0, m.sheets.findIndex((s: any) => s.hr >= 0)); S.fresh = {}; S.hits = {}; S.aiIssues = []; S.msgs = [];
-    S.history = [{ t: Date.now(), label: "Geöffnet: " + name, snap: JSON.stringify(m) }];
+    S.history = [{ t: Date.now(), label: "Geöffnet: " + name, snap: JSON.stringify(m) }]; S.redo = []; S.savedT = Date.now();
     S.origBytes = /\.xlsx$|\.xlsm$/i.test(name) && openedBytes ? new Uint8Array(openedBytes) : null; persistOrig();
     S.protokoll.push({ zeit: stamp(), wer: firma().bearbeiter || "", aktion: "Datei geöffnet: " + name, details: [] });
     persist(); emit();
@@ -122,7 +145,7 @@ export function saveExcel() {
   const plain = () => { try { return Promise.resolve(ZF.buildWorkbook(XLSX, S.model)); } catch (e) { return Promise.reject(e); } };
   const styled = (window.ExcelJS && S.origBytes && typeof ZFX !== "undefined")
     ? ZFX.save(ExcelJS, ZF, S.origBytes, S.model, { protokoll: S.protSheet ? S.protokoll : null }).catch(plain) : plain();
-  styled.then((buf: any) => saveFile(name, buf, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"), () => toast("Speichern fehlgeschlagen."));
+  styled.then((buf: any) => saveFile(name, buf, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").then(() => { S.savedT = Date.now(); emit(); }), () => toast("Speichern fehlgeschlagen."));
 }
 
 /* ---------- Prüfen ---------- */

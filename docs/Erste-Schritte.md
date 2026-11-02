@@ -40,7 +40,16 @@ Der Schlüssel bleibt nur auf Ihrem Rechner. Geben Sie ihn nie weiter.
 
 Excel-Datei einfach **ins Fenster ziehen** oder **„Excel-Datei öffnen“** klicken. Im Programm sehen Sie nur Ihre eigenen Dateien. Zum Ausprobieren ohne eigene Datei gibt es in der [Browser-Version](https://uzerwod-boop.github.io/zettelfrei/) Beispieldateien („Beispiel öffnen…“).
 
-Die Tabelle sieht aus wie in Excel: Zelle anklicken und lostippen, **Enter** speichert. Formeln, Zwischensummen und mehrere Blätter bleiben erhalten.
+Die Tabelle funktioniert wie Excel:
+
+- **Zelle anklicken und lostippen**, **Enter** speichert. Formeln mit „=“.
+- **Bereich markieren** mit gedrückter Maus oder Umschalt + Pfeiltasten – oben stehen dann Summe, Anzahl und Mittelwert.
+- **Kopieren und Einfügen** (⌘/Strg + C, V) – auch direkt aus Excel oder in Excel hinein.
+- **Rückgängig** mit ⌘/Strg + Z, Wiederholen mit ⌘ + Umschalt + Z bzw. Strg + Y – oder mit den Pfeilen oben.
+- **Rechtsklick** auf eine Zeile: darüber/darunter einfügen, löschen. Auf eine Überschrift: sortieren, umbenennen, neue Spalte. Auf ein Blatt unten: umbenennen, löschen, neues Blatt (auch mit **+**).
+- **Datei schließen** mit dem **×** neben dem Dateinamen.
+
+Formeln, Zwischensummen, Farben und mehrere Blätter bleiben beim Speichern erhalten.
 
 > **Tipp für den Anfang:** Arbeiten Sie mit einer Kopie Ihrer Datei und speichern Sie mit **„Als Excel speichern“** unter einem neuen Namen.
 

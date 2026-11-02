@@ -1,7 +1,7 @@
 const P: Record<string, string> = {
   chat: "M4 5h16v11H9l-5 4zM8 9h8M8 12h5", file: "M7 3h7l5 5v13H7zM14 3v5h5", doc: "M6 3h12v18H6zM9 8h6M9 12h6M9 16h4",
   shield: "M12 3l8 4v5c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V7zM9 12l2 2 4-4", history: "M12 7v5l3 2M21 12a9 9 0 1 1-3-6.7M21 4v5h-5",
-  send: "M5 12h13M13 6l6 6-6 6", feedback: "M4 5h16v11h-7l-5 4v-4H4zM9 9.5h6M9 12.5h3", help: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1.9-1.1 1.8M12 16.5v.5", stop: "M7 7h10v10H7z", settings: "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM19 12h2M3 12h2M12 3v2M12 19v2M17 7l1.4-1.4M5.6 18.4 7 17M17 17l1.4 1.4M5.6 5.6 7 7",
+  send: "M5 12h13M13 6l6 6-6 6", undo: "M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3", redo: "M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3", close: "M6 6l12 12M18 6 6 18", feedback: "M4 5h16v11h-7l-5 4v-4H4zM9 9.5h6M9 12.5h3", help: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1.9-1.1 1.8M12 16.5v.5", stop: "M7 7h10v10H7z", settings: "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM19 12h2M3 12h2M12 3v2M12 19v2M17 7l1.4-1.4M5.6 18.4 7 17M17 17l1.4 1.4M5.6 5.6 7 7",
 };
 export function Icon({ name, size = 22 }: { name: string; size?: number }) {
   return <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={P[name]} /></svg>;

@@ -86,6 +86,15 @@ async def main():
             # Persistenz
             await pg.reload(); await pg.wait_for_timeout(700)
             check("Auftraege" in await pg.locator(".topbar, header").first.inner_text(), "nach Neuladen wieder da")
+            # Wie in Excel: Rechtsklick → Zeile einfügen, Rückgängig, Blatt anlegen/umbenennen
+            first = await pg.locator('td[data-r="5"][data-k="0"]').inner_text()
+            await pg.locator('td[data-r="5"][data-k="1"]').click(button="right"); await pg.locator('.ctxmenu button:has-text("Zeile darüber einfügen")').click(); await pg.wait_for_timeout(300)
+            check((await pg.locator('td[data-r="6"][data-k="0"]').inner_text()) == first and (await pg.locator('td[data-r="5"][data-k="0"]').inner_text()) == "", "Rechtsklick: Zeile darüber eingefügt")
+            await pg.locator(".scroll").focus(); await pg.keyboard.press("Control+z"); await pg.wait_for_timeout(300)
+            check((await pg.locator('td[data-r="5"][data-k="0"]').inner_text()) == first, "Strg+Z macht das Einfügen rückgängig")
+            await pg.click(".sheettabs .addtab"); await pg.wait_for_timeout(200)
+            check("Tabelle" in await pg.locator(".sheettabs").inner_text(), "Neues Blatt über +")
+            await pg.keyboard.press("Control+z"); await pg.wait_for_timeout(200)
             # Feedback und KI-Qualitätstest öffnen sich
             await pg.click("#t-feedback"); await pg.wait_for_timeout(200)
             check(await pg.evaluate("document.getElementById('feedback').open"), "Feedback-Dialog öffnet sich")

@@ -372,3 +372,61 @@ dialog#feedback label{display:grid;gap:6px;font-size:13.5px;color:var(--muted)}
 dialog#feedback textarea{width:100%;resize:vertical;background:var(--paper)}
 dialog#feedback .seg .btn.on,.row.seg .btn.on{border-color:var(--accent);color:var(--accent)}
 dialog#feedback .note{margin:0}
+
+/* ---------- 0.7: Bearbeiten wie in Excel ---------- */
+#grid td.inrange{background:color-mix(in srgb,var(--accent) 13%,var(--sheet))}
+#grid td.inrange.sel{box-shadow:inset 0 0 0 2px var(--accent)}
+#grid tr.rowon th.rn,#grid thead th.on{background:color-mix(in srgb,var(--accent) 22%,var(--head));color:var(--ink)}
+#grid thead th{cursor:pointer;user-select:none} #grid th.rn{cursor:pointer;user-select:none}
+#grid tr.hdr td{cursor:default} #grid tr.hdr td.addcol{width:30px;padding:0;text-align:center}
+#grid td.addcol button,.sheettabs .addtab{border:0;background:transparent;color:var(--muted);font:600 18px var(--f-body);cursor:pointer;width:30px;height:100%;border-radius:6px}
+#grid td.addcol button:hover,.sheettabs .addtab:hover{color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.scroll{user-select:none} .scroll input{user-select:text}
+.fxbar .rsum{color:var(--muted)} .fxbar .rsum b{color:var(--ink);font-weight:600}
+.iconbtn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer}
+.iconbtn:hover:not(:disabled){color:var(--ink);background:var(--head)} .iconbtn:disabled{opacity:.35;cursor:default}
+.undo{display:inline-flex;gap:2px;margin-right:4px} .fileinfo .closefile{width:26px;height:26px;margin-left:2px}
+.btn.danger{background:#c8402f;border-color:#c8402f;color:#fff}
+/* Kontextmenü */
+.ctxmenu{position:fixed;z-index:200;min-width:230px;background:var(--sheet);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:0 16px 44px rgba(0,0,0,.28);transform-origin:top left;animation:menuin .14s ease-out}
+.ctxmenu button{display:flex;justify-content:space-between;align-items:center;gap:18px;width:100%;text-align:left;border:0;background:transparent;color:inherit;font:500 13.5px var(--f-body);padding:8px 11px;border-radius:8px;cursor:pointer}
+.ctxmenu button:hover:not(:disabled){background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.ctxmenu button.danger{color:#d9533f} .ctxmenu button:disabled{opacity:.45;cursor:default}
+.ctxmenu kbd{font:500 11.5px var(--f-mono);color:var(--muted)} .ctxmenu .sep{height:1px;background:var(--line);margin:5px 4px}
+@keyframes menuin{from{opacity:0;transform:scale(.96) translateY(-3px)}to{opacity:1;transform:none}}
+/* kleine Dialoge */
+dialog.askdlg{width:min(440px,92vw);border:1px solid var(--line);border-radius:16px;background:var(--sheet);color:var(--ink);padding:20px 22px;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+dialog.askdlg::backdrop{background:rgba(10,14,15,.45)}
+dialog.askdlg form{display:grid;gap:12px} dialog.askdlg h2{margin:0;font:800 19px var(--f-display)} dialog.askdlg .note{margin:0}
+dialog.askdlg input{width:100%;font:15px var(--f-body);padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
+dialog.askdlg .row{display:flex;gap:8px;justify-content:flex-end}
+
+/* ---------- Animationen: angenehm, kurz, abschaltbar ---------- */
+.btn,.iconbtn,.rail button,.sheettabs button,.chips button,.kpi,.ctxmenu button,.examples button{transition:transform .12s ease,background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease,opacity .15s ease}
+.btn:active:not(:disabled),.iconbtn:active:not(:disabled),.sheettabs button:active,.examples button:active,button.kpi:active{transform:scale(.96)}
+.rail button:active{transform:scale(.92)}
+.btn:hover:not(:disabled){box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 28%,transparent)}
+.btn.quiet:hover:not(:disabled){box-shadow:none}
+.rail button[aria-selected="true"] svg{animation:pop .28s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{0%{transform:scale(.7)}100%{transform:scale(1)}}
+/* Bereichswechsel rechts */
+.panel .pane:not([hidden]),.panel .panewrap:not([hidden])>.pane{animation:panein .22s ease-out}
+@keyframes panein{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
+/* Blattwechsel und neue Datei */
+.sheettabs button[aria-selected="true"]{position:relative}
+.sheettabs button[aria-selected="true"]::after{content:"";position:absolute;left:10%;right:10%;top:-1px;height:2px;background:var(--accent);animation:grow .25s ease-out}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+#grid tbody{animation:fadein .2s ease-out} @keyframes fadein{from{opacity:.4}to{opacity:1}}
+/* Zellauswahl gleitet sanft, neue/eingefügte Zeilen leuchten kurz auf */
+#grid td.sel{transition:box-shadow .08s ease,background-color .12s ease}
+#grid tr.fresh td{animation:flash 1.4s ease-out}
+@keyframes flash{0%{background:color-mix(in srgb,var(--marker,#f6dd6a) 85%,transparent)}100%{}}
+/* Chat: Nachrichten und Vorschau gleiten herein */
+.msgs .me,.msgs .bot,.plan,.gcard,.datanote{animation:msgin .25s ease-out}
+@keyframes msgin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.plan.done{animation:done .4s ease-out} @keyframes done{0%{transform:scale(.98)}60%{transform:scale(1.01)}100%{transform:none}}
+/* Dialoge öffnen weich */
+dialog[open]{animation:dlgin .18s ease-out} @keyframes dlgin{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+.updatebar{animation:rise .3s ease-out}
+.drop.over,.sheet.over{transition:box-shadow .15s ease,background-color .15s ease}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}

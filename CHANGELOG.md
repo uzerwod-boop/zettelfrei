@@ -2,6 +2,21 @@
 
 Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.7.0] – 2026-11-02 · Bedienen wie Excel
+
+### Neu
+- Bereiche markieren: mit gedrückter Maus, Umschalt + Klick/Pfeiltasten, Klick auf Zeilennummer oder Spaltenbuchstaben, ⌘/Strg + A. Oben stehen Summe, Anzahl und Mittelwert des Bereichs.
+- Kopieren, Ausschneiden, Einfügen (⌘/Strg + C, X, V) – kompatibel mit Excel, Numbers und Google Sheets. Ein einzelner Wert füllt einen markierten Bereich. Berechnete Spalten werden beim Einfügen geschützt.
+- Rückgängig und Wiederholen mit ⌘/Strg + Z bzw. ⌘ + Umschalt + Z / Strg + Y und mit Knöpfen oben.
+- Rechtsklick auf Zeilen: darüber/darunter einfügen (auch mehrere), löschen, kopieren, einfügen, Inhalt löschen. Neue Zeilen bekommen die Formeln der Nachbarzeile, Zwischensummen und Bezüge wachsen mit.
+- Rechtsklick auf Überschriften: auf- und absteigend sortieren, umbenennen (auch per Doppelklick), neue Spalte (auch mit „+“), letzte Spalte löschen.
+- Blätter: neues Blatt mit „+“, umbenennen per Doppelklick oder Rechtsklick (Formeln in anderen Blättern werden angepasst), löschen mit Warnung, wenn andere Blätter darauf verweisen.
+- Datei schließen mit „×“ neben dem Dateinamen – mit Rückfrage, wenn noch nicht als Excel gespeichert.
+- Kurze, ruhige Animationen: Druck-Effekt auf Knöpfen, sanfter Bereichswechsel, neue Zeilen leuchten kurz auf, Menüs und Dialoge gleiten herein. Bei „Bewegung reduzieren“ im System ausgeschaltet.
+
+### Behoben
+- Nach dem Löschen einer Zeile konnten in der gespeicherten Excel-Datei Farben und Rahmen um eine Zeile verrutschen. Formatierungen bleiben jetzt an ihrer Zeile – auch beim Einfügen und Sortieren.
+
 ## [0.6.2] – 2026-11-02 · Nur Ihre eigenen Dateien
 
 ### Geändert
@@ -169,6 +184,7 @@ Erkenntnis aus Tests mit einem schnellen, günstigen Modell: Regeln allein reich
 - KI wahlweise über OpenRouter, eigenen Server, Claude API oder lokales Modell.
 - PDFs und Fotos von Lieferantenrechnungen per KI einlesen.
 
+[0.7.0]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.7.0
 [0.6.2]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.6.2
 [0.6.1]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.6.1
 [0.6.0]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.6.0
