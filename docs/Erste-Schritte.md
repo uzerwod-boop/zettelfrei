@@ -38,7 +38,7 @@ Der Schlüssel bleibt nur auf Ihrem Rechner. Geben Sie ihn nie weiter.
 
 ## 3. Datei öffnen
 
-Excel-Datei einfach **ins Fenster ziehen** oder oben **„Excel öffnen“** klicken. Zum Ausprobieren gibt es Beispieldateien unter „Beispiel öffnen…“.
+Excel-Datei einfach **ins Fenster ziehen** oder **„Excel-Datei öffnen“** klicken. Im Programm sehen Sie nur Ihre eigenen Dateien. Zum Ausprobieren ohne eigene Datei gibt es in der [Browser-Version](https://uzerwod-boop.github.io/zettelfrei/) Beispieldateien („Beispiel öffnen…“).
 
 Die Tabelle sieht aus wie in Excel: Zelle anklicken und lostippen, **Enter** speichert. Formeln, Zwischensummen und mehrere Blätter bleiben erhalten.
 

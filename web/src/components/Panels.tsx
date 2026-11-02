@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { S, commit, emit, goTo, issues, restoreVersion, saveFile, setPane, toast, useStore } from "../store";
-import { TODAY, b64, de, firma } from "../util";
+import { SHOW_EXAMPLES, TODAY, b64, de, firma } from "../util";
 import { Bot, PlanCard, RULES, aiError, context } from "./Assistant";
 import { openSettings } from "./Settings";
 import { DIALOGS } from "../legacyDialogs";
@@ -112,9 +112,9 @@ export function Belege() {
         onDrop={e => { e.preventDefault(); e.stopPropagation(); setOver(false); const f = e.dataTransfer.files[0]; if (f) handle(f); }}>
         <strong>Datei hierher ziehen oder antippen</strong>E-Rechnung (XML, ZUGFeRD-PDF), PDF, JPG oder PNG</label>
       <input ref={inp} type="file" id="pdfInput" hidden accept="application/pdf,image/png,image/jpeg,image/webp,.xml,application/xml,text/xml" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) handle(f); }} />
-      <div className="row">
+      {SHOW_EXAMPLES && <div className="row">
         {Object.keys(docs).map(n => <button key={n} className="btn quiet small" type="button" data-sampledoc={n} onClick={() => sample(n)}>Beispiel: {/\.pdf$/i.test(n) ? "ZUGFeRD-PDF" : "XRechnung"}</button>)}
-        <button className="btn quiet small" type="button" onClick={() => extract(SAMPLE_INVOICE, [], "Beispiel-Rechnung Weber KG")}>Beispiel: Rechnungstext (KI)</button></div>
+        <button className="btn quiet small" type="button" onClick={() => extract(SAMPLE_INVOICE, [], "Beispiel-Rechnung Weber KG")}>Beispiel: Rechnungstext (KI)</button></div>}
       {st.busy && <span className="busy">{st.busy}</span>}
       <div id="pdfOut" className="stack">
         {st.error && <p className="hint warnc">{st.error}</p>}

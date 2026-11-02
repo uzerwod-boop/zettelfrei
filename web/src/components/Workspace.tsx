@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { S, commit, emit, issues, mark, openExample, openFile, persist, saveExcel, selectSheet, setPane, sheet, toast, useStore, type Pane } from "../store";
-import { HIER, IS_APP, de, fmtVal, openExternal, rawOf } from "../util";
+import { HIER, IS_APP, SHOW_EXAMPLES, de, fmtVal, openExternal, rawOf } from "../util";
 import { GUIDE_URL } from "../config";
 import { openFeedback } from "./Feedback";
 import { Icon, Mark } from "./Icons";
@@ -39,10 +39,10 @@ export function TopBar() {
         {last && <span className="saved">· gesichert {new Date(last.t).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}</span>}
       </div>
       <div className="filebar">
-        <select aria-label="Beispiel öffnen" value="" onChange={e => { if (e.target.value) openExample(e.target.value); }}>
+        {SHOW_EXAMPLES && <select aria-label="Beispiel öffnen" value="" onChange={e => { if (e.target.value) openExample(e.target.value); }}>
           <option value="">Beispiel öffnen…</option>
           {examples.map(n => <option key={n} value={n}>{n.replace(/_/g, " ").replace(/\.xlsx$/, "")}</option>)}
-        </select>
+        </select>}
         <button className="btn quiet" onClick={() => input.current?.click()}>Excel öffnen</button>
         <input ref={input} type="file" hidden accept=".xlsx,.xlsm,.xls,.csv,.ods" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) openFile(f); }} />
         <button className="btn" onClick={saveExcel} disabled={!s.model}>Als Excel speichern</button>
@@ -201,13 +201,16 @@ export function Sheet() {
 }
 
 function Empty() {
-  const ex = Object.keys(window.ZF_EXAMPLES || {});
+  const ex = SHOW_EXAMPLES ? Object.keys(window.ZF_EXAMPLES || {}) : [], inp = useRef<HTMLInputElement>(null);
   return (
     <div className="empty">
       <Mark />
       <h2>Excel bleibt. Das Tippen fällt weg.</h2>
       <p>Öffnen Sie Ihre Excel-Datei oder ziehen Sie sie hierher. Sie bleibt {IS_APP ? "auf Ihrem Rechner" : "in Ihrem Browser"}.</p>
-      <div className="row center">{ex.slice(0, 5).map(n => <button key={n} className="btn quiet small" onClick={() => openExample(n)}>{n.replace(/_/g, " ").replace(/\.xlsx$/, "")}</button>)}</div>
+      <div className="row center"><button className="btn" type="button" id="emptyOpen" onClick={() => inp.current?.click()}>Excel-Datei öffnen</button></div>
+      <input ref={inp} type="file" hidden accept=".xlsx,.xlsm,.xls,.csv,.ods" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) openFile(f); }} />
+      {ex.length > 0 && <><p className="hint">Oder mit einem Beispiel ausprobieren:</p>
+        <div className="row center">{ex.slice(0, 5).map(n => <button key={n} className="btn quiet small" onClick={() => openExample(n)}>{n.replace(/_/g, " ").replace(/\.xlsx$/, "")}</button>)}</div></>}
     </div>);
 }
 export function Toast() { const s = useStore(); return s.toast ? <div className="toast" role="status">{s.toast}</div> : null; }

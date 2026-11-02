@@ -2,6 +2,13 @@
 
 Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.6.2] – 2026-11-02 · Nur Ihre eigenen Dateien
+
+### Geändert
+- Das installierte Programm zeigt keine Beispieldateien mehr – weder „Beispiel öffnen…“ noch Beispiel-Rechnungen. So verwechselt niemand Beispiele mit den eigenen Daten. Auf der Startseite gibt es dafür den Knopf „Excel-Datei öffnen“.
+- In der Browser-Version bleiben die Beispiele zum Ausprobieren erhalten.
+- Release-Text und Hinweis „neue Version ist da“ kommen jetzt automatisch aus diesem Änderungsprotokoll.
+
 ## [0.6.1] – 2026-11-02 · Erstes automatisches Update
 
 ### Neu
@@ -162,6 +169,7 @@ Erkenntnis aus Tests mit einem schnellen, günstigen Modell: Regeln allein reich
 - KI wahlweise über OpenRouter, eigenen Server, Claude API oder lokales Modell.
 - PDFs und Fotos von Lieferantenrechnungen per KI einlesen.
 
+[0.6.2]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.6.2
 [0.6.1]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.6.1
 [0.6.0]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.6.0
 [0.5.4]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.5.4

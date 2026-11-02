@@ -35,3 +35,5 @@ export function openExternal(url: string) {
   if (t?.opener?.openUrl) { t.opener.openUrl(url).catch(() => window.open(url, "_blank", "noopener")); return; }
   window.open(url, "_blank", "noopener");
 }
+/** Beispieldateien nur in der Browser-Demo zeigen – im installierten Programm sieht man nur eigene Dateien. */
+export const SHOW_EXAMPLES = !IS_APP;
