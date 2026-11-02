@@ -59,3 +59,25 @@ test("Summe meldet Text-Zahlen und unlesbare Werte", () => {
   assert.equal(r.value, 2034.56); assert.deepEqual(r.textNums, ["1.234,56"]); assert.deepEqual(r.unread, ["ca. 250"]);
   assert.equal(r.excelValue, 800, "so rechnet Excel (ohne Text)"); assert.equal(r.empty, 1);
 });
+
+test("Auswertungen über Spalten und Blätter: Spalte gegen Spalte, Rechnen je Zeile, Zuordnung, Ausdruck je Gruppe", () => {
+  const m = ZF.loadCSV(XLSX, "Artikel;Bestand;Mindestbestand;EK EUR\nA;2;10;1,5\nB;12;10;3\nC;0;5;2", "m.csv");
+  const lager = ZF.loadCSV(XLSX, "Mitarbeiter;Baustelle;Lohn EUR\nKevin Müller;Bad 1;300\nKevin Mueller;Bad 2;200\nAnna;Bad 1;100\nAnna;QA;50", "a.csv").sheets[0];
+  const proj = ZF.loadCSV(XLSX, "Baustelle;Kunde;Budget EUR\nBad 1;Schneider;1000\nBad 2;Becker;400", "p.csv").sheets[0];
+  lager.name = "Arbeitszeiten"; proj.name = "Projekte"; m.sheets[0].name = "Material"; m.sheets.push(lager, proj);
+  const f = [{ spalte: "Bestand", op: "<", wert: { spalte: "Mindestbestand" } }];
+  const r = ZF.runQueries(m, [
+    { id: "q1", blatt: "Material", spalte: "Artikel", art: "anzahl", filter: f },
+    { id: "q2", blatt: "Material", spalte: "=(Mindestbestand-Bestand)*EK EUR", art: "summe", filter: f },
+    { id: "q3", blatt: "Arbeitszeiten", spalte: "Lohn EUR", art: "summe", gruppieren: "Baustelle", zuordnung: { blatt: "Projekte", von: "Baustelle", nach: "Kunde" } },
+    { id: "q4", blatt: "Arbeitszeiten", spalte: "Lohn EUR", art: "summe", gruppieren: "Baustelle" },
+    { id: "q5", blatt: "Projekte", spalte: "Budget EUR", art: "summe", gruppieren: "Baustelle" },
+    { id: "q6", ausdruck: "q4/q5*100", prozent: true }]);
+  assert.equal(r.q1.value, 2); assert.equal(r.q2.value, 22, "(10-2)*1,5 + (5-0)*2");
+  assert.deepEqual(r.q3.groups.map(g => [g.key, g.value]), [["Schneider", 400], ["Becker", 200], ["(ohne Zuordnung)", 50]]);
+  assert.deepEqual(r.q6.groups.map(g => [g.key, g.value]), [["Bad 2", 50], ["Bad 1", 40]], "Budgetanteil je Baustelle");
+  assert.deepEqual(ZF.ambiguity(m, "Arbeitszeiten", "Mitarbeiter", "Kevin Müller", "Kevin heute 8 Stunden"), { wort: "Kevin", values: ["Kevin Müller", "Kevin Mueller"] });
+  assert.equal(ZF.ambiguity(m, "Arbeitszeiten", "Mitarbeiter", "Kevin Müller", "Kevin Müller heute"), null, "eindeutig genannt");
+  const c = ZF.query(m, { blatt: "Arbeitszeiten", spalte: "Lohn EUR", art: "summe", filter: [{ spalte: "Baustelle", op: "enthält", wert: "Bad" }] });
+  assert.deepEqual(c.contains[0].values, ["Bad 1", "Bad 2"], "„enthält“ meldet mehrere erfasste Werte");
+});

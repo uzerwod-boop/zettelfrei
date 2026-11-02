@@ -9,11 +9,20 @@ Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog]
 - Zeilennummer und Bedingung passen nicht zusammen → die Änderung wird abgelehnt statt in der falschen Zeile ausgeführt.
 - Anweisungen, die in Zellen stehen (z. B. in Notizen), befolgt die KI nicht mehr; bei „tu, was in den Notizen steht“ fragt sie nach.
 - Antworten bei Änderungen sind als Vorschlag formuliert („Ich schlage vor …“), nicht als „wurde geändert“.
+- „Wie viel ist offen?“ summiert die Spalte mit dem offenen Betrag, statt nur Zeilen mit Status „Offen“; doppelte Einträge löscht die KI nicht selbst, sondern fragt nach.
 
 ### Neu
 - Vorschau zeigt zu jeder geänderten Zeile, um welche es geht (z. B. „R-2026-0010 · Schneider GmbH“), und warnt bei großen Änderungen.
 - Werte aus einer anderen Spalte derselben Zeile übernehmen, z. B. „Bezahlt EUR = Brutto EUR“ beim Bezahlt-Setzen.
 - Summen sagen ehrlich, womit gerechnet wurde: Zahlen, die als Text in der Zelle stehen, nicht lesbare Werte („ca. 250“) und leere Zellen – samt dem Ergebnis, das Excel selbst anzeigen würde.
+- Spalte mit Spalte vergleichen, z. B. „Bestand unter Mindestbestand“.
+- Rechnen je Zeile in Auswertungen, z. B. Nachbestellkosten = (Mindestbestand − Bestand) × EK.
+- Gruppieren über ein anderes Blatt, z. B. Lohn je Kunde, wenn der Kunde nur im Blatt „Projekte“ steht.
+- Rechnen je Gruppe über Blätter hinweg, z. B. verbrauchter Budgetanteil je Baustelle.
+- Mehrdeutige Namen werden erkannt: „Kevin“ passt zu „Kevin Müller“ und „Kevin Mueller“ → Hinweis in der Antwort; in der Vorschau ist die Zeile dann nicht vorausgewählt.
+- „Bad Schneider“ erfasst auch „Bad Schneider II“ → die Antwort nennt alle erfassten Einträge.
+- Konnte ein Teil einer Frage nicht berechnet werden, steht das deutlich in der Antwort statt „(?)“.
+- Zwischenergebnisse einer Rechnung erscheinen nicht mehr als eigene Diagramme.
 
 ## [0.5.2] – 2026-11-02 · Excel-Dateien aus anderen Programmen
 

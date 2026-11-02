@@ -334,3 +334,5 @@ select option{background:var(--sheet);color:var(--ink)}
 .plan .rowid{font-weight:400;color:var(--muted)}
 .planwarn{background:var(--warn-soft);color:var(--warn);font-weight:600;padding:9px 14px;font-size:13.5px;border-bottom:1px solid var(--line)}
 .datanote{margin:6px 0 0;padding:8px 10px;border-radius:8px;background:var(--warn-soft);color:var(--ink);font-size:13px}
+.datanote.bad{background:color-mix(in srgb,#c8402f 18%,transparent)}
+.ambwarn{margin:4px 0 2px;color:var(--warn);font-size:13px;font-weight:600}
