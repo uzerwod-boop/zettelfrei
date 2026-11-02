@@ -2,6 +2,12 @@
 
 Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.5.2] – 2026-11-02 · Excel-Dateien aus anderen Programmen
+
+### Behoben
+- Excel-Dateien, die von anderen Programmen erzeugt wurden (z. B. .NET OpenXML SDK, ERP- und Lohn-Exporte mit `x:`-Präfix, BOM und absoluten Pfaden), ließen sich nicht öffnen („Diese Datei lässt sich nicht lesen“). Sie werden jetzt angeglichen und normal gelesen; beim Speichern bleibt die Formatierung erhalten.
+- Arbeitszeit-Prüfung: Genau 6 Std. ohne Pause wurde fälschlich als „Pause zu kurz“ gemeldet (Rundungsfehler). Gerechnet wird jetzt auf die Minute genau.
+
 ## [0.5.1] – 2026-10-26 · Feinschliff
 
 ### Geändert
@@ -101,6 +107,7 @@ Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog]
 - KI wahlweise über OpenRouter, eigenen Server, Claude API oder lokales Modell.
 - PDFs und Fotos von Lieferantenrechnungen per KI einlesen.
 
+[0.5.2]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.5.2
 [0.5.1]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.5.1
 [0.5.0]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.5.0
 [0.4.0]: https://github.com/uzerwod-boop/zettelfrei/commit/472ebad

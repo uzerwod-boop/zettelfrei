@@ -78,10 +78,12 @@ export function restoreVersion(i: number) {
 }
 
 /* ---------- Datei öffnen / speichern ---------- */
+let openedBytes: Uint8Array | null = null; // Vorlage fürs Speichern mit Formatierung (ggf. angeglichen)
 function readWorkbook(data: Uint8Array, name: string): Promise<any> {
+  openedBytes = data;
   try {
     if (/\.(csv|txt)$/i.test(name)) return Promise.resolve(ZF.loadCSV(XLSX, new TextDecoder("utf-8").decode(data), name));
-    if (/\.(xlsx|xlsm)$/i.test(name) && window.ExcelJS) return ZF.loadWorkbookExcelJS(XLSX, ExcelJS, data, name);
+    if (/\.(xlsx|xlsm)$/i.test(name) && window.ExcelJS) return ZF.openXlsx(XLSX, ExcelJS, data, name).then((r: any) => { openedBytes = r.bytes; return r.model; });
     return Promise.resolve(ZF.loadWorkbook(XLSX, data, name));
   } catch (e) { return Promise.reject(e); }
 }
@@ -92,7 +94,7 @@ export function openData(data: Uint8Array, name: string) {
     if (!m.sheets.length) { toast("Die Datei ist leer."); return; }
     S.model = m; S.cur = Math.max(0, m.sheets.findIndex((s: any) => s.hr >= 0)); S.fresh = {}; S.hits = {}; S.aiIssues = []; S.msgs = [];
     S.history = [{ t: Date.now(), label: "Geöffnet: " + name, snap: JSON.stringify(m) }];
-    S.origBytes = /\.xlsx$|\.xlsm$/i.test(name) ? new Uint8Array(data) : null; persistOrig();
+    S.origBytes = /\.xlsx$|\.xlsm$/i.test(name) && openedBytes ? new Uint8Array(openedBytes) : null; persistOrig();
     S.protokoll.push({ zeit: stamp(), wer: firma().bearbeiter || "", aktion: "Datei geöffnet: " + name, details: [] });
     persist(); emit();
     const parsed = m.sheets.filter((s: any) => s.hr >= 0);

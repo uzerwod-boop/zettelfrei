@@ -54,10 +54,12 @@ function openData(data,name){
   readWorkbook(data,name).then(function(m){ showWorkbook(m,data,name); },function(){ toast("Diese Datei lässt sich nicht lesen."); });
 }
 // .xlsx/.xlsm liest ExcelJS (gepflegt), CSV unser eigener Leser; SheetJS nur noch für alte .xls/.ods.
+var openedBytes=null; // Datei, die beim Speichern als Vorlage dient (ggf. angeglichen)
 function readWorkbook(data,name){
+  openedBytes=data;
   try{
     if(/\.(csv|txt)$/i.test(name)) return Promise.resolve(ZF.loadCSV(XLSX,new TextDecoder("utf-8").decode(data),name));
-    if(/\.(xlsx|xlsm)$/i.test(name) && window.ExcelJS) return ZF.loadWorkbookExcelJS(XLSX,ExcelJS,data,name);
+    if(/\.(xlsx|xlsm)$/i.test(name) && window.ExcelJS) return ZF.openXlsx(XLSX,ExcelJS,data,name).then(function(r){ openedBytes=r.bytes; return r.model; });
     return Promise.resolve(ZF.loadWorkbook(XLSX,data,name));
   }catch(e){ return Promise.reject(e); }
 }
@@ -65,7 +67,7 @@ function showWorkbook(m,data,name){
   if(!m.sheets.length){ toast("Die Datei ist leer."); return; }
   model=m; cur=Math.max(0,m.sheets.findIndex(function(s){ return s.hr>=0; })); fresh={}; hits={}; aiIssues=[];
   history=[{t:Date.now(),label:"Geöffnet: "+name,snap:JSON.stringify(model)}];
-  origBytes=/\.xlsx$|\.xlsm$/i.test(name)?new Uint8Array(data):null; persistOrig();
+  origBytes=/\.xlsx$|\.xlsm$/i.test(name)&&openedBytes?new Uint8Array(openedBytes):null; persistOrig();
   protokoll.push({zeit:stamp(),wer:firma().bearbeiter||"",aktion:"Datei geöffnet: "+name,details:[]});
   $("cmdOut").innerHTML=""; $("pdfOut").innerHTML=""; $("fxAddr").textContent="–"; $("fxVal").textContent="";
   persist(); renderAll(); renderExamples();

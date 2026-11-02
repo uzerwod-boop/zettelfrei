@@ -193,6 +193,50 @@ function loadWorkbookExcelJS(XLSX, ExcelJS, data, name){
   });
 }
 
+/* ---------- Excel-Dateien aus anderen Programmen angleichen ----------
+   Manche Programme (z. B. .NET OpenXML SDK, ERP- und Lohn-Exporte) schreiben das XML mit Präfix
+   (<x:sheetData>), mit BOM und mit absoluten Pfaden („/xl/workbook.xml“). Excel liest das, ExcelJS nicht.
+   normalizeOOXML schreibt eine gleichwertige Datei ohne diese Besonderheiten; null = nichts zu tun. */
+var SSML="http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+function relTarget(relsPath, target){
+  if(target.charAt(0)!=="/") return target;
+  var base=relsPath.replace(/_rels\/[^\/]*$/,"").split("/").filter(Boolean), to=target.slice(1).split("/");
+  var i=0; while(i<base.length && i<to.length-1 && base[i]===to[i]) i++;
+  var up=[]; for(var j=i;j<base.length;j++) up.push("..");
+  return up.concat(to.slice(i)).join("/");
+}
+function normalizeOOXML(XLSX, data){
+  var C=XLSX&&XLSX.CFB; if(!C) return null;
+  var z; try{ z=C.read(data,{type:"array"}); }catch(e){ return null; }
+  var changed=false, dec=new TextDecoder("utf-8"), enc=new TextEncoder();
+  z.FileIndex.forEach(function(f,i){
+    var path=(z.FullPaths[i]||"").replace(/^Root Entry\//,"");
+    if(f.type!==2 || !f.content || !/\.(xml|rels)$/i.test(path)) return;
+    var t=dec.decode(f.content instanceof Uint8Array?f.content:new Uint8Array(f.content)), o=t;
+    t=t.replace(/^﻿/,"");
+    var m=t.match(/xmlns:([A-Za-z_][\w.\-]*)="http:\/\/schemas\.openxmlformats\.org\/spreadsheetml\/2006\/main"/);
+    if(m && !/\sxmlns="/.test(t.slice(0,600))){
+      var px=m[1].replace(/[.\-]/g,"\\$&");
+      t=t.replace(new RegExp("<(/?)"+px+":","g"),"<$1").replace(m[0],'xmlns="'+SSML+'"');
+    }
+    if(/\.rels$/i.test(path)) t=t.replace(/Target="(\/[^"]+)"/g,function(_,tg){ return 'Target="'+relTarget(path,tg)+'"'; });
+    if(t!==o){ var b=enc.encode(t); f.content=b; f.size=b.length; changed=true; }
+  });
+  if(!changed) return null;
+  var out=C.write(z,{fileType:"zip",type:"array"});
+  return out instanceof Uint8Array?out:new Uint8Array(out);
+}
+/* Excel-Datei lesen: ExcelJS, sonst angeglichene Datei, sonst SheetJS. Gibt {model, bytes} zurück –
+   bytes ist die Datei, mit der beim Speichern die Formatierung erhalten wird. */
+function openXlsx(XLSX, ExcelJS, data, name){
+  return loadWorkbookExcelJS(XLSX, ExcelJS, data, name).then(function(m){ return {model:m, bytes:data}; }, function(){
+    var n=normalizeOOXML(XLSX, data);
+    var viaSheetJS=function(){ return {model:loadWorkbook(XLSX, data, name), bytes:null}; };
+    if(!n) return viaSheetJS();
+    return loadWorkbookExcelJS(XLSX, ExcelJS, n, name).then(function(m){ return {model:m, bytes:n}; }, viaSheetJS);
+  });
+}
+
 /* ---------- CSV (auch deutsches Format mit Semikolon) ---------- */
 function parseCSV(text){
   text=String(text).replace(/^\uFEFF/,"");
@@ -720,7 +764,7 @@ function lawChecks(sh,calc,out,opts){
     var shifts=[];
     eachData(sh,function(r,i){
       var b=timeNum(V(i,cBeg)), e=timeNum(V(i,cEnd)); if(isNaN(b)||isNaN(e)) return;
-      var dur=(e-b)*24; if(dur<0) dur+=24;
+      var dur=Math.round((e-b)*1440)/60; if(dur<0) dur+=24; // auf Minuten runden: 8:00–14:00 sind genau 6 Std.
       var p=cPau>=0?pauseMin(V(i,cPau)):0; // Minuten
       var work=dur-p/60;
       if(work>9 && p<45) add(i,cPau>=0?cPau:cEnd,"Pause zu kurz: über 9 Std. Arbeit braucht 45 Min. (§ 4 ArbZG)");
@@ -845,7 +889,7 @@ function buildWorkbook(XLSX, model){
 
 return {colLetter:colLetter,colIndex:colIndex,parseNum:parseNum,isDateStr:isDateStr,normDate:normDate,clone:clone,blank:blank,
   isTimeFmt:isTimeFmt,fmtTime:fmtTime,parseTime:parseTime,dateToSerial:dateToSerial,serialToDate:serialToDate,todaySerial:todaySerial,addColumn:addColumn,col:col,
-  loadWorkbook:loadWorkbook,runQueries:runQueries,isData:isData,eachData:eachData,dataCount:dataCount,anyDateSerial:anyDateSerial,timeNum:timeNum,looksTime:looksTime,loadWorkbookExcelJS:loadWorkbookExcelJS,loadCSV:loadCSV,parseCSV:parseCSV,parseSheet:parseSheet,Calc:Calc,display:display,dataRowNo:dataRowNo,footRowNo:footRowNo,cellAt:cellAt,
+  loadWorkbook:loadWorkbook,runQueries:runQueries,isData:isData,eachData:eachData,dataCount:dataCount,anyDateSerial:anyDateSerial,timeNum:timeNum,looksTime:looksTime,loadWorkbookExcelJS:loadWorkbookExcelJS,normalizeOOXML:normalizeOOXML,openXlsx:openXlsx,loadCSV:loadCSV,parseCSV:parseCSV,parseSheet:parseSheet,Calc:Calc,display:display,dataRowNo:dataRowNo,footRowNo:footRowNo,cellAt:cellAt,
   appendRow:appendRow,deleteRow:deleteRow,setCell:setCell,findCol:findCol,computedCols:computedCols,numericCol:numericCol,
   query:query,checks:checks,describe:describe,planOps:planOps,applyPlan:applyPlan,buildWorkbook:buildWorkbook,transformRefs:transformRefs};
 })();
