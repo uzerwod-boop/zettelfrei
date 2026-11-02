@@ -659,11 +659,12 @@ function aggregate(art, nums, count){
   return nums.reduce(function(a,b){ return a+b; },0);
 }
 // Zeilen, die alle Filter erfüllen: [{i, vals}] oder {error}
+function colErr(sh,name){ return "Spalte „"+name+"“ gibt es im Blatt „"+sh.name+"“ nicht (vorhanden: "+sh.headers.filter(function(h){ return String(h).trim(); }).join(", ")+")"; }
 function filterRows(model, sh, filter, calc){
   var filters=(filter||[]).map(function(f){ var o={name:f.spalte,k:findCol(sh,f.spalte),op:Array.isArray(f.wert)&&(!f.op||f.op==="=")?"in":(f.op||"="),w:f.wert,k2:-1};
     if(f.wert&&typeof f.wert==="object"&&!Array.isArray(f.wert)&&f.wert.spalte!=null){ o.name2=f.wert.spalte; o.k2=findCol(sh,f.wert.spalte); if(o.k2<0) o.bad2=true; } // Spalte mit Spalte vergleichen
     return o; });
-  var bad=filters.find(function(f){ return f.k<0||f.bad2; }); if(bad) return {error:"Spalte „"+(bad.k<0?bad.name:bad.name2)+"“ nicht gefunden"};
+  var bad=filters.find(function(f){ return f.k<0||f.bad2; }); if(bad) return {error:colErr(sh,bad.k<0?bad.name:bad.name2)};
   var hits=[];
   eachData(sh,function(r,i){ var vals=rowValues(model,sh,i,calc); if(filters.every(function(f){ return matches(vals[f.k],f.op,f.k2>=0?vals[f.k2]:f.w); })) hits.push({i:i,vals:vals}); });
   return hits;
@@ -690,22 +691,24 @@ function query(model, q){
   var label=isExpr?String(q.bezeichnung||q.spalte.replace(/^=/,"")):(k>=0?sh.headers[k]:"");
   if(isExpr){ var kk=sh.ncol; hits.forEach(function(h){ h.vals=h.vals.slice(); h.vals[kk]=fx(h.vals); }); k=kk; }
   // „enthält“-Filter: welche verschiedenen Werte wurden erfasst? (z. B. „Bad Schneider“ und „Bad Schneider II“)
-  var contains=(q.filter||[]).filter(function(f){ return f.op==="enthält"; }).map(function(f){ var fk=findCol(sh,f.spalte), seen={}, vals=[];
-    hits.forEach(function(h){ var v=h.vals[fk], n=normKey(v); if(n&&!seen[n]){ seen[n]=1; vals.push(String(v).trim()); } }); return {spalte:sh.headers[fk],wert:f.wert,values:vals}; }).filter(function(c){ return c.values.length>1; });
+  var contains=(q.filter||[]).filter(function(f){ return f.op==="enthält"||f.op==="in"||Array.isArray(f.wert); }).map(function(f){ var fk=findCol(sh,f.spalte), seen={}, vals=[], sums={};
+    hits.forEach(function(h){ var v=h.vals[fk], n=normKey(v); if(!n) return; if(!seen[n]){ seen[n]=1; vals.push(String(v).trim()); sums[n]=0; }
+      if(k>=0){ var x=calc.num(h.vals[k]); if(!isNaN(x)) sums[n]+=x; } });
+    return {spalte:sh.headers[fk],wert:Array.isArray(f.wert)?f.wert.join(", "):f.wert,values:vals,sums:k>=0&&(q.art||"summe")!=="anzahl"&&(q.art||"summe")!=="liste"?vals.map(function(v){ return Math.round(sums[normKey(v)]*100)/100; }):null}; }).filter(function(c){ return c.values.length>1; });
   var art=(q.art||"summe").toLowerCase();
   // Gruppieren nach einer Spalte, optional nach Zeitraum: "Baustelle", "Datum:monat", "Datum:woche"
   if(q.gruppieren){
     var gp=String(q.gruppieren).split(":"), gk=findCol(sh,gp[0]), unit=(gp[1]||"").toLowerCase()||null;
-    if(gk<0) return {error:"Spalte „"+gp[0]+"“ nicht gefunden"};
+    if(gk<0) return {error:colErr(sh,gp[0])};
     var mapTo=null, byLabel=sh.headers[gk];
     if(q.zuordnung){ // z. B. Baustelle → Kunde aus Blatt „Projekte“
       var z=q.zuordnung, zs=calc.sheet(z.blatt); if(!zs||zs.hr<0) return {error:"Blatt „"+z.blatt+"“ nicht gefunden"};
-      var zk1=findCol(zs,z.von||sh.headers[gk]), zk2=findCol(zs,z.nach); if(zk1<0||zk2<0) return {error:"Zuordnung: Spalte in „"+zs.name+"“ nicht gefunden"};
+      var zk1=findCol(zs,z.von||sh.headers[gk]), zk2=findCol(zs,z.nach); if(zk1<0||zk2<0) return {error:"Zuordnung: "+colErr(zs,zk1<0?(z.von||sh.headers[gk]):z.nach)};
       mapTo={}; eachData(zs,function(r,i){ var a=calc.value(zs,dataRowNo(zs,i),zs.c0+zk1), b=calc.value(zs,dataRowNo(zs,i),zs.c0+zk2); if(a!=null&&a!=="") mapTo[normKey(a)]=b; });
       byLabel=zs.headers[zk2];
       hits.forEach(function(h){ h.vals=h.vals.slice(); var m=mapTo[normKey(h.vals[gk])]; h.vals[gk]=m==null||m===""?"(ohne Zuordnung)":m; });
     }
-    if(art!=="anzahl"&&k<0) return {error:"Spalte nicht gefunden"};
+    if(art!=="anzahl"&&k<0) return {error:colErr(sh,q.spalte)};
     var map={}, order=[];
     hits.forEach(function(h){ var key=groupKey(h.vals[gk],unit), id=String(key).toLowerCase();
       if(!map[id]){ map[id]={key:key,nums:[],count:0,rows:[],sort:unit?(typeof h.vals[gk]==="number"?h.vals[gk]:anyDateSerial(h.vals[gk])):null}; order.push(id); }
@@ -719,7 +722,7 @@ function query(model, q){
       rows:[].concat.apply([],groups.map(function(g){ return g.rows; })), money:art!=="anzahl"&&k>=0&&(q.euro||/€|eur|preis|betrag|wert|netto|brutto|summe|mwst|lohn|kosten/i.test(label))};
   }
   if(art==="anzahl") return {value:hits.length, rows:hits.map(function(h){ return dataRowNo(sh,h.i); }), contains:contains};
-  if(k<0) return {error:"Spalte nicht gefunden"};
+  if(k<0) return {error:colErr(sh,q.spalte)};
   if(art==="liste") return {list:hits.map(function(h){ return h.vals[k]; }).filter(function(v){ return v!=null&&v!==""; }), rows:hits.map(function(h){ return dataRowNo(sh,h.i); }), col:k, contains:contains};
   var nums=[], textNums=[], unread=[], empty=0, excelSum=0;
   hits.forEach(function(h){ var raw=h.vals[k], n=calc.num(raw);
@@ -784,6 +787,16 @@ function ambiguity(model, sheetName, colName, chosen, text){
   return null;
 }
 
+var INJECT=/ignore (all |any )?(previous|prior|above) instructions|ignoriere (alle |die )?(vorherigen |bisherigen )?anweisungen|disregard (the )?(previous|above)|system ?prompt|you are now|du bist (jetzt|ab sofort)|neue anweisung|new instructions?:/i;
+// Löschen einer Zeile, deren Nummer/ID mehrfach vorkommt? → {spalte, wert, rows}
+function duplicateKey(model, sheetName, row){
+  var calc=new Calc(model), sh=calc.sheet(sheetName); if(!sh||sh.hr<0) return null;
+  var keyRe=/(^|[^a-z])(nr|nummer|id|artikel-?nr|auftrags-?nr|rechnungs-?nr)([^a-z]|$)/i, k=sh.headers.findIndex(function(h){ return keyRe.test(h); }); if(k<0) k=0;
+  var v=normKey(calc.value(sh,row,sh.c0+k)); if(!v) return null;
+  var rows=[]; eachData(sh,function(r,i){ var rr=dataRowNo(sh,i); if(normKey(calc.value(sh,rr,sh.c0+k))===v) rows.push(rr); });
+  return rows.length>1?{spalte:sh.headers[k],wert:String(calc.value(sh,row,sh.c0+k)),rows:rows}:null;
+}
+
 /* ---------- Prüfen (allgemein) ---------- */
 function checks(model,opts){
   var calc=new Calc(model), out=[];
@@ -791,7 +804,7 @@ function checks(model,opts){
     if(sh.hr<0||!sh.rows.length) return;
     var comp=computedCols(sh);
     for(var k=0;k<sh.ncol;k++){
-      var n=0, filledC=0, nums=0, numLike=0; eachData(sh,function(r){ n++; var c=r[k]; if(c&&!blank(c)){ filledC++; if(typeof c.v==="number"||c.f) nums++; if(typeof c.v==="number"||c.f||(typeof c.v==="string"&&/\d/.test(c.v)&&!/[a-zäöü]{3,}/i.test(c.v.replace(/€|eur|stk|ca\.?/gi,""))&&!/^\d{1,2}[.:/]\d{1,2}([.:/]\d{2,4})?$/.test(c.v.trim()))) numLike++; } });
+      var n=0, filledC=0, nums=0, numLike=0; eachData(sh,function(r){ n++; var c=r[k]; if(c&&!blank(c)){ filledC++; if(typeof c.v==="number"||c.f) nums++; if(typeof c.v==="number"||c.f||(typeof c.v==="string"&&/\d/.test(c.v)&&!/^\s*[A-Za-zÄÖÜäöü]{1,4}[-_ \/]?\d+[A-Za-z]?\s*$/.test(c.v)&&!/[a-zäöü]{3,}/i.test(c.v.replace(/€|eur|stk|ca\.?/gi,""))&&!/^\d{1,2}[.:/]\d{1,2}([.:/]\d{2,4})?$/.test(c.v.trim()))) numLike++; } });
       var keyRe=/(^|[^a-z])(nr|nummer|id|artikel-?nr|auftrags-?nr|rechnungs-?nr)([^a-z]|$)/i, key=keyRe.test(sh.headers[k]);
       var firstKey=sh.headers.findIndex(function(h){ return keyRe.test(h); }), uniq=key && k===firstKey;
       var seen={};
@@ -800,8 +813,9 @@ function checks(model,opts){
         if(typeof v==="string" && /^#/.test(v)) out.push({blatt:sh.name,zeile:row,k:k,problem:"Formel ergibt "+v});
         if(!comp[k] && filledC/n>=0.75 && filledC<n && blank(c)) out.push({blatt:sh.name,zeile:row,k:k,problem:sh.headers[k]+" fehlt"});
         if(!comp[k] && !key && !/tel|telefon|handy|mobil|fax|plz|iban|bic|e-?mail/i.test(sh.headers[k]) && numLike/Math.max(1,filledC)>=0.6 && c && !c.f && typeof c.v==="string" && c.v.trim() && !sh.dateCol[k] && !(sh.timeCol&&sh.timeCol[k]) && !/^#/.test(c.v)){
-          if(parseNum(c.v)==null) out.push({blatt:sh.name,zeile:row,k:k,problem:"Text statt Zahl („"+c.v.trim()+"“) – Excel rechnet damit nicht"});
+          if(parseNum(c.v)==null){ if(!/^\s*[A-Za-zÄÖÜäöü]{1,4}[-_ \/]?\d+[A-Za-z]?\s*$/.test(c.v)) out.push({blatt:sh.name,zeile:row,k:k,problem:"Text statt Zahl („"+c.v.trim()+"“) – Excel rechnet damit nicht"}); }
           else if(nums>0 && !/^0\d/.test(c.v.trim()) && !/tel|telefon|handy|mobil|fax|plz|iban|bic/i.test(sh.headers[k])) out.push({blatt:sh.name,zeile:row,k:k,problem:"Zahl als Text gespeichert („"+c.v.trim()+"“) – Summen in Excel lassen sie weg"}); }
+        if(typeof v==="string" && INJECT.test(v)) out.push({blatt:sh.name,zeile:row,k:k,problem:"Text sieht aus wie eine Anweisung an eine KI – Zettelfrei befolgt ihn nicht, bitte prüfen"});
         if(c && c.f && typeof v==="string" && /\?\?\?|unbekannt|nicht gefunden/i.test(v)) out.push({blatt:sh.name,zeile:row,k:k,problem:"Nachschlagen ohne Treffer: „"+v+"“"});
         if(/(ust|mwst|steuer).*(%|satz)|steuersatz|^satz$/i.test(sh.headers[k]) && typeof v==="number" && v>1 && v<=100) out.push({blatt:sh.name,zeile:row,k:k,problem:"Steuersatz "+deNum(v)+" statt "+deNum(v)+" % – Excel rechnet mit "+deNum(v*100)+" %"});
         if(uniq && v!=null && v!==""){ var s=String(v).trim().toLowerCase(); if(seen[s]) out.push({blatt:sh.name,zeile:row,k:k,problem:sh.headers[k]+" doppelt (auch Zeile "+seen[s]+")"}); else seen[s]=row; }
@@ -981,6 +995,6 @@ return {colLetter:colLetter,colIndex:colIndex,parseNum:parseNum,isDateStr:isDate
   isTimeFmt:isTimeFmt,fmtTime:fmtTime,parseTime:parseTime,dateToSerial:dateToSerial,serialToDate:serialToDate,todaySerial:todaySerial,addColumn:addColumn,col:col,
   loadWorkbook:loadWorkbook,runQueries:runQueries,isData:isData,eachData:eachData,dataCount:dataCount,anyDateSerial:anyDateSerial,timeNum:timeNum,looksTime:looksTime,loadWorkbookExcelJS:loadWorkbookExcelJS,normalizeOOXML:normalizeOOXML,openXlsx:openXlsx,loadCSV:loadCSV,parseCSV:parseCSV,parseSheet:parseSheet,Calc:Calc,display:display,dataRowNo:dataRowNo,footRowNo:footRowNo,cellAt:cellAt,
   appendRow:appendRow,deleteRow:deleteRow,setCell:setCell,findCol:findCol,computedCols:computedCols,numericCol:numericCol,
-  query:query,filterRows:filterRows,ambiguity:ambiguity,checks:checks,describe:describe,planOps:planOps,applyPlan:applyPlan,buildWorkbook:buildWorkbook,transformRefs:transformRefs};
+  query:query,filterRows:filterRows,ambiguity:ambiguity,duplicateKey:duplicateKey,INJECT:INJECT,checks:checks,describe:describe,planOps:planOps,applyPlan:applyPlan,buildWorkbook:buildWorkbook,transformRefs:transformRefs};
 })();
 if(typeof module!=="undefined") module.exports=ZF;

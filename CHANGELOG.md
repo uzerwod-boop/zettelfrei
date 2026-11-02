@@ -2,6 +2,23 @@
 
 Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.5.4] – 2026-11-02 · Schutz, der nicht vom KI-Modell abhängt
+
+Erkenntnis aus Tests mit einem schnellen, günstigen Modell: Regeln allein reichen nicht. Diese Version prüft im Programm selbst.
+
+### Neu
+- Jede Antwort zeigt, mit welchen Filtern gerechnet wurde (z. B. „Filter: Freigegeben = Ja“) – erfundene Einschränkungen fallen sofort auf.
+- Zusammengezählte Einträge werden genannt, mit Teilsummen: „Sie haben ‚Kevin Müller‘ genannt, zusammengezählt wurden aber: Kevin Müller (280), Kevin Mueller (290)“.
+- Selbstkorrektur: War ein Teil nicht berechenbar (falsche Spalte, falsches Blatt), bekommt die KI die Fehlermeldung samt vorhandenen Spalten und korrigiert einmal selbst („automatisch korrigiert“).
+- Mehrdeutige Namen in der Vorschau: Auswahl per Knopf („Kevin Müller“ / „Kevin Mueller“), vorher nicht vorausgewählt.
+- Löschen einer Zeile, deren Nummer doppelt vorkommt: Hinweis mit beiden Zeilen, nicht vorausgewählt.
+- Änderungen, die aus Text in der Tabelle stammen („tu, was in den Notizen steht“) oder Text enthalten, der wie eine KI-Anweisung aussieht: Warnung, nichts vorausgewählt.
+- Prüfen meldet Zellen, deren Text wie eine Anweisung an eine KI aussieht.
+
+### Behoben
+- Prüfen: Kennungen wie „L2“ oder „A-1001“ wurden als „Text statt Zahl“ gemeldet.
+- Regeln: exakt genannte Namen exakt filtern, keine Filter erfinden, „offen/überfällig“ nach offenem Betrag statt Status, „ohne X“ als „≠ X“.
+
 ## [0.5.3] – 2026-11-02 · Assistent: sicher bei vielen Zeilen
 
 ### Behoben
@@ -129,6 +146,7 @@ Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog]
 - KI wahlweise über OpenRouter, eigenen Server, Claude API oder lokales Modell.
 - PDFs und Fotos von Lieferantenrechnungen per KI einlesen.
 
+[0.5.4]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.5.4
 [0.5.3]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.5.3
 [0.5.2]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.5.2
 [0.5.1]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.5.1

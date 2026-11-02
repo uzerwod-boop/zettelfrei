@@ -6,7 +6,7 @@ import { b64, firma, rawOf, stamp, toB64 } from "./util";
 export type Pane = "cmd" | "pdf" | "docs" | "check" | "hist";
 export interface HistEntry { t: number; label: string; snap: string }
 export interface ProtEntry { zeit: string; wer: string; aktion: string; details: string[] }
-export interface Msg { id: number; text: string; status: "busy" | "done" | "error"; res?: any; results?: any; plan?: any[]; planState?: "open" | "done" | "dropped"; error?: string; noAi?: boolean }
+export interface Msg { id: number; text: string; status: "busy" | "done" | "error"; res?: any; results?: any; plan?: any[]; planState?: "open" | "done" | "dropped"; error?: string; noAi?: boolean; fixed?: boolean }
 
 const KEY = "zf3", KEY_ORIG = "zf3-orig";
 export const S = {
