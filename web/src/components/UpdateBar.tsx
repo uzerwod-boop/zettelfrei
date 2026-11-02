@@ -1,7 +1,8 @@
 // Desktop-Programm: neue Version aus den GitHub-Releases finden, laden, installieren, neu starten.
 // Die Update-Dateien sind signiert; das Programm installiert nur, was mit unserem Schlüssel signiert ist.
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { IS_APP } from "../util";
+import { IS_APP, openExternal } from "../util";
+import { REPO } from "../config";
 
 type St = { s: "idle" | "checking" | "none" | "available" | "loading" | "error"; version?: string; notes?: string; pct?: number; msg?: string };
 let st: St = { s: "idle" }, upd: any = null, dismissed = false; const subs = new Set<() => void>();
@@ -25,9 +26,20 @@ async function install() {
 }
 export const useUpdate = () => useSyncExternalStore(cb => { subs.add(cb); return () => subs.delete(cb); }, () => st);
 
+// Nach einem Update einmal sagen, dass es geklappt hat (Version beim letzten Start merken)
+function justUpdated(): string | null {
+  if (!IS_APP) return null;
+  try { const prev = localStorage.getItem("zf-version"); localStorage.setItem("zf-version", __APP_VERSION__); return prev && prev !== __APP_VERSION__ ? prev : null; } catch { return null; }
+}
+const UPDATED_FROM = justUpdated();
+
 export function UpdateBar() {
-  const u = useUpdate(), [, force] = useState(0);
+  const u = useUpdate(), [, force] = useState(0), [done, setDone] = useState(!UPDATED_FROM);
   useEffect(() => { const t = setTimeout(() => checkForUpdate(false), 4000); return () => clearTimeout(t); }, []);
+  if (!done) return (
+    <div className="updatebar" role="status"><span><b>Zettelfrei wurde auf {__APP_VERSION__} aktualisiert.</b> Ihre Datei und Einstellungen sind erhalten.</span>
+      <button className="btn small" type="button" onClick={() => { openExternal(`${REPO}/releases/tag/v${__APP_VERSION__}`); setDone(true); }}>Was ist neu?</button>
+      <button className="btn quiet small" type="button" onClick={() => setDone(true)}>OK</button></div>);
   if (dismissed || !["available", "loading", "error", "none"].includes(u.s) || (u.s === "error" && !u.msg)) return null;
   return (
     <div className="updatebar" role="status">
