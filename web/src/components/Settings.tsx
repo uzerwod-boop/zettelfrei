@@ -2,6 +2,9 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { toast } from "../store";
 import { HIER } from "../util";
 import { aiError } from "./Assistant";
+import { openQualityTest } from "./QualityTest";
+import { checkForUpdate } from "./UpdateBar";
+import { IS_APP } from "../util";
 
 // Eigener kleiner Zustand: ist der Dialog offen?
 let open = false; const subs = new Set<() => void>();
@@ -51,6 +54,10 @@ export function Settings() {
         <p className="note">{HELP(prov, !!st.server)}</p>
         {stat && <div className={"status " + stat.cls}>{stat.text}</div>}
         <div className="row"><button className="btn" value="save" id="setSave">Speichern</button><button className="btn quiet" type="button" onClick={test}>Verbindung testen</button><button className="btn quiet" value="cancel" formNoValidate>Abbrechen</button></div>
+        <div className="qtlink"><b>Wie gut ist dieses Modell?</b> <span className="note">17 Testfragen mit bekannten Antworten, Ergebnis in ca. 1–3 Minuten.</span>
+          <button className="btn quiet small" type="button" onClick={() => { AI.save(cfg()); close(); openQualityTest(); }}>KI-Qualitätstest</button></div>
+        {IS_APP && <div className="qtlink"><b>Programm</b> <span className="note">Version {__APP_VERSION__} · neue Versionen werden beim Start gesucht.</span>
+          <button className="btn quiet small" type="button" onClick={() => { close(); checkForUpdate(true); }}>Nach Updates suchen</button></div>}
       </form>
     </dialog>);
 }

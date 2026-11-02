@@ -339,3 +339,36 @@ select option{background:var(--sheet);color:var(--ink)}
 .answer .filters{color:var(--muted)}
 .ambpick{display:inline-flex;flex-wrap:wrap;gap:6px;margin-left:4px;vertical-align:middle}
 .ambpick .btn.on{border-color:var(--accent);color:var(--accent)}
+
+/* KI-Qualitätstest */
+dialog#qualitytest{width:min(980px,94vw);max-height:90vh;padding:0;border:1px solid var(--line);border-radius:16px;background:var(--sheet);color:var(--ink)}
+dialog#qualitytest::backdrop{background:rgba(10,14,15,.45)}
+.qt{padding:22px 26px;display:grid;gap:12px}
+.qt h2{margin:0;font:800 22px var(--f-display)} .qt h3{margin:8px 0 0;font:700 15px var(--f-body)}
+.qt .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap} .qt .row.end{justify-content:flex-end}
+.qtscore{margin-left:auto;font-size:14px} .qtscore .ok{color:var(--ok)} .qtscore .guard{color:var(--warn)} .qtscore .bad{color:#e0604f}
+.qtsum{margin:0;color:var(--muted);font-size:13px}
+.qtlist{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.qtlist li{display:grid;grid-template-columns:26px minmax(0,1.1fr) minmax(0,1fr) 64px;gap:10px;padding:8px 12px;border-bottom:1px solid var(--grid);font-size:13.5px;align-items:baseline}
+.qtlist li:last-child{border-bottom:0}
+.qtlist .ic{font-weight:800;text-align:center} .qtlist .n{color:var(--muted)} .qtlist .t{color:var(--muted);text-align:right;font-family:var(--f-mono);font-size:12px}
+.qtlist li.ok .ic{color:var(--ok)} .qtlist li.guard .ic{color:var(--warn)} .qtlist li.fail .ic,.qtlist li.error .ic{color:#e0604f}
+.qtlist li.wait{opacity:.6}
+.qtruns{border-collapse:collapse;font-size:13px;width:100%} .qtruns th,.qtruns td{padding:5px 8px;border-bottom:1px solid var(--grid);text-align:left;max-width:none}
+.qtlink{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.qtlink .note{margin:0}
+/* Hinweis auf neue Programmversion */
+.updatebar{position:fixed;right:18px;bottom:18px;z-index:60;max-width:520px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--sheet);color:var(--ink);border:1px solid var(--accent);border-left:5px solid var(--accent);border-radius:12px;padding:12px 14px;box-shadow:0 14px 40px rgba(0,0,0,.25);font-size:13.5px}
+.updatebar span{flex:1 1 260px}
+
+/* Hilfe und Feedback unten in der Leiste */
+.rail-foot{margin-top:auto;display:flex;flex-direction:column;gap:4px;padding-top:10px}
+.rail-foot button{opacity:.8} .rail-foot button:hover{opacity:1}
+@media (max-width:900px){.rail-foot{margin-top:0;flex-direction:row;padding-top:0;margin-left:auto}}
+dialog#feedback{width:min(560px,94vw);border:1px solid var(--line);border-radius:16px;background:var(--sheet);color:var(--ink);padding:22px 26px}
+dialog#feedback::backdrop{background:rgba(10,14,15,.45)}
+dialog#feedback form{display:grid;gap:12px} dialog#feedback h2{margin:0;font:800 22px var(--f-display)}
+dialog#feedback label{display:grid;gap:6px;font-size:13.5px;color:var(--muted)}
+dialog#feedback textarea{width:100%;resize:vertical;background:var(--paper)}
+dialog#feedback .seg .btn.on,.row.seg .btn.on{border-color:var(--accent);color:var(--accent)}
+dialog#feedback .note{margin:0}

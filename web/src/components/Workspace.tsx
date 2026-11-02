@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { S, commit, emit, issues, mark, openExample, openFile, persist, saveExcel, selectSheet, setPane, sheet, toast, useStore, type Pane } from "../store";
-import { HIER, IS_APP, de, fmtVal, rawOf } from "../util";
+import { HIER, IS_APP, de, fmtVal, openExternal, rawOf } from "../util";
+import { GUIDE_URL } from "../config";
+import { openFeedback } from "./Feedback";
 import { Icon, Mark } from "./Icons";
 
 /* ---------- Leiste links ---------- */
@@ -17,6 +19,10 @@ export function Rail() {
           <Icon name={x.icon} /><span>{x.label}</span>
           {x.id === "check" && n > 0 && <span className="n">{n}</span>}
         </button>))}
+      <div className="rail-foot">
+        <button type="button" id="t-help" onClick={() => openExternal(GUIDE_URL)} title="Erste Schritte (Anleitung)"><Icon name="help" /><span>Hilfe</span></button>
+        <button type="button" id="t-feedback" onClick={openFeedback} title="Feedback senden"><Icon name="feedback" /><span>Feedback</span></button>
+      </div>
     </nav>);
 }
 

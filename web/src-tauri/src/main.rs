@@ -1,6 +1,7 @@
 // Zettelfrei als Programm für Windows und macOS.
 // Die Oberfläche ist dieselbe wie im Browser (web/dist). Rust übernimmt nur,
-// was ein Browser-Fenster nicht kann: Dateien über den „Speichern unter“-Dialog sichern.
+// was ein Browser-Fenster nicht kann: Dateien über den „Speichern unter“-Dialog sichern
+// und neue Versionen installieren (signiert, aus den GitHub-Releases).
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use base64::{engine::general_purpose::STANDARD, Engine};
@@ -22,6 +23,9 @@ async fn save_file(app: tauri::AppHandle, name: String, data: String) -> Result<
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build()) // Updates aus GitHub-Releases (signiert)
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_opener::init()) // Links und E-Mail im System öffnen
         .invoke_handler(tauri::generate_handler![save_file])
         .run(tauri::generate_context!())
         .expect("Zettelfrei konnte nicht gestartet werden");

@@ -2,6 +2,16 @@
 
 Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.6.0] – 2026-11-02 · Bereit für den Pilotbetrieb
+
+### Neu
+- **KI-Qualitätstest** (KI-Einstellungen): 17 Fragen an eine Testdatei mit bekannten Antworten – Auswertungen über mehrere Blätter, mehrdeutige Namen, Änderungen an vielen Zeilen, doppelte Einträge, Anweisungen in Zellen. Ergebnis je Frage als korrekt, abgefangen (Modell falsch, Zettelfrei warnt/verhindert) oder falsch, mit Zeit, Kosten und Token-Verbrauch. Frühere Läufe bleiben zum Vergleich von Modellen stehen; „Ergebnis kopieren“ für Rückmeldungen. Die geöffnete Datei bleibt unberührt.
+- **Automatische Updates** im Programm: Beim Start sucht Zettelfrei nach einer neuen Version und installiert sie nach einem Klick („Jetzt aktualisieren“), danach Neustart. Updates sind signiert; installiert wird nur, was mit dem Zettelfrei-Schlüssel signiert ist. Zusätzlich „Nach Updates suchen“ in den Einstellungen.
+- **Feedback** unten links: Problem, Idee oder Lob mit Version, System und KI-Modell – ohne Tabellendaten. Per E-Mail (Adresse in `web/src/config.ts`) oder über das GitHub-Formular.
+- **Hilfe** unten links öffnet die neue Anleitung [Erste Schritte](docs/Erste-Schritte.md), auch als [PDF](docs/Zettelfrei-Erste-Schritte.pdf) zum Verschicken.
+- Kosten und Tokens jeder KI-Anfrage werden mitgezählt (bei OpenRouter mit genauen Kosten).
+- Links und E-Mails öffnen im Programm im System-Browser bzw. Mail-Programm.
+
 ## [0.5.4] – 2026-11-02 · Schutz, der nicht vom KI-Modell abhängt
 
 Erkenntnis aus Tests mit einem schnellen, günstigen Modell: Regeln allein reichen nicht. Diese Version prüft im Programm selbst.
@@ -146,6 +156,7 @@ Erkenntnis aus Tests mit einem schnellen, günstigen Modell: Regeln allein reich
 - KI wahlweise über OpenRouter, eigenen Server, Claude API oder lokales Modell.
 - PDFs und Fotos von Lieferantenrechnungen per KI einlesen.
 
+[0.6.0]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.6.0
 [0.5.4]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.5.4
 [0.5.3]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.5.3
 [0.5.2]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.5.2

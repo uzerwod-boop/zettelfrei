@@ -46,11 +46,13 @@
 
 <table>
 <tr>
-<td align="center" width="33%"><b>macOS</b><br><sub>Apple Silicon und Intel · ab macOS 11</sub><br><br><a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.4/Zettelfrei_0.5.4_universal.dmg"><b>Zettelfrei_0.5.4_universal.dmg</b></a><br><sub>ca. 7 MB</sub></td>
-<td align="center" width="33%"><b>Windows</b><br><sub>Windows 10 und 11 · 64 Bit</sub><br><br><a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.4/Zettelfrei_0.5.4_x64-setup.exe"><b>Zettelfrei_0.5.4_x64-setup.exe</b></a><br><sub>ca. 3 MB · auch als <a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.5.4/Zettelfrei_0.5.4_x64_en-US.msi">.msi</a></sub></td>
+<td align="center" width="33%"><b>macOS</b><br><sub>Apple Silicon und Intel · ab macOS 11</sub><br><br><a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.6.0/Zettelfrei_0.6.0_universal.dmg"><b>Zettelfrei_0.6.0_universal.dmg</b></a><br><sub>ca. 7 MB</sub></td>
+<td align="center" width="33%"><b>Windows</b><br><sub>Windows 10 und 11 · 64 Bit</sub><br><br><a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.6.0/Zettelfrei_0.6.0_x64-setup.exe"><b>Zettelfrei_0.6.0_x64-setup.exe</b></a><br><sub>ca. 3 MB · auch als <a href="https://github.com/uzerwod-boop/zettelfrei/releases/download/v0.6.0/Zettelfrei_0.6.0_x64_en-US.msi">.msi</a></sub></td>
 <td align="center" width="33%"><b>Browser</b><br><sub>ohne Installation · Chrome, Edge, Firefox, Safari</sub><br><br><a href="https://uzerwod-boop.github.io/zettelfrei/"><b>uzerwod-boop.github.io/zettelfrei</b></a><br><sub>sofort loslegen</sub></td>
 </tr>
 </table>
+
+**Neu dabei?** Die [Erste-Schritte-Anleitung](docs/Erste-Schritte.md) (auch als [PDF](docs/Zettelfrei-Erste-Schritte.pdf)) führt in 10 Minuten durch Installation, KI und die ersten Sätze.
 
 Alle Versionen: [Releases](https://github.com/uzerwod-boop/zettelfrei/releases). Die Programme werden automatisch aus diesem Repository gebaut (GitHub Actions, [desktop.yml](.github/workflows/desktop.yml)).
 
@@ -58,6 +60,8 @@ Alle Versionen: [Releases](https://github.com/uzerwod-boop/zettelfrei/releases).
 > **Erster Start:** Die Programme sind noch nicht bei Apple bzw. Microsoft signiert. Das System fragt deshalb einmal nach.
 > - **macOS:** `.dmg` öffnen, Zettelfrei in „Programme“ ziehen. Beim ersten Start „Fertig“ wählen, dann **Systemeinstellungen → Datenschutz & Sicherheit → „Dennoch öffnen“**. Danach startet es normal aus dem Dock.
 > - **Windows:** Bei „Der Computer wurde durch Windows geschützt“ auf **„Weitere Informationen“ → „Trotzdem ausführen“** klicken. Installiert wird nur für den eigenen Benutzer, ohne Admin-Rechte.
+>
+> Ab Version 0.6 meldet das Programm neue Versionen selbst und aktualisiert sich mit einem Klick.
 
 ## Neu in 0.5
 
@@ -159,6 +163,8 @@ PORT=8787                              # Port
 HOST=0.0.0.0                           # im Firmennetz erreichbar machen (Standard: nur dieser Rechner)
 ```
 
+**Wie gut ist ein Modell?** In den KI-Einstellungen startet **„KI-Qualitätstest“**: 17 Fragen an eine Testdatei mit bekannten Antworten (Auswertungen über mehrere Blätter, mehrdeutige Namen, Änderungen an vielen Zeilen, Anweisungen in Zellen). Ergebnis je Frage – korrekt, von Zettelfrei abgefangen oder falsch – samt Zeit und Kosten; frühere Läufe bleiben zum Vergleich stehen.
+
 **Tipp:** Für die meisten Aufgaben reicht ein schnelleres, günstigeres Modell (z. B. `anthropic/claude-haiku-5.5`). Für gescannte Rechnungen und Fotos lohnt ein stärkeres Modell.
 
 ### Datenschutz
@@ -217,6 +223,7 @@ src/einvoice.js       E-Rechnung: XRechnung (UBL) und ZUGFeRD (CII) lesen, XRech
 src/xlsxio.js         Speichern mit Formatierung (ExcelJS)
 src/docs.js           PDF-Briefe, Rechnungsansicht, Abnahmeprotokoll, CSV-Export, Wochenbericht
 src/workflows.js      Bereich „Dokumente“
+tests/ai-eval/        Testdatei für den KI-Qualitätstest (17 Fragen mit bekannten Antworten)
 src/styles.css        Gestaltung (hell und dunkel)
 server.js             kleiner Server, leitet KI-Anfragen mit Schlüssel weiter (Claude oder OpenRouter)
 beispiele/            fünf typische Excel-Dateien eines Fliesenlegers, eine Stresstest-Datei und zwei E-Rechnungen (erfundene Daten)
@@ -271,7 +278,8 @@ Was als Nächstes kommt – Reihenfolge nach Rückmeldungen aus den Betrieben. [
 - [x] **0.4** Auswertungen: gruppieren, Prozent und Unterschiede, Blätter verknüpfen, Diagramme, 40 weitere Excel-Funktionen
 - [x] **0.5** Programm für macOS und Windows, neue Oberfläche, Dateien hineinziehen
 - [ ] **Mehrere Mitarbeitende:** Stunden, Material und Fotos vom Handy per Link, das Büro übernimmt sie in dieselbe Excel-Datei
-- [ ] **Signierte Programme** (Apple Developer ID, Windows-Zertifikat) und automatische Updates
+- [x] **0.6** KI-Qualitätstest, automatische Updates, Feedback und Anleitung für den Pilotbetrieb
+- [ ] **Signierte Programme** (Apple Developer ID, Windows-Zertifikat)
 - [ ] **Google Sheets** öffnen und zurückspeichern (nur die ausgewählte Tabelle, kein Zugriff auf das ganze Drive)
 - [ ] **ZUGFeRD-PDF erzeugen** (PDF/A-3 mit eingebetteter XML) statt nur XRechnung
 - [ ] **DATEV-Export** für den Steuerberater

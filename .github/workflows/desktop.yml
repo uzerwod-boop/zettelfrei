@@ -23,6 +23,8 @@ jobs:
           - platform: windows-latest
             args: ""
     runs-on: ${{ matrix.platform }}
+    env:
+      HAS_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -38,9 +40,17 @@ jobs:
           workspaces: web/src-tauri -> target
       - run: npm ci
         working-directory: web
+      # Ohne Signaturschlüssel (Secret TAURI_SIGNING_PRIVATE_KEY) bauen wir ohne Update-Dateien statt abzubrechen
+      - name: Updates nur mit Signaturschlüssel
+        if: ${{ env.HAS_KEY != 'true' }}
+        shell: bash
+        working-directory: web/src-tauri
+        run: node -e "const f='tauri.conf.json',c=JSON.parse(require('fs').readFileSync(f));c.bundle.createUpdaterArtifacts=false;require('fs').writeFileSync(f,JSON.stringify(c,null,2))"
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         with:
           projectPath: web
           tagName: v__VERSION__

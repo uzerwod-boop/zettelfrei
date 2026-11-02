@@ -8,4 +8,5 @@ rmSync(out, { recursive: true, force: true }); mkdirSync(out, { recursive: true 
 for (const f of ["engine.js", "einvoice.js", "docs.js", "xlsxio.js", "examples.js", "ai.js", "workflows.js"]) cpSync(join(root, "src", f), join(out, f));
 cpSync(join(root, "vendor"), join(out, "vendor"), { recursive: true });
 cpSync(join(root, "fonts"), join(out, "fonts"), { recursive: true });
+cpSync(join(root, "tests", "ai-eval", "Zettelfrei_KI_Test.xlsx"), join(out, "ki-test.xlsx")); // Testdatei für den KI-Qualitätstest
 console.log("Kernmodule nach public/lib kopiert");

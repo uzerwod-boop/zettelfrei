@@ -29,3 +29,9 @@ export function rawOf(cell: any): string {
 /** Läuft Zettelfrei als installiertes Programm (Tauri) statt im Browser? */
 export const IS_APP = !!(window as any).__TAURI__;
 export const HIER = IS_APP ? "auf diesem Rechner" : "in diesem Browser";
+/** Link im Browser bzw. Mail-Programm öffnen – im Desktop-Programm über das System, sonst neuer Tab. */
+export function openExternal(url: string) {
+  const t = (window as any).__TAURI__;
+  if (t?.opener?.openUrl) { t.opener.openUrl(url).catch(() => window.open(url, "_blank", "noopener")); return; }
+  window.open(url, "_blank", "noopener");
+}

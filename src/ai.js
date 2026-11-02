@@ -95,10 +95,15 @@ function httpError(status,body){
   if((status===400||status===404) && /model/i.test(body)) return err("model","Modell nicht gefunden");
   var e=err("http","Fehler "+status); e.detail=body; return e;
 }
+// Verbrauch mitzählen: Tokens immer, Kosten in US-Dollar, wenn der Anbieter sie meldet (OpenRouter)
+var usage={requests:0,input:0,output:0,cost:0,costKnown:true};
+function countUsage(res){ var u=res&&res.usage; usage.requests++; if(!u){ usage.costKnown=false; return; }
+  usage.input+=+(u.prompt_tokens||u.input_tokens||0); usage.output+=+(u.completion_tokens||u.output_tokens||0);
+  if(typeof u.cost==="number") usage.cost+=u.cost; else usage.costKnown=false; }
 function post(url,headers,body,signal){
   return fetch(url,{method:"POST",headers:headers,body:JSON.stringify(body),signal:signal}).then(function(r){
     if(!r.ok) return r.text().then(function(t){ throw httpError(r.status,t); });
-    return r.json();
+    return r.json().then(function(j){ countUsage(j); return j; });
   },function(e){ if(e&&e.name==="AbortError") throw err("cancelled","abgebrochen"); throw err("network","Keine Verbindung zum KI-Anbieter"); });
 }
 
@@ -134,7 +139,7 @@ function json(prompt,opts){
     if(p==="openrouter") return post(OPENROUTER_URL,{
         "content-type":"application/json","authorization":"Bearer "+cfg.keys.openrouter,
         "HTTP-Referer":location.origin&&location.origin!=="null"?location.origin:"https://github.com/uzerwod-boop/zettelfrei","X-OpenRouter-Title":"Zettelfrei"
-      },openaiBody(prompt,images,model("openrouter")),opts.signal).then(openaiText);
+      },Object.assign(openaiBody(prompt,images,model("openrouter")),{usage:{include:true}}),opts.signal).then(openaiText);
     var headers={"content-type":"application/json"}; if(cfg.keys.local) headers.authorization="Bearer "+cfg.keys.local;
     return post(String(cfg.url||"").replace(/\/+$/,"")+"/chat/completions",headers,openaiBody(prompt,images,model("local")),opts.signal).then(openaiText);
   }).then(function(text){ if(typeof text!=="string"||!text.trim()) throw err("empty_completion","Leere Antwort"); return parseJson(text); });
@@ -143,5 +148,6 @@ function json(prompt,opts){
 function test(){ return json('Antworte mit {"ok": true}.').then(function(r){ return !!(r&&r.ok); }); }
 
 return {init:init, json:json, test:test, status:status, save:save, active:active, onChange:function(f){ listeners.push(f); },
-  parseJson:parseJson, DEFAULTS:DEFAULTS, model:model};
+  parseJson:parseJson, DEFAULTS:DEFAULTS, model:model,
+  usage:function(){ return JSON.parse(JSON.stringify(usage)); }, resetUsage:function(){ usage={requests:0,input:0,output:0,cost:0,costKnown:true}; }};
 })();

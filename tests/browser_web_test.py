@@ -86,6 +86,12 @@ async def main():
             # Persistenz
             await pg.reload(); await pg.wait_for_timeout(700)
             check("Auftraege" in await pg.locator(".topbar, header").first.inner_text(), "nach Neuladen wieder da")
+            # Feedback und KI-Qualitätstest öffnen sich
+            await pg.click("#t-feedback"); await pg.wait_for_timeout(200)
+            check(await pg.evaluate("document.getElementById('feedback').open"), "Feedback-Dialog öffnet sich")
+            await pg.fill("#fbText", "Test"); check("Zettelfrei" in await pg.locator("dialog#feedback").inner_text(), "Feedback zeigt Version und System")
+            await pg.keyboard.press("Escape"); await pg.click("#aiChip"); await pg.wait_for_timeout(200); await pg.click('button:has-text("KI-Qualitätstest")'); await pg.wait_for_timeout(200)
+            check(await pg.locator("#qualitytest .qtlist li").count() == 17, "KI-Qualitätstest mit 17 Fragen"); await pg.keyboard.press("Escape")
             check(not errs, "keine Skriptfehler " + "; ".join(errs[:3]))
             await b.close()
     finally:
