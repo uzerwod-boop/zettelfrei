@@ -43,7 +43,7 @@ export function UpdateBar() {
   if (dismissed || !["available", "loading", "error", "none"].includes(u.s) || (u.s === "error" && !u.msg)) return null;
   return (
     <div className="updatebar" role="status">
-      {u.s === "available" && <><span><b>Zettelfrei {u.version} ist da.</b> {u.notes ? u.notes.split("\n").find(l => l.trim() && !l.startsWith("#"))?.replace(/[*_`]/g, "").slice(0, 110) : "Neue Version mit Verbesserungen."}</span>
+      {u.s === "available" && <><span><b>Zettelfrei {u.version} ist da.</b> {(u.notes || "").split("\n").map(l => l.replace(/^\s*[-*]\s+/, "").replace(/[*_`#]/g, "").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").trim()).find(l => l && !/^(neu|behoben|geändert|download)\b/i.test(l))?.slice(0, 120) || "Neue Version mit Verbesserungen."}</span>
         <button className="btn small" type="button" onClick={install}>Jetzt aktualisieren</button>
         <button className="btn quiet small" type="button" onClick={() => { dismissed = true; force(n => n + 1); }}>Später</button></>}
       {u.s === "loading" && <span><b>Update wird geladen …</b> {u.pct}% – Zettelfrei startet danach neu, Ihre Datei bleibt erhalten.</span>}
