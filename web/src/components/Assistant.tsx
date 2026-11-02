@@ -159,11 +159,11 @@ export function Bot({ m }: { m: Msg }) {
   const label = `Assistent: „${m.text.length > 50 ? m.text.slice(0, 50) + "…" : m.text}“`;
   const opTxt: Record<string, string> = { "=": "=", "!=": "≠", ">": ">", "<": "<", ">=": "≥", "<=": "≤", "enthält": "enthält", "in": "ist eins von", "nicht in": "ist keins von", "leer": "ist leer", "nicht leer": "ist nicht leer" };
   const fShow = (f: any) => `${f.spalte} ${opTxt[f.op || "="] || f.op} ${f.wert && typeof f.wert === "object" && !Array.isArray(f.wert) ? "„" + f.wert.spalte + "“" : Array.isArray(f.wert) ? f.wert.join(", ") : f.op === "leer" || f.op === "nicht leer" ? "" : f.wert}`.trim();
-  const usedFilters = [...new Set((res.abfragen || []).filter((q: any) => !q.ausdruck && results[q.id] && !results[q.id].error).flatMap((q: any) => (q.filter || []).map(fShow)))] as string[];
+  const usedFilters = [...new Set((res.abfragen || []).filter((q: any) => !q.ausdruck && results[q.id] && !results[q.id].error && (q.filter || []).length).map((q: any) => q.filter.map(fShow).join(" und ")))] as string[];
   return (
     <div className="bot">
       {txt && <div className="answer">{txt}{names.length > 0 && <span className="rows">Berechnet aus {count} Zeile{count === 1 ? "" : "n"} · <button type="button" onClick={() => {
-        S.hits = {}; names.forEach(n => { S.hits[n] = Object.fromEntries(hit[n].map(r => [r, 1])) as any; }); S.fresh = {}; goTo(names[0], hit[names[0]][0]); }}>in der Tabelle zeigen</button>{usedFilters.length ? <span className="filters"> · Filter: {usedFilters.join("; ")}</span> : <span className="filters"> · ohne Filter</span>}{m.fixed ? <span className="filters"> · automatisch korrigiert</span> : null}</span>}</div>}
+        S.hits = {}; names.forEach(n => { S.hits[n] = Object.fromEntries(hit[n].map(r => [r, 1])) as any; }); S.fresh = {}; goTo(names[0], hit[names[0]][0]); }}>in der Tabelle zeigen</button>{usedFilters.length ? <span className="filters"> · Filter: {usedFilters.join(" | ")}</span> : <span className="filters"> · ohne Filter</span>}{m.fixed ? <span className="filters"> · automatisch korrigiert</span> : null}</span>}</div>}
       {(() => { const errs = (res.abfragen || []).filter((q: any) => results[q.id]?.error); return errs.length ? <p className="hint datanote bad">Achtung: {errs.length === 1 ? "Ein Teil der Rechnung" : `${errs.length} Teile der Rechnung`} konnte nicht berechnet werden ({errs.map((q: any) => results[q.id].error).join("; ")}). Die Antwort ist deshalb unvollständig – bitte genauer fragen.</p> : null; })()}
       {(res.abfragen || []).flatMap((q: any) => (results[q.id]?.contains || []).map((c: any, j: number) =>
         { const said = c.values.filter((v: string) => m.text.toLowerCase().replace(/\s+/g, " ").includes(v.toLowerCase())).sort((a: string, b: string) => b.length - a.length)[0];
@@ -171,7 +171,10 @@ export function Bot({ m }: { m: Msg }) {
           return <p key={"c" + q.id + j} className="hint datanote">{said ? <>Sie haben „{said}“ genannt, zusammengezählt wurden aber {c.values.length} Einträge: {list}. Falls nur „{said}“ gemeint war, bitte so fragen: „nur {said}“.</>
             : <>„{c.wert}“ umfasst {c.values.length} verschiedene Einträge in „{c.spalte}“: {list}. Zusammengezählt – falls nur einer gemeint war, bitte genauer fragen.</>}</p>; }))}
       {(res.abfragen || []).flatMap((q: any) => (q.filter || []).filter((f: any) => (!f.op || f.op === "=") && typeof f.wert === "string").map((f: any, j: number) => {
-        const a = ZF.ambiguity(S.model, q.blatt, f.spalte, f.wert, m.text); return a ? <p key={"a" + q.id + j} className="hint datanote">„{a.wort}“ passt zu mehreren: {a.values.map((v: string) => `„${v}“`).join(", ")}. Gerechnet wurde nur mit „{f.wert}“.</p> : null; }))}
+        const a = ZF.ambiguity(S.model, q.blatt, f.spalte, f.wert, m.text);
+        const covered = a && a.values.every((v: string) => (res.abfragen || []).some((q2: any) => (q2.filter || []).some((f2: any) => f2.spalte === f.spalte && (!f2.op || f2.op === "=") && String(f2.wert).toLowerCase() === v.toLowerCase())));
+        const first = (res.abfragen || []).find((q2: any) => (q2.filter || []).some((f2: any) => f2.spalte === f.spalte && (!f2.op || f2.op === "=")));
+        return a && !covered && first === q ? <p key={"a" + q.id + j} className="hint datanote">„{a.wort}“ passt zu mehreren: {a.values.map((v: string) => `„${v}“`).join(", ")}. Gerechnet wurde nur mit „{f.wert}“.</p> : null; }))}
       {(res.abfragen || []).map((q: any) => { const r = results[q.id]; if (!r || !(r.textNums?.length || r.unread?.length)) return null;
         const f = (n: number) => fmtQuery({ value: n, money: r.money });
         return <p key={"n" + q.id} className="hint datanote">
