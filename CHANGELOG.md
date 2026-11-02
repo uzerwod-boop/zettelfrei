@@ -7,6 +7,15 @@ Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog]
 ### Behoben
 - Excel-Dateien, die von anderen Programmen erzeugt wurden (z. B. .NET OpenXML SDK, ERP- und Lohn-Exporte mit `x:`-Präfix, BOM und absoluten Pfaden), ließen sich nicht öffnen („Diese Datei lässt sich nicht lesen“). Sie werden jetzt angeglichen und normal gelesen; beim Speichern bleibt die Formatierung erhalten.
 - Arbeitszeit-Prüfung: Genau 6 Std. ohne Pause wurde fälschlich als „Pause zu kurz“ gemeldet (Rundungsfehler). Gerechnet wird jetzt auf die Minute genau.
+- Assistent, Änderungen an vielen Zeilen („alle offenen Rechnungen von X auf bezahlt“): Die KI nennt jetzt eine Bedingung, die Tabelle sucht die Zeilen selbst. Vorher konnte die KI falsche Zeilennummern wählen (z. B. eine Rechnung eines anderen Kunden) oder bereits bezahlte und stornierte Rechnungen mitändern.
+- Zeilennummer und Bedingung passen nicht zusammen → die Änderung wird abgelehnt statt in der falschen Zeile ausgeführt.
+- Anweisungen, die in Zellen stehen (z. B. in Notizen), befolgt die KI nicht mehr; bei „tu, was in den Notizen steht“ fragt sie nach.
+- Antworten bei Änderungen sind als Vorschlag formuliert („Ich schlage vor …“), nicht als „wurde geändert“.
+
+### Neu
+- Vorschau zeigt zu jeder geänderten Zeile, um welche es geht (z. B. „R-2026-0010 · Schneider GmbH“), und warnt bei großen Änderungen.
+- Werte aus einer anderen Spalte derselben Zeile übernehmen, z. B. „Bezahlt EUR = Brutto EUR“ beim Bezahlt-Setzen.
+- Summen sagen ehrlich, womit gerechnet wurde: Zahlen, die als Text in der Zelle stehen, nicht lesbare Werte („ca. 250“) und leere Zellen – samt dem Ergebnis, das Excel selbst anzeigen würde.
 
 ## [0.5.1] – 2026-10-26 · Feinschliff
 

@@ -39,3 +39,23 @@ test("ArbZG: genau 6 Std. ohne Pause und genau 9 Std. mit 30 Min. sind erlaubt",
   const m = ZF.loadCSV(XLSX, csv, "t.csv"), p = ZF.checks(m).filter(x => /Pause/.test(x.problem)).map(x => x.zeile);
   assert.deepEqual(p, [4, 5], "nur C (6,25 Std. ohne Pause) und D (9,5 Std. mit 30 Min.)");
 });
+
+test("Mehrere Zeilen per Filter: die Tabelle sucht die Zeilen, nicht die KI", () => {
+  const csv = "Rechnungs-Nr;Kunde;Brutto EUR;Bezahlt EUR;Status\nR1;Schneider GmbH;100;0;Offen\nR2;Becker OHG;200;0;Offen\nR3;Schneider GmbH;300;0;Storniert\nR4;Schneider GmbH;400;100;Teilbezahlt\nR5;Schneider GmbH;500;500;Bezahlt";
+  const m = ZF.loadCSV(XLSX, csv, "r.csv");
+  const plan = ZF.planOps(m, [{ typ: "aendern", blatt: m.sheets[0].name, filter: [{ spalte: "Kunde", op: "=", wert: "Schneider GmbH" }, { spalte: "Status", op: "in", wert: ["Offen", "Teilbezahlt"] }],
+    werte: { Status: "Bezahlt", "Bezahlt EUR": { aus: "Brutto EUR" } } }]);
+  assert.deepEqual(plan.map(p => p.row), [2, 5], "nur R1 und R4");
+  assert.match(plan[0].summary, /R1 · Schneider GmbH/, "Zeile ist in der Vorschau erkennbar");
+  assert.deepEqual(plan[1].changes.map(c => [c.name, c.nv]), [["Status", "Bezahlt"], ["Bezahlt EUR", 400]], "Wert aus anderer Spalte derselben Zeile");
+  const wrong = ZF.planOps(m, [{ typ: "aendern", blatt: m.sheets[0].name, zeile: 3, filter: [{ spalte: "Rechnungs-Nr", op: "=", wert: "R1" }], werte: { Status: "Bezahlt" } }]);
+  assert.ok(wrong[0].error, "falsche Zeilennummer wird abgelehnt");
+});
+
+test("Summe meldet Text-Zahlen und unlesbare Werte", () => {
+  const m = ZF.loadCSV(XLSX, "Beleg;Betrag\nA;100\nB;200\nC;300\nD;ca. 250\nE;\nF;400", "b.csv");
+  m.sheets[0].rows[1][1] = { v: "1.234,56" };   // Zahl als Text, wie aus einem Import
+  const r = ZF.query(m, { blatt: m.sheets[0].name, spalte: "Betrag", art: "summe" });
+  assert.equal(r.value, 2034.56); assert.deepEqual(r.textNums, ["1.234,56"]); assert.deepEqual(r.unread, ["ca. 250"]);
+  assert.equal(r.excelValue, 800, "so rechnet Excel (ohne Text)"); assert.equal(r.empty, 1);
+});
