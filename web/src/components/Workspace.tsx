@@ -4,6 +4,7 @@ import { confirmBox, openMenu, promptBox } from "./Overlays";
 import { HIER, IS_APP, SHOW_EXAMPLES, de, fmtVal, openExternal, rawOf } from "../util";
 import { GUIDE_URL } from "../config";
 import { openFeedback } from "./Feedback";
+import { openAbout } from "./About";
 import { Icon, Mark } from "./Icons";
 
 /* ---------- Leiste links ---------- */
@@ -14,7 +15,7 @@ export function Rail() {
   const s = useStore(); const n = useMemo(() => issues().length, [s.rev]);
   return (
     <nav className="rail" role="tablist" aria-label="Bereiche" aria-orientation="vertical">
-      <div className="rail-logo" title="Zettelfrei"><Mark dark /></div>
+      <button type="button" className="rail-logo" title={`Zettelfrei ${__APP_VERSION__} – Über Zettelfrei`} onClick={openAbout}><Mark dark /></button>
       {NAV.map(x => (
         <button key={x.id} role="tab" id={"t-" + x.id} aria-selected={s.pane === x.id} onClick={() => setPane(x.id)}>
           <Icon name={x.icon} /><span>{x.label}</span>
@@ -23,6 +24,7 @@ export function Rail() {
       <div className="rail-foot">
         <button type="button" id="t-help" onClick={() => openExternal(GUIDE_URL)} title="Erste Schritte (Anleitung)"><Icon name="help" /><span>Hilfe</span></button>
         <button type="button" id="t-feedback" onClick={openFeedback} title="Feedback senden"><Icon name="feedback" /><span>Feedback</span></button>
+        <button type="button" id="t-about" className="ver" onClick={openAbout} title="Über Zettelfrei – Version, Neuigkeiten, Updates">v{__APP_VERSION__}</button>
       </div>
     </nav>);
 }

@@ -430,3 +430,15 @@ dialog[open]{animation:dlgin .18s ease-out} @keyframes dlgin{from{opacity:0;tran
 .updatebar{animation:rise .3s ease-out}
 .drop.over,.sheet.over{transition:box-shadow .15s ease,background-color .15s ease}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* Version unten in der Leiste und „Über Zettelfrei“ */
+.rail-foot button.ver{font:500 10.5px var(--f-mono);padding:6px 0 2px;opacity:.6;letter-spacing:.02em}
+.rail-foot button.ver:hover{opacity:1}
+button.rail-logo{border:0;background:transparent;padding:0;cursor:pointer;width:auto!important}
+dialog#about{width:min(460px,92vw);border:1px solid var(--line);border-radius:18px;background:var(--sheet);color:var(--ink);padding:26px 28px}
+dialog#about::backdrop{background:rgba(10,14,15,.45)}
+.about{display:grid;gap:10px;justify-items:center;text-align:center}
+.about h2{margin:4px 0 0;font:800 30px var(--f-display);letter-spacing:-.02em} .about h2 em{font-style:normal;color:var(--accent)}
+.about .ver{margin:0;font-size:15px} .about .note{margin:0} .about .note.small{font-size:12.5px;line-height:1.7}
+.about .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%} .about .row.end{justify-content:flex-end}
+.linkbtn{border:0;background:none;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-decoration:underline;text-underline-offset:2px}

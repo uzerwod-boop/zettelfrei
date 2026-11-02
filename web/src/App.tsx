@@ -5,6 +5,7 @@ import { QualityTest } from "./components/QualityTest";
 import { UpdateBar } from "./components/UpdateBar";
 import { Feedback } from "./components/Feedback";
 import { Overlays } from "./components/Overlays";
+import { About } from "./components/About";
 import { Kpis, Rail, Sheet, Toast, TopBar } from "./components/Workspace";
 import { useStore } from "./store";
 
@@ -21,6 +22,6 @@ export default function App() {
         {s.pane === "check" && <Pruefen />}
         {s.pane === "hist" && <Verlauf />}
       </aside>
-      <Settings /><QualityTest /><UpdateBar /><Feedback /><Overlays /><Toast />
+      <Settings /><QualityTest /><UpdateBar /><Feedback /><Overlays /><About /><Toast />
     </div>);
 }

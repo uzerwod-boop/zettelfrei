@@ -2,6 +2,11 @@
 
 Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.7.1] – 2026-11-02 · Version immer im Blick
+
+### Neu
+- Die Versionsnummer steht unten in der linken Leiste. Ein Klick darauf (oder auf das Logo oben) öffnet „Über Zettelfrei“: Version und Datum, Programm oder Browser, KI-Modell, „Was ist neu?“, „Nach Updates suchen“, Anleitung, Lizenz und „Versionsinfo kopieren“ für Rückfragen.
+
 ## [0.7.0] – 2026-11-02 · Bedienen wie Excel
 
 ### Neu
@@ -184,6 +189,7 @@ Erkenntnis aus Tests mit einem schnellen, günstigen Modell: Regeln allein reich
 - KI wahlweise über OpenRouter, eigenen Server, Claude API oder lokales Modell.
 - PDFs und Fotos von Lieferantenrechnungen per KI einlesen.
 
+[0.7.1]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.7.1
 [0.7.0]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.7.0
 [0.6.2]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.6.2
 [0.6.1]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.6.1

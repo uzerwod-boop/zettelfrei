@@ -3,3 +3,4 @@ declare const ZF: any, ZFE: any, ZFD: any, ZFX: any, AI: any, XLSX: any, ExcelJS
 interface Window { ZF_EXAMPLES?: Record<string, string>; ZF_DOCS?: Record<string, string>; claude?: any; ExcelJS?: any; XLSX?: any; }
 declare module "*.css";
 declare const __APP_VERSION__: string;
+declare const __BUILD_DATE__: string;
