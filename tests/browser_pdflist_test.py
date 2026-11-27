@@ -54,7 +54,7 @@ async def main():
             dt = await pg.evaluate_handle("(b)=>{const d=new DataTransfer();d.items.add(new File([new Uint8Array(b)],'Pipeline.pdf',{type:'application/pdf'}));return d;}", list(data))
             await pg.dispatch_event(".sheetwrap", "drop", {"dataTransfer": dt})
             await pg.wait_for_selector(".listcard", timeout=30000)
-            n = len(calls); check(n >= 2 and all(c[1] == 1 for c in calls), f"{n} Anfragen, je ein Bildteil")
+            n = len(calls); check(n >= 2 and calls[0][1] == 1 and all(c[1] == 2 for c in calls[1:]), f"{n} Anfragen: Teil 1 allein, ab Teil 2 mit Kopfzeile als Orientierung")
             check(all(x == 8000 for x in maxt), "Antwortlimit 8000 Tokens für Listen")
             if len(sys.argv) <= 1: check(sum(1 for c in calls if c[0] and c[0][0] == "2") == 4, "abgeschnittene Antwort: neu versucht, dann in zwei Hälften gelesen")
             check(not calls[0][2] and all(c[2] for c in calls[1:]), "ab Teil 2 mit festen Spalten")

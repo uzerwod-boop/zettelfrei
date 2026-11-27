@@ -2,6 +2,13 @@
 
 Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.9.3] – 2026-11-27 · PDF-Listen vollständiger und spaltengenau
+
+### Verbessert
+- Ab dem zweiten Stück einer PDF-Liste bekommt die KI den Kopf der Liste mit den Spaltenüberschriften als Orientierung mit. Datumsangaben landen so in der richtigen Spalte (z. B. „Anruf“ oder „Meeting“), auch auf Seiten ohne Überschriften.
+- Selbstkontrolle beim Lesen: Die KI zählt die sichtbaren Einträge je Stück. Fehlen Zeilen in ihrer Antwort, liest Zettelfrei das Stück noch einmal und notfalls in zwei kleineren Hälften.
+- Kleine Kürzel-Symbole in Datumszellen (z. B. in der Odoo-Aktivitätenansicht) werden nicht mehr als eigene Werte gemeldet.
+
 ## [0.9.2] – 2026-11-27 · Lange PDF-Listen zuverlässig lesen
 
 ### Behoben
@@ -219,6 +226,7 @@ Erkenntnis aus Tests mit einem schnellen, günstigen Modell: Regeln allein reich
 - KI wahlweise über OpenRouter, eigenen Server, Claude API oder lokales Modell.
 - PDFs und Fotos von Lieferantenrechnungen per KI einlesen.
 
+[0.9.3]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.9.3
 [0.9.2]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.9.2
 [0.9.1]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.9.1
 [0.9.0]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.9.0
