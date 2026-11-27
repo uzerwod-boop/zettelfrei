@@ -646,6 +646,48 @@ function newSheet(model, name){
     colFmt:heads.map(function(){ return null; }), dateCol:heads.map(function(){ return false; }), timeCol:heads.map(function(){ return false; }), extra:{}, isNew:true, orig:{data:[],foot:[]}};
   model.sheets.push(sh); return sh;
 }
+/* ---------- Gelesene Liste (z. B. PDF-Export aus einem CRM) als Blatt ---------- */
+// headers: Spaltennamen, rows: Arrays mit Text/Zahl. Datumsangaben werden als Datum, Beträge als Zahl übernommen.
+function tableSheet(model, name, headers, rows){
+  var heads=[], seen={};
+  (headers||[]).forEach(function(h,k){ var b=String(h==null?"":h).trim()||("Spalte "+colLetter(k)), n=b, i=2; while(seen[n.toLowerCase()]) n=b+" "+(i++); seen[n.toLowerCase()]=1; heads.push(n); });
+  var N=heads.length, cellStr=function(v){ return v==null?"":String(v).trim(); };
+  var data=(rows||[]).map(function(r){ var a=[]; for(var k=0;k<N;k++) a.push(cellStr(r&&r[k])); return a; }).filter(function(r){ return r.some(function(x){ return x; }); });
+  var dateCol=[], money=[], numCol=[];
+  for(var k=0;k<N;k++){ var filled=data.map(function(r){ return r[k]; }).filter(function(x){ return x; });
+    var dates=filled.filter(function(x){ return normDate(x)||/^\d{4}-\d{2}-\d{2}$/.test(x); }).length, nums=filled.filter(function(x){ return parseNum(x)!=null; }).length;
+    dateCol[k]=filled.length>0&&dates/filled.length>=0.6; numCol[k]=!dateCol[k]&&filled.length>0&&nums/filled.length>=0.8&&!/tel|telefon|handy|plz|nr|nummer|iban/i.test(heads[k]);
+    money[k]=numCol[k]&&filled.some(function(x){ return /€|EUR/i.test(x); }); }
+  var out=data.map(function(r){ return r.map(function(x,k){ if(!x) return null;
+    if(dateCol[k]){ var d=normDate(x), m=x.match(/^(\d{4})-(\d{2})-(\d{2})$/); if(m) d=m[3]+"."+m[2]+"."+m[1]; if(d) return {v:d,d:1}; }
+    if(numCol[k]){ var n=parseNum(x); if(n!=null) return {v:n}; }
+    return {v:x}; }); });
+  var base=String(name||"Liste").replace(/[\\\/?*[\]:]/g," ").trim().slice(0,28)||"Liste", nm=base, i=2;
+  while(model&&model.sheets.some(function(o){ return o.name.toLowerCase()===nm.toLowerCase(); })) nm=base.slice(0,26)+" "+(i++);
+  var widths=heads.map(function(h,k){ var w=Math.max.apply(null,[String(h).length].concat(data.slice(0,200).map(function(r){ return r[k].length; }))); return Math.min(40,Math.max(10,w+2)); });
+  return {name:nm, hr:0, top:[], headers:heads, rows:out, kind:out.map(function(){ return ""; }), foot:[], c0:0, ncol:N, widths:widths, merges:[],
+    colFmt:heads.map(function(h,k){ return money[k]?'#,##0.00 "€"':null; }), dateCol:dateCol, timeCol:heads.map(function(){ return false; }), extra:{}, isNew:true, orig:{data:[],foot:[]}};
+}
+// Teilstücke (Seiten bzw. Seitenhälften) zu einer Liste zusammenfügen: Spalten nach Namen angleichen,
+// doppelt gelesene Zeilen an den Schnittkanten entfernen.
+function joinChunks(chunks){
+  var norm=function(x){ return String(x==null?"":x).toLowerCase().replace(/[^a-zäöüß0-9]/g,""); };
+  var heads=[], rows=[], dropped=0;
+  (chunks||[]).forEach(function(ch){
+    if(!ch) return; var sp=(ch.spalten||[]).map(function(h){ return String(h==null?"":h).trim(); });
+    var map=sp.map(function(h){ var i=heads.map(norm).indexOf(norm(h)); if(i<0&&h){ heads.push(h); i=heads.length-1; } return i; });
+    if(!heads.length) return;
+    var prev=rows.slice(-6).map(function(r){ return r.map(norm).join("|"); });
+    (ch.zeilen||[]).forEach(function(z,j){
+      var r=heads.map(function(){ return ""; });
+      (z||[]).forEach(function(v,k){ var i=map[k]; if(i==null||i<0) i=k<heads.length?k:-1; if(i>=0) r[i]=v==null?"":String(v).trim(); });
+      if(!r.some(function(x){ return x; })) return;
+      if(j<6&&prev.indexOf(r.map(norm).join("|"))>=0){ dropped++; return; }
+      rows.push(r); });
+  });
+  rows=rows.map(function(r){ while(r.length<heads.length) r.push(""); return r; });
+  return {headers:heads, rows:rows, dropped:dropped};
+}
 function renameColumn(sh, k, name){
   name=String(name||"").trim(); if(!name) return {error:"Der Name darf nicht leer sein."};
   if(sh.headers.some(function(h,j){ return j!==k&&String(h).toLowerCase()===name.toLowerCase(); })) return {error:"Eine Spalte „"+name+"“ gibt es schon."};
@@ -1079,7 +1121,7 @@ function buildWorkbook(XLSX, model){
 return {colLetter:colLetter,colIndex:colIndex,parseNum:parseNum,isDateStr:isDateStr,normDate:normDate,clone:clone,blank:blank,
   isTimeFmt:isTimeFmt,fmtTime:fmtTime,parseTime:parseTime,dateToSerial:dateToSerial,serialToDate:serialToDate,todaySerial:todaySerial,addColumn:addColumn,col:col,
   loadWorkbook:loadWorkbook,runQueries:runQueries,isData:isData,eachData:eachData,dataCount:dataCount,anyDateSerial:anyDateSerial,timeNum:timeNum,looksTime:looksTime,loadWorkbookExcelJS:loadWorkbookExcelJS,normalizeOOXML:normalizeOOXML,openXlsx:openXlsx,loadCSV:loadCSV,parseCSV:parseCSV,parseSheet:parseSheet,Calc:Calc,display:display,dataRowNo:dataRowNo,footRowNo:footRowNo,cellAt:cellAt,
-  appendRow:appendRow,deleteRow:deleteRow,insertRowAt:insertRowAt,sortRows:sortRows,renameSheet:renameSheet,deleteSheet:deleteSheet,newSheet:newSheet,sheetRefCount:sheetRefCount,renameColumn:renameColumn,deleteLastColumn:deleteLastColumn,setCell:setCell,findCol:findCol,computedCols:computedCols,numericCol:numericCol,
+  appendRow:appendRow,deleteRow:deleteRow,insertRowAt:insertRowAt,sortRows:sortRows,renameSheet:renameSheet,deleteSheet:deleteSheet,newSheet:newSheet,tableSheet:tableSheet,joinChunks:joinChunks,sheetRefCount:sheetRefCount,renameColumn:renameColumn,deleteLastColumn:deleteLastColumn,setCell:setCell,findCol:findCol,computedCols:computedCols,numericCol:numericCol,
   query:query,filterRows:filterRows,ambiguity:ambiguity,duplicateKey:duplicateKey,INJECT:INJECT,checks:checks,describe:describe,planOps:planOps,applyPlan:applyPlan,buildWorkbook:buildWorkbook,transformRefs:transformRefs};
 })();
 if(typeof module!=="undefined") module.exports=ZF;

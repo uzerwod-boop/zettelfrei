@@ -74,6 +74,7 @@ Rechts im Assistenten eintippen (oder mit dem Mikrofon sprechen):
 ## 6. Weitere Bereiche
 
 - **Belege:** E-Rechnung (XRechnung, ZUGFeRD), PDF oder Foto auf die Tabelle ziehen – wird gelesen, z. B. erhöht sich der Lagerbestand.
+- **Listen aus anderen Programmen:** Eine Liste als PDF (z. B. Pipeline oder Aktivitäten aus Odoo) auf die Startseite ziehen – daraus wird ein neues Blatt. Zettelfrei zeigt vorher, wie viele Einträge gelesen wurden und was unsicher ist. Noch genauer ist es, die Liste in Odoo direkt als Excel zu exportieren (⚙️ → „Exportieren“).
 - **Dokumente:** E-Rechnung schreiben, Mahnung, Abnahmeprotokoll mit Unterschrift, Liste für den Steuerberater, Wochenbericht. Vorher einmal die **Firmendaten** eintragen.
 - **Prüfen:** findet ohne KI leere Pflichtfelder, doppelte Nummern, Verstöße gegen das Arbeitszeitgesetz, überfällige Rechnungen und Formelfehler.
 

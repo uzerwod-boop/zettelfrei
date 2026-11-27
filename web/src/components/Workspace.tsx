@@ -138,7 +138,7 @@ export function Sheet() {
     onDragOver: (e: React.DragEvent) => { if ([...e.dataTransfer.items].some(i => i.kind === "file")) { e.preventDefault(); drag.current++; setOver(true); } },
     onDragLeave: () => setOver(false),
     onDrop: (e: React.DragEvent) => { const f = e.dataTransfer.files[0]; setOver(false); if (!f) return; e.preventDefault();
-      if (/\.(xlsx|xlsm|xls|csv|ods)$/i.test(f.name) || !S.model) openFile(f); else { setPane("pdf"); window.dispatchEvent(new CustomEvent("zf-beleg", { detail: f })); } },
+      if (/\.(xlsx|xlsm|xls|csv|ods)$/i.test(f.name) || (!S.model && !/\.(pdf|png|jpe?g|webp)$/i.test(f.name))) openFile(f); else { setPane("pdf"); window.dispatchEvent(new CustomEvent("zf-beleg", { detail: f })); } },
   };
   if (!s.model || !sh || !view) return <section className="sheetwrap" aria-label="Tabelle" {...dz}><div className={"sheet empty-state" + (over ? " over" : "")}><Empty /></div></section>;
   const { calc, flag, numc, comp } = view;
@@ -336,6 +336,7 @@ function Empty() {
       <Mark />
       <h2>Excel bleibt. Das Tippen fällt weg.</h2>
       <p>Öffnen Sie Ihre Excel-Datei oder ziehen Sie sie hierher. Sie bleibt {IS_APP ? "auf Ihrem Rechner" : "in Ihrem Browser"}.</p>
+      <p className="hint">Nur eine Liste als PDF, z. B. aus Odoo oder einem anderen CRM? Einfach hierher ziehen – sie wird zur Tabelle.</p>
       <div className="row center"><button className="btn" type="button" id="emptyOpen" onClick={() => inp.current?.click()}>Excel-Datei öffnen</button></div>
       <input ref={inp} type="file" hidden accept=".xlsx,.xlsm,.xls,.csv,.ods" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) openFile(f); }} />
       {ex.length > 0 && <><p className="hint">Oder mit einem Beispiel ausprobieren:</p>

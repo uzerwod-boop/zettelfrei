@@ -124,6 +124,13 @@ export function openData(data: Uint8Array, name: string) {
     toast(parsed.length ? `${name} geöffnet · ${parsed.map((s: any) => `${ZF.dataCount(s)} Zeilen in „${s.name}“`).join(", ")}` : "Keine Tabelle mit Überschriften gefunden.");
   }, () => toast("Diese Datei lässt sich nicht lesen."));
 }
+// Neue Datei ohne Excel-Vorlage, z. B. aus einer PDF-Liste
+export function openModel(m: any, label: string) {
+  S.model = m; S.cur = 0; S.fresh = {}; S.hits = {}; S.aiIssues = []; S.msgs = [];
+  S.history = [{ t: Date.now(), label, snap: JSON.stringify(m) }]; S.redo = []; S.savedT = 0; S.origBytes = null; openedBytes = null; persistOrig();
+  S.protokoll.push({ zeit: stamp(), wer: firma().bearbeiter || "", aktion: label, details: [] });
+  persist(); emit();
+}
 export function openExample(name: string) { const ex = window.ZF_EXAMPLES || {}; if (ex[name]) openData(b64(ex[name]), name); }
 export function openFile(f: File) { f.arrayBuffer().then(b => openData(new Uint8Array(b), f.name)); }
 

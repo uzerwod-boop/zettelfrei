@@ -2,6 +2,16 @@
 
 Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.8.0] – 2026-11-27 · Listen aus PDF übernehmen
+
+### Neu
+- Listen aus anderen Programmen als PDF übernehmen – z. B. eine Pipeline oder Aktivitätenliste aus Odoo oder einem anderen CRM. Einfach auf die Startseite ziehen (auch ohne geöffnete Excel-Datei) oder unter „Belege“ „Neues Blatt: Liste übernehmen“ wählen. Daraus wird ein neues Blatt, mit dem Sie fragen, sortieren und als Excel speichern können.
+- Die KI liest jede Seite in zwei Hälften, damit auch kleine Schrift sicher erkannt wird. Doppelt gelesene Zeilen an den Schnittkanten werden entfernt, Datumsangaben werden als Datum und Beträge als Zahl übernommen.
+- Vorschau vor dem Anlegen: Anzahl der Einträge, Abgleich mit der Gesamtzahl laut Dokument (z. B. „1-99 / 99“) und eine Liste der Stellen, die die KI nicht sicher lesen konnte.
+
+### Behoben
+- PDFs, deren Text beim Kopieren nur als einzelne Buchstaben herauskommt (z. B. „Drucken als PDF“ aus dem Browser), werden jetzt als Bild gelesen statt als unbrauchbarer Text.
+
 ## [0.7.1] – 2026-11-02 · Version immer im Blick
 
 ### Neu
@@ -189,6 +199,7 @@ Erkenntnis aus Tests mit einem schnellen, günstigen Modell: Regeln allein reich
 - KI wahlweise über OpenRouter, eigenen Server, Claude API oder lokales Modell.
 - PDFs und Fotos von Lieferantenrechnungen per KI einlesen.
 
+[0.8.0]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.8.0
 [0.7.1]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.7.1
 [0.7.0]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.7.0
 [0.6.2]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.6.2

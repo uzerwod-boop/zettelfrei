@@ -442,3 +442,14 @@ dialog#about::backdrop{background:rgba(10,14,15,.45)}
 .about .ver{margin:0;font-size:15px} .about .note{margin:0} .about .note.small{font-size:12.5px;line-height:1.7}
 .about .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%} .about .row.end{justify-content:flex-end}
 .linkbtn{border:0;background:none;color:var(--accent);cursor:pointer;padding:0;font:inherit;text-decoration:underline;text-underline-offset:2px}
+
+/* Liste aus PDF */
+.listcard{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;animation:pop .25s ease}
+.listprev{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.listprev table{border-collapse:collapse;font-size:12px;width:max-content;min-width:100%}
+.listprev th,.listprev td{padding:4px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis}
+.listprev th{position:sticky;top:0;background:var(--head);font-weight:600}
+.listcard .planwarn{border:0;border-radius:8px}
+.listcard .planwarn ul{margin:4px 0 0 18px;padding:0}
+.listcard .row{align-items:flex-end}
+.listcard .grow{flex:1;min-width:140px}
