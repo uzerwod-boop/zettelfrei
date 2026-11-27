@@ -105,6 +105,8 @@ export function Belege() {
   const inp = useRef<HTMLInputElement>(null);
   const tables = (s.model?.sheets || []).map((x: any, i: number) => ({ x, i })).filter((o: any) => o.x.hr >= 0);
   const listMode = () => !S.model || target === NEW_LIST;
+  const queue = useRef<File[]>([]), [left, setLeft] = useState(0);
+  const next = () => { const f = queue.current.shift(); setLeft(queue.current.length); if (f) handle(f, true); };
   const tgt = () => S.model.sheets[target >= 0 && S.model.sheets[target] ? target : S.cur];
   useEffect(() => { setTarget(-1); }, [s.model]);
   const showInv = (inv: any) => {
@@ -136,7 +138,7 @@ export function Belege() {
       if (!j.rows.length) { setSt({ error: "In diesem Dokument wurde keine Liste gefunden." }); return; }
       const total = chunks.map(c => c && +c.gesamt).find(x => x > 0) || null;
       setSt({ list: { ...j, total, pages, title: String(first?.titel || "").slice(0, 28) || name.replace(/\.[^.]+$/, "").slice(0, 28), unsure: chunks.flatMap(c => (c?.unsicher || []).map(String)).filter(Boolean) } });
-    } catch (e: any) { setSt({ error: aiError(e) || "Die Liste konnte nicht gelesen werden." }); }
+    } catch (e: any) { setSt({ error: `${name}: ` + (aiError(e) || "Die Liste konnte nicht gelesen werden.") }); if (queue.current.length) setTimeout(next, 1500); }
   };
   const createList = (l: ListRead, name: string) => {
     const sh = ZF.tableSheet(S.model, name, l.headers, l.rows);
@@ -144,10 +146,10 @@ export function Belege() {
     else { S.model.sheets.push(sh); S.cur = S.model.sheets.length - 1; commit(`Liste als Blatt „${sh.name}“ (${l.rows.length} Einträge)`); }
     toast(`Blatt „${sh.name}“ mit ${l.rows.length} Zeilen angelegt`);
   };
-  const handle = async (f: File) => {
+  const handle = async (f: File, forceList = false) => {
     setSt({});
     if (!S.model && !/pdf$/i.test(f.type) && !/\.pdf$/i.test(f.name) && !f.type.startsWith("image/")) { toast("Zuerst eine Excel-Datei öffnen."); return; }
-    if (listMode()) {
+    if (forceList || listMode()) {
       if (f.type.startsWith("image/")) { readList([f], f.name, 1); return; }
       setSt({ busy: "PDF wird geöffnet…" });
       try { const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await f.arrayBuffer()), isEvalSupported: false }).promise;
@@ -171,6 +173,8 @@ export function Belege() {
     } catch { setSt({ error: "Diese Datei lässt sich nicht öffnen. Ist es ein gültiges PDF?" }); }
   };
   useEffect(() => { const h = (e: any) => handle(e.detail); window.addEventListener("zf-beleg", h); return () => window.removeEventListener("zf-beleg", h); });
+  useEffect(() => { const h = (e: any) => { const busy = queue.current.length > 0 || !!st.busy || !!st.list; queue.current.push(...e.detail); setLeft(queue.current.length); if (!busy) next(); };
+    window.addEventListener("zf-belege-list", h); return () => window.removeEventListener("zf-belege-list", h); });
   const docs = window.ZF_DOCS || {};
   const sample = (n: string) => handle(new File([b64(docs[n])], n, { type: /\.pdf$/i.test(n) ? "application/pdf" : "application/xml" }));
   const inv = st.inv;
@@ -201,7 +205,8 @@ export function Belege() {
           <ul className="einv-lines">{inv.lines.map((l: any, i: number) => <li key={i}><span>{l.name}</span><span>{de(l.qty, l.qty % 1 ? 2 : 0)} {l.unit} × {de(l.price, 2)} €</span></li>)}</ul>
         </div>}
         {st.info && <p className="hint">{st.info}</p>}
-        {st.list && <ListCard l={st.list} onCreate={n => createList(st.list!, n)} onDrop={() => setSt({})} />}
+        {st.list && <ListCard key={st.list.title + st.list.rows.length} l={st.list} onCreate={n => { createList(st.list!, n); if (queue.current.length) setTimeout(next, 600); }} onDrop={() => { setSt({}); next(); }} />}
+        {left > 0 && <p className="hint">Danach noch {left} Datei{left > 1 ? "en" : ""}: {queue.current.map(f => f.name).join(", ")}</p>}
         {inv && st.plan && st.plan.length > 0 && <PlanCard plan={st.plan} state={st.planState} label={st.label!} onDone={ps => setSt(o => ({ ...o, planState: ps }))} />}
         {st.msg && (st.msg.noAi ? <p className="hint">Dafür braucht Zettelfrei eine KI. <button type="button" className="linkbtn" onClick={openSettings}>KI einrichten</button></p> : <Bot m={st.msg} />)}
       </div>

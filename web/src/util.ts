@@ -37,3 +37,19 @@ export function openExternal(url: string) {
 }
 /** Beispieldateien nur in der Browser-Demo zeigen – im installierten Programm sieht man nur eigene Dateien. */
 export const SHOW_EXAMPLES = !IS_APP;
+
+// Dateien aus einem Drop holen – auch aus hineingezogenen Ordnern (bis 3 Ebenen tief)
+export async function droppedFiles(dt: DataTransfer): Promise<{ files: File[]; folder: string | null }> {
+  const entries = [...dt.items].map(i => (i as any).webkitGetAsEntry?.()).filter(Boolean), plain = [...dt.files];
+  if (!entries.length) return { files: plain, folder: null };
+  const files: File[] = []; let folder: string | null = null;
+  const walk = async (e: any, depth: number): Promise<void> => {
+    if (e.isFile) { files.push(await new Promise<File>((res, rej) => e.file(res, rej))); return; }
+    if (e.isDirectory && depth < 3) { folder = folder || e.name; const r = e.createReader(); let batch: any[];
+      do { batch = await new Promise<any[]>((res, rej) => r.readEntries(res, rej)); for (const c of batch) await walk(c, depth + 1); } while (batch.length); }
+  };
+  for (const e of entries) await walk(e, 0);
+  return { files: files.length ? files : plain, folder };
+}
+// Ordnername aus einer Ordner-Auswahl (input webkitdirectory)
+export const folderOf = (fs: File[]) => ((fs[0] as any)?.webkitRelativePath || "").split("/")[0] || null;

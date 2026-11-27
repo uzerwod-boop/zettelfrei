@@ -131,6 +131,41 @@ export function openModel(m: any, label: string) {
   S.protokoll.push({ zeit: stamp(), wer: firma().bearbeiter || "", aktion: label, details: [] });
   persist(); emit();
 }
+/* ---------- Mehrere Dateien oder ein ganzer Ordner ---------- */
+const EXCEL_RE = /\.(xlsx|xlsm|xls|csv|ods)$/i, DOC_RE = /\.(pdf|png|jpe?g|webp)$/i;
+async function readMany(files: File[]) {
+  const ok = files.filter(f => !/^[.~]/.test(f.name)).sort((a, b) => a.name.localeCompare(b.name, "de"));
+  const xs = ok.filter(f => EXCEL_RE.test(f.name)), docs = ok.filter(f => DOC_RE.test(f.name)), books: { m: any; f: File; bytes: Uint8Array | null }[] = [];
+  for (const f of xs) { const data = new Uint8Array(await f.arrayBuffer());
+    try { const m = await readWorkbook(data, f.name); books.push({ m, f, bytes: /\.(xlsx|xlsm)$/i.test(f.name) && openedBytes ? new Uint8Array(openedBytes) : null }); }
+    catch { toast(`„${f.name}“ lässt sich nicht lesen und wird übersprungen.`); } }
+  return { books, docs, skipped: ok.length - xs.length - docs.length };
+}
+const sendDocs = (docs: File[]) => { if (docs.length) { S.pane = "pdf"; emit(); setTimeout(() => window.dispatchEvent(new CustomEvent("zf-belege-list", { detail: docs })), 50); } };
+// Öffnet alle Excel-Dateien als eine Arbeitsmappe (je Datei die Blätter), PDF-Listen und Fotos kommen danach als neue Blätter dazu
+export async function openMany(files: File[], label: string) {
+  const { books, docs, skipped } = await readMany(files);
+  if (!books.length && !docs.length) { toast("Keine Excel-, PDF- oder Bilddateien gefunden."); return; }
+  if (books.length) {
+    const base = books[0].m; books.slice(1).forEach(b => ZF.mergeModels(base, b.m, b.f.name));
+    base.name = (books.length > 1 ? label.replace(/\.[^.]+$/, "") || "Zusammengeführt" : books[0].f.name.replace(/\.[^.]+$/, "")) + ".xlsx";
+    S.model = base; S.cur = Math.max(0, base.sheets.findIndex((x: any) => x.hr >= 0)); S.fresh = {}; S.hits = {}; S.aiIssues = []; S.msgs = [];
+    const what = books.map(b => b.f.name).join(", ");
+    S.history = [{ t: Date.now(), label: "Geöffnet: " + what, snap: JSON.stringify(base) }]; S.redo = []; S.savedT = books.length > 1 ? 0 : Date.now();
+    S.origBytes = books[0].bytes; openedBytes = books[0].bytes; persistOrig();
+    S.protokoll.push({ zeit: stamp(), wer: firma().bearbeiter || "", aktion: `Geöffnet: ${what}`, details: [] }); persist(); emit();
+    toast(`${books.length} Datei${books.length > 1 ? "en" : ""} geöffnet · ${base.sheets.filter((x: any) => x.hr >= 0).length} Tabellenblätter` + (docs.length ? ` · ${docs.length} PDF/Foto werden gelesen` : "") + (skipped ? ` · ${skipped} andere Dateien übersprungen` : ""));
+  }
+  sendDocs(docs);
+}
+// Weitere Dateien als Blätter zur geöffneten Datei hinzufügen
+export async function addFiles(files: File[]) {
+  if (!S.model) return openMany(files, "Zusammengeführt");
+  const { books, docs } = await readMany(files), added: string[] = [];
+  books.forEach(b => added.push(...ZF.mergeModels(S.model, b.m, b.f.name)));
+  if (added.length) { S.cur = S.model.sheets.findIndex((x: any) => x.name === added[0]); commit(`Hinzugefügt: ${books.map(b => b.f.name).join(", ")}`); toast(`${added.length} Blatt${added.length > 1 ? "er" : ""} hinzugefügt: ${added.join(", ")}`); }
+  sendDocs(docs);
+}
 export function openExample(name: string) { const ex = window.ZF_EXAMPLES || {}; if (ex[name]) openData(b64(ex[name]), name); }
 export function openFile(f: File) { f.arrayBuffer().then(b => openData(new Uint8Array(b), f.name)); }
 

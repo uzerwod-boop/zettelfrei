@@ -38,7 +38,7 @@ Der Schlüssel bleibt nur auf Ihrem Rechner. Geben Sie ihn nie weiter.
 
 ## 3. Datei öffnen
 
-Excel-Datei einfach **ins Fenster ziehen** oder **„Excel-Datei öffnen“** klicken. Im Programm sehen Sie nur Ihre eigenen Dateien. Zum Ausprobieren ohne eigene Datei gibt es in der [Browser-Version](https://uzerwod-boop.github.io/zettelfrei/) Beispieldateien („Beispiel öffnen…“).
+Excel-Datei einfach **ins Fenster ziehen** oder **„Excel-Datei öffnen“** klicken. Mehrere Dateien gehören zusammen (z. B. CRM-Liste, Kampagnen, PDF-Export)? Legen Sie sie in einen Ordner und ziehen Sie den **ganzen Ordner** hinein oder klicken Sie **„Ordner öffnen“** – daraus wird eine Arbeitsmappe mit einem Blatt je Datei. Im Programm sehen Sie nur Ihre eigenen Dateien. Zum Ausprobieren ohne eigene Datei gibt es in der [Browser-Version](https://uzerwod-boop.github.io/zettelfrei/) Beispieldateien („Beispiel öffnen…“).
 
 Die Tabelle funktioniert wie Excel:
 

@@ -2,6 +2,15 @@
 
 Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.9.0] – 2026-11-27 · Ganzer Ordner auf einmal
+
+### Neu
+- Mehrere Dateien oder einen ganzen Ordner öffnen: auf die Startseite ziehen oder „Ordner öffnen“ wählen. Alle Excel-Dateien werden zu einer Arbeitsmappe, jede Datei bekommt ihre eigenen Blätter. So beantwortet der Assistent Fragen über alle Dateien zugleich, z. B. CRM-Liste und Kampagnen.
+- Listen als PDF im selben Ordner (z. B. Odoo-Pipeline) werden danach nacheinander gelesen und als weitere Blätter angelegt – jeweils mit Vorschau.
+- Blätter mit allgemeinem Namen wie „Sheet1“ oder „Tabelle1“ heißen nach ihrer Datei (z. B. „Marketing-Automation“). Gleiche Blattnamen werden eindeutig gemacht, Formeln in der Datei passen sich an.
+- Rechtsklick auf ein Blatt → „Datei als Blatt hinzufügen …“ nimmt weitere Dateien in die geöffnete Arbeitsmappe auf. Mehrere Dateien auf eine geöffnete Tabelle ziehen tut dasselbe.
+- „Als Excel speichern“ schreibt alles in eine Datei – auch Übersichtsblätter, Nebentabellen (z. B. Stundensätze für SVERWEIS) und verbundene Zellen der hinzugefügten Dateien.
+
 ## [0.8.0] – 2026-11-27 · Listen aus PDF übernehmen
 
 ### Neu
@@ -199,6 +208,7 @@ Erkenntnis aus Tests mit einem schnellen, günstigen Modell: Regeln allein reich
 - KI wahlweise über OpenRouter, eigenen Server, Claude API oder lokales Modell.
 - PDFs und Fotos von Lieferantenrechnungen per KI einlesen.
 
+[0.9.0]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.9.0
 [0.8.0]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.8.0
 [0.7.1]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.7.1
 [0.7.0]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.7.0

@@ -23,6 +23,20 @@ function save(ExcelJS, ZF, origBytes, model, opts){
       wb.eachSheet(function(o){ o.eachRow(function(row){ row.eachCell(function(c){ var v=c.value; if(v&&typeof v==="object"&&typeof v.formula==="string"&&re.test(v.formula)){ re.lastIndex=0; c.value={formula:v.formula.replace(re,q+"!"),result:v.result}; } re.lastIndex=0; }); }); });
     });
     var wsOf=function(sh){ return wb.getWorksheet(sh.name); };
+    // Neue Blätter (z. B. aus einer weiteren Datei oder einer PDF-Liste) anlegen, auch solche ohne Tabelle
+    model.sheets.forEach(function(sh){
+      if(!sh.isNew||wsOf(sh)) return; var ws=wb.addWorksheet(sh.name);
+      (sh.top||[]).forEach(function(row,ri){ (row||[]).forEach(function(cell,ci){ if(!cell) return; var xc=ws.getCell(ri+1,ci+1);
+        if(cell.f){ var v=calc.value(sh,ri+1,ci); xc.value={formula:cell.f,result:typeof v==="number"?v:(v==null?undefined:String(v))}; }
+        else if(cell.v!=null&&cell.v!==""){ var d=cell.d&&deToDate(cell.v); if(d){ xc.value=d; xc.numFmt="dd.mm.yyyy"; } else xc.value=cell.v; } }); });
+      // Zellen neben der Tabelle (z. B. eine Stundensatz-Liste für SVERWEIS)
+      Object.keys(sh.extra||{}).forEach(function(key){ var p=key.split(":"), r=+p[0], c=+p[1], cell=sh.extra[key]; if(!cell) return; var xc=ws.getCell(r,c+1);
+        if(cell.f){ var v=calc.value(sh,r,c); xc.value={formula:cell.f,result:typeof v==="number"?v:(v==null?undefined:String(v))}; }
+        else if(cell.v!=null&&cell.v!==""){ var d=cell.d&&deToDate(cell.v); if(d){ xc.value=d; xc.numFmt="dd.mm.yyyy"; } else xc.value=cell.v; } });
+      (sh.merges||[]).forEach(function(m){ try{ if(typeof m==="string") ws.mergeCells(m); else if(Array.isArray(m)) ws.mergeCells(m[0]+1,m[1]+1,m[2]+1,m[3]+1); }catch(e){} });
+      (sh.widths||[]).forEach(function(w,k){ if(w) ws.getColumn(k+1).width=w; });
+      if(sh.hr>=0) sh.headers.forEach(function(h,k){ var c=ws.getCell(sh.hr+1,sh.c0+1+k); c.value=h; c.font={bold:true}; c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFDDE7E3"}}; ws.getColumn(sh.c0+1+k).width=(sh.widths&&sh.widths[k])||16; });
+    });
     // Formeln außerhalb der Tabellen (Titelzeilen, Übersichtsblätter) aktualisieren, z. B. verschobene Bezüge auf andere Blätter
     model.sheets.forEach(function(sh){
       var ws=wsOf(sh); if(!ws) return;

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { S, canRedo, canUndo, closeFile, commit, emit, issues, mark, openExample, openFile, persist, redo, saveExcel, selectSheet, setPane, sheet, toast, undo, unsaved, useStore, type Pane } from "../store";
+import { S, addFiles, canRedo, canUndo, closeFile, commit, emit, issues, mark, openExample, openFile, openMany, persist, redo, saveExcel, selectSheet, setPane, sheet, toast, undo, unsaved, useStore, type Pane } from "../store";
 import { confirmBox, openMenu, promptBox } from "./Overlays";
-import { HIER, IS_APP, SHOW_EXAMPLES, de, fmtVal, openExternal, rawOf } from "../util";
+import { HIER, IS_APP, SHOW_EXAMPLES, de, droppedFiles, fmtVal, folderOf, openExternal, rawOf } from "../util";
 import { GUIDE_URL } from "../config";
 import { openFeedback } from "./Feedback";
 import { openAbout } from "./About";
@@ -52,7 +52,7 @@ export function TopBar() {
           {examples.map(n => <option key={n} value={n}>{n.replace(/_/g, " ").replace(/\.xlsx$/, "")}</option>)}
         </select>}
         <button className="btn quiet" onClick={() => input.current?.click()}>Excel öffnen</button>
-        <input ref={input} type="file" hidden accept=".xlsx,.xlsm,.xls,.csv,.ods" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) openFile(f); }} />
+        <input ref={input} type="file" hidden multiple accept=".xlsx,.xlsm,.xls,.csv,.ods,.pdf" onChange={e => { const fs = [...(e.target.files || [])]; e.target.value = ""; pickFiles(fs); }} />
         <button className="btn" onClick={saveExcel} disabled={!s.model}>Als Excel speichern</button>
       </div>
     </header>);
@@ -112,7 +112,7 @@ export function Sheet() {
   const s = useStore(); const sh = sheet();
   const [sel, setSel] = useState<Sel>(null), [anchor, setAnchor] = useState<Sel>(null), [edit, setEdit] = useState<string | null>(null), [showAll, setShowAll] = useState(false);
   const editDone = useRef(false);
-  const wrap = useRef<HTMLDivElement>(null), inp = useRef<HTMLInputElement>(null), drag = useRef(0);
+  const wrap = useRef<HTMLDivElement>(null), inp = useRef<HTMLInputElement>(null), drag = useRef(0), addInput = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
   useEffect(() => { setSel(null); setAnchor(null); setEdit(null); setShowAll(false); }, [s.cur, s.model]);
   // Sprung von außen (Hinweis, Chat): Zeile zeigen und markieren
@@ -137,7 +137,8 @@ export function Sheet() {
   const dz = {
     onDragOver: (e: React.DragEvent) => { if ([...e.dataTransfer.items].some(i => i.kind === "file")) { e.preventDefault(); drag.current++; setOver(true); } },
     onDragLeave: () => setOver(false),
-    onDrop: (e: React.DragEvent) => { const f = e.dataTransfer.files[0]; setOver(false); if (!f) return; e.preventDefault();
+    onDrop: (e: React.DragEvent) => { const dt = e.dataTransfer, f = dt.files[0]; setOver(false); if (!f) return; e.preventDefault();
+      if (dt.files.length > 1 || [...dt.items].some(i => (i as any).webkitGetAsEntry?.()?.isDirectory)) { droppedFiles(dt).then(r => manyFiles(r.files, r.folder)); return; }
       if (/\.(xlsx|xlsm|xls|csv|ods)$/i.test(f.name) || (!S.model && !/\.(pdf|png|jpe?g|webp)$/i.test(f.name))) openFile(f); else { setPane("pdf"); window.dispatchEvent(new CustomEvent("zf-beleg", { detail: f })); } },
   };
   if (!s.model || !sh || !view) return <section className="sheetwrap" aria-label="Tabelle" {...dz}><div className={"sheet empty-state" + (over ? " over" : "")}><Empty /></div></section>;
@@ -271,7 +272,7 @@ export function Sheet() {
   let rsum = 0, rcnt = 0, rnum = 0;
   if (multi && rng) for (let r = rng.r1; r <= rng.r2; r++) for (let k = rng.k1; k <= rng.k2; k++) { const v = calc.value(sh, r, sh.c0 + k); if (v == null || v === "") continue; rcnt++; if (typeof v === "number" && !(sh.timeCol && sh.timeCol[k]) && !(sh.dateCol[k] && v > 20000)) { rsum += v; rnum++; } }
   const tabMenu = (e: React.MouseEvent, i: number) => { const x = s.model.sheets[i];
-    openMenu(e, [{ label: "Umbenennen …", onClick: () => renameSheetUI(i) }, { label: "Neues Blatt", onClick: addSheet }, "sep",
+    openMenu(e, [{ label: "Umbenennen …", onClick: () => renameSheetUI(i) }, { label: "Neues Blatt", onClick: addSheet }, { label: "Datei als Blatt hinzufügen …", onClick: () => addInput.current?.click() }, "sep",
       { label: `Blatt „${x.name}“ löschen …`, danger: true, disabled: s.model.sheets.length < 2, onClick: () => deleteSheetUI(i) }]); };
 
   return (
@@ -316,6 +317,7 @@ export function Sheet() {
         <div className="sheettabs" role="tablist" aria-label="Blätter">
           {s.model.sheets.map((x: any, i: number) => <button key={x.name + i} role="tab" aria-selected={i === s.cur} title={x.name + " · Doppelklick: umbenennen · Rechtsklick: mehr"} onClick={() => selectSheet(i)} onDoubleClick={() => renameSheetUI(i)} onContextMenu={e => tabMenu(e, i)}>{x.name}</button>)}
           <button type="button" className="addtab" title="Neues Blatt" aria-label="Neues Blatt" onClick={addSheet}>+</button>
+          <input ref={addInput} type="file" hidden multiple accept=".xlsx,.xlsm,.xls,.csv,.ods,.pdf,image/*" onChange={e => { const fs = [...(e.target.files || [])]; e.target.value = ""; if (fs.length) addFiles(fs); }} />
         </div>
       </div>
       <p className="foot">Klicken und tippen wie in Excel · Bereich mit Maus oder Umschalt markieren · {KEY("C")} / {KEY("V")} kopieren und einfügen (auch aus Excel) · {KEY("Z")} rückgängig · Rechtsklick für Zeilen, Spalten und Blätter. Formeln, Farben und Formate der Originaldatei bleiben beim Speichern erhalten; die Datei bleibt {HIER}.</p>
@@ -329,16 +331,21 @@ export async function deleteSheetUI(i: number) { const sh = S.model.sheets[i], r
   if (!(await confirmBox(`Blatt „${sh.name}“ löschen?`, (refs ? `Achtung: ${refs} Formel${refs === 1 ? "" : "n"} in anderen Blättern beziehen sich auf dieses Blatt und zeigen danach einen Fehler. ` : "") + `Mit ${KEY("Z")} holen Sie das Blatt zurück.`, "Löschen", true))) return;
   const r = ZF.deleteSheet(S.model, sh); if (r.error) { toast(r.error); return; } S.cur = Math.max(0, Math.min(i, S.model.sheets.length - 1)); commit(`Blatt „${sh.name}“ gelöscht`); }
 
+// Mehrere Dateien: in eine geöffnete Datei als Blätter aufnehmen, sonst zusammen öffnen
+function manyFiles(files: File[], folder: string | null) { if (S.model) addFiles(files); else openMany(files, folder || "Zusammengeführt"); }
+function pickFiles(fs: File[]) { if (!fs.length) return; if (fs.length === 1 && /\.(xlsx|xlsm|xls|csv|ods)$/i.test(fs[0].name)) openFile(fs[0]); else openMany(fs, "Zusammengeführt"); }
 function Empty() {
-  const ex = SHOW_EXAMPLES ? Object.keys(window.ZF_EXAMPLES || {}) : [], inp = useRef<HTMLInputElement>(null);
+  const ex = SHOW_EXAMPLES ? Object.keys(window.ZF_EXAMPLES || {}) : [], inp = useRef<HTMLInputElement>(null), dir = useRef<HTMLInputElement>(null);
   return (
     <div className="empty">
       <Mark />
       <h2>Excel bleibt. Das Tippen fällt weg.</h2>
       <p>Öffnen Sie Ihre Excel-Datei oder ziehen Sie sie hierher. Sie bleibt {IS_APP ? "auf Ihrem Rechner" : "in Ihrem Browser"}.</p>
-      <p className="hint">Nur eine Liste als PDF, z. B. aus Odoo oder einem anderen CRM? Einfach hierher ziehen – sie wird zur Tabelle.</p>
-      <div className="row center"><button className="btn" type="button" id="emptyOpen" onClick={() => inp.current?.click()}>Excel-Datei öffnen</button></div>
-      <input ref={inp} type="file" hidden accept=".xlsx,.xlsm,.xls,.csv,.ods" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) openFile(f); }} />
+      <p className="hint">Mehrere Dateien oder einen ganzen Ordner hierher ziehen: Alle Excel-Dateien werden zu einer Arbeitsmappe mit je eigenen Blättern, Listen als PDF (z. B. aus Odoo) werden zu weiteren Blättern.</p>
+      <div className="row center"><button className="btn" type="button" id="emptyOpen" onClick={() => inp.current?.click()}>Excel-Datei öffnen</button>
+        <button className="btn quiet" type="button" id="emptyFolder" onClick={() => dir.current?.click()}>Ordner öffnen</button></div>
+      <input ref={inp} type="file" hidden multiple accept=".xlsx,.xlsm,.xls,.csv,.ods,.pdf" onChange={e => { const fs = [...(e.target.files || [])]; e.target.value = ""; pickFiles(fs); }} />
+      <input ref={dir} type="file" hidden {...{ webkitdirectory: "", directory: "" } as any} onChange={e => { const fs = [...(e.target.files || [])]; e.target.value = ""; if (fs.length) openMany(fs, folderOf(fs) || "Ordner"); }} />
       {ex.length > 0 && <><p className="hint">Oder mit einem Beispiel ausprobieren:</p>
         <div className="row center">{ex.slice(0, 5).map(n => <button key={n} className="btn quiet small" onClick={() => openExample(n)}>{n.replace(/_/g, " ").replace(/\.xlsx$/, "")}</button>)}</div></>}
     </div>);

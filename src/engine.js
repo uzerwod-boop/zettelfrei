@@ -688,6 +688,24 @@ function joinChunks(chunks){
   rows=rows.map(function(r){ while(r.length<heads.length) r.push(""); return r; });
   return {headers:heads, rows:rows, dropped:dropped};
 }
+/* ---------- Mehrere Dateien zu einer Arbeitsmappe zusammenführen (Ordner mit Excel-Dateien) ---------- */
+// Hängt die Blätter von „other“ an „base“ an. Allgemeine Blattnamen (Tabelle1, Sheet1) bekommen den Dateinamen,
+// gleiche Namen werden eindeutig gemacht; Formeln in der angehängten Datei werden mit umbenannt.
+function mergeModels(base, other, fileName){
+  var stem=String(fileName||other.name||"Datei").replace(/\.[^.]+$/,"").replace(/[\\\/?*[\]:]/g," ").trim()||"Datei";
+  var generic=/^(sheet|tabelle|blatt|feuil|hoja|foglio|arkusz)\s*\d*$/i, tables=other.sheets.filter(function(o){ return o.hr>=0; }).length, added=[];
+  var taken=function(n){ return base.sheets.some(function(o){ return o.name.toLowerCase()===n.toLowerCase(); }) || other.sheets.some(function(o){ return o.__new&&o.__new.toLowerCase()===n.toLowerCase(); }); };
+  other.sheets.forEach(function(sh){
+    var want=(generic.test(sh.name.trim())&&tables<=1)?stem:sh.name, n=want.slice(0,31), i=2;
+    if(taken(n)) n=(want.slice(0,24)+" ("+stem.slice(0,10)+")").slice(0,31);
+    while(taken(n)) n=want.slice(0,27)+" "+(i++);
+    sh.__new=n; });
+  // erst auf Platzhalter, dann auf Zielnamen umbenennen, damit sich Namen nicht gegenseitig überschreiben
+  other.sheets.forEach(function(sh,j){ if(sh.__new!==sh.name) renameSheet(other,sh,"\u0001zf"+j); });
+  other.sheets.forEach(function(sh){ if(sh.name!==sh.__new){ var old=sh.name; allFormulaCells(other,function(c){ c.f=renameRefs(c.f,old,sh.__new); }); sh.name=sh.__new; } });
+  other.sheets.forEach(function(sh){ delete sh.__new; delete sh.origName; sh.isNew=true; sh.fromFile=String(fileName||""); base.sheets.push(sh); added.push(sh.name); });
+  return added;
+}
 function renameColumn(sh, k, name){
   name=String(name||"").trim(); if(!name) return {error:"Der Name darf nicht leer sein."};
   if(sh.headers.some(function(h,j){ return j!==k&&String(h).toLowerCase()===name.toLowerCase(); })) return {error:"Eine Spalte „"+name+"“ gibt es schon."};
@@ -1121,7 +1139,7 @@ function buildWorkbook(XLSX, model){
 return {colLetter:colLetter,colIndex:colIndex,parseNum:parseNum,isDateStr:isDateStr,normDate:normDate,clone:clone,blank:blank,
   isTimeFmt:isTimeFmt,fmtTime:fmtTime,parseTime:parseTime,dateToSerial:dateToSerial,serialToDate:serialToDate,todaySerial:todaySerial,addColumn:addColumn,col:col,
   loadWorkbook:loadWorkbook,runQueries:runQueries,isData:isData,eachData:eachData,dataCount:dataCount,anyDateSerial:anyDateSerial,timeNum:timeNum,looksTime:looksTime,loadWorkbookExcelJS:loadWorkbookExcelJS,normalizeOOXML:normalizeOOXML,openXlsx:openXlsx,loadCSV:loadCSV,parseCSV:parseCSV,parseSheet:parseSheet,Calc:Calc,display:display,dataRowNo:dataRowNo,footRowNo:footRowNo,cellAt:cellAt,
-  appendRow:appendRow,deleteRow:deleteRow,insertRowAt:insertRowAt,sortRows:sortRows,renameSheet:renameSheet,deleteSheet:deleteSheet,newSheet:newSheet,tableSheet:tableSheet,joinChunks:joinChunks,sheetRefCount:sheetRefCount,renameColumn:renameColumn,deleteLastColumn:deleteLastColumn,setCell:setCell,findCol:findCol,computedCols:computedCols,numericCol:numericCol,
+  appendRow:appendRow,deleteRow:deleteRow,insertRowAt:insertRowAt,sortRows:sortRows,renameSheet:renameSheet,deleteSheet:deleteSheet,newSheet:newSheet,tableSheet:tableSheet,joinChunks:joinChunks,mergeModels:mergeModels,sheetRefCount:sheetRefCount,renameColumn:renameColumn,deleteLastColumn:deleteLastColumn,setCell:setCell,findCol:findCol,computedCols:computedCols,numericCol:numericCol,
   query:query,filterRows:filterRows,ambiguity:ambiguity,duplicateKey:duplicateKey,INJECT:INJECT,checks:checks,describe:describe,planOps:planOps,applyPlan:applyPlan,buildWorkbook:buildWorkbook,transformRefs:transformRefs};
 })();
 if(typeof module!=="undefined") module.exports=ZF;
