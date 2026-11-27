@@ -22,7 +22,7 @@ def chunk(part, parts):
 async def main():
     port = free_port(); env = dict(os.environ, PORT=str(port)); [env.pop(k, None) for k in ("ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "ZF_KLASSISCH")]
     srv = subprocess.Popen(["node", "server.js"], cwd=ROOT, env=env, stdout=subprocess.DEVNULL); time.sleep(0.8)
-    errs, calls = [], []
+    errs, calls, maxt = [], [], []
     try:
         async with async_playwright() as p:
             b = await p.chromium.launch(); ctx = await b.new_context(viewport={"width": 1440, "height": 900})
@@ -39,6 +39,11 @@ async def main():
                 m = re.search(r"Teil (\d+) von (\d+)", text); calls.append((m and m.groups(), imgs, "GENAU diese Spalten" in text))
                 await asyncio.sleep(0.2)
                 res = chunk(int(m.group(1)), int(m.group(2))) if m else {"antwort": "?"}
+                maxt.append(body.get("max_tokens"))
+                if m and m.group(1) == "2" and len(sys.argv) <= 1:   # Teil 2: zweimal abgeschnittene Antwort, dann in zwei Hälften
+                    n2 = sum(1 for c in calls if c[0] and c[0][0] == "2")
+                    if n2 <= 2: await r.fulfill(status=200, content_type="application/json", body=json.dumps({"choices": [{"message": {"content": json.dumps(res)[:120]}}]})); return
+                    z = res["zeilen"]; h = len(z) // 2; res = dict(res, zeilen=z[:h + 1] if n2 == 3 else z[h:])
                 await r.fulfill(status=200, content_type="application/json", body=json.dumps({"choices": [{"message": {"content": json.dumps(res)}}]}))
             await ctx.route("https://openrouter.ai/**", route)
             pg = await ctx.new_page(); pg.on("pageerror", lambda e: errs.append(str(e)))
@@ -49,7 +54,9 @@ async def main():
             dt = await pg.evaluate_handle("(b)=>{const d=new DataTransfer();d.items.add(new File([new Uint8Array(b)],'Pipeline.pdf',{type:'application/pdf'}));return d;}", list(data))
             await pg.dispatch_event(".sheetwrap", "drop", {"dataTransfer": dt})
             await pg.wait_for_selector(".listcard", timeout=30000)
-            n = len(calls); check(n >= 2 and all(c[1] == 1 for c in calls), f"{n} Bildteile einzeln an die KI geschickt")
+            n = len(calls); check(n >= 2 and all(c[1] == 1 for c in calls), f"{n} Anfragen, je ein Bildteil")
+            check(all(x == 8000 for x in maxt), "Antwortlimit 8000 Tokens für Listen")
+            if len(sys.argv) <= 1: check(sum(1 for c in calls if c[0] and c[0][0] == "2") == 4, "abgeschnittene Antwort: neu versucht, dann in zwei Hälften gelesen")
             check(not calls[0][2] and all(c[2] for c in calls[1:]), "ab Teil 2 mit festen Spalten")
             if len(sys.argv) <= 1:
                 head = await pg.inner_text(".listcard .einv-h"); check("30 Einträge" in head, "30 Einträge (Kantendoppel entfernt): " + head)

@@ -60,6 +60,7 @@ const listPrompt = (name: string, part: number, parts: number, spalten?: string[
   "- Stehen in einer Zelle mehrere Angaben untereinander (z. B. Firmenname, darunter Ansprechpartner, ein Status-Abzeichen oder ein Betrag), lege für jede Angabe eine eigene Spalte an (z. B. „Phase“, „Betrag“).\n" +
   "- Runde Symbole mit einem oder zwei Buchstaben sind Kürzel der zuständigen Person: Spalte „Zuständig“.\n" +
   "- Datum immer als TT.MM.JJJJ. Farben nicht übernehmen, nur den Inhalt. Zahlen und Beträge wie gedruckt (z. B. \"0,00 €\"). Kleine Zähler neben Symbolen weglassen.\n" +
+  "- Spalten, die in diesem Ausschnitt in keiner Zeile etwas enthalten, trotzdem mit \"\" füllen, aber keine Erklärtexte schreiben. Kurze Antworten, kein Text außerhalb des JSON.\n" +
   "- Leere Zellen als \"\". Unleserliches nicht raten: Zelle leer lassen und in \"unsicher\" kurz nennen (Zeile und Spalte).\n" +
   (spalten?.length ? `- Verwende GENAU diese Spalten in dieser Reihenfolge: ${JSON.stringify(spalten)}.\n` : "- Spaltenüberschriften wie im Dokument.\n") +
   "- Steht irgendwo die Gesamtzahl der Einträge (z. B. „1-99 / 99“), gib sie in \"gesamt\" an, sonst null.\n" +
@@ -78,6 +79,25 @@ async function pageImages(pdf: any, maxPages: number, split: boolean): Promise<B
       out.push(await new Promise<Blob>(r => d.toBlob(b => r(b!), "image/jpeg", 0.9))); }
   }
   return out;
+}
+// Bildteil nochmals halbieren (wenn die Antwort für ein Stück zu lang wurde)
+async function splitImage(b: Blob): Promise<Blob[]> {
+  const bm = await createImageBitmap(b), ov = Math.round(bm.height * 0.05), h = Math.round(bm.height / 2) + ov, out: Blob[] = [];
+  for (const y of [0, bm.height - h]) { const c = document.createElement("canvas"); c.width = bm.width; c.height = h;
+    const g = c.getContext("2d")!; g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, h); g.drawImage(bm, 0, y, bm.width, h, 0, 0, bm.width, h);
+    out.push(await new Promise<Blob>(r => c.toBlob(x => r(x!), "image/jpeg", 0.92))); }
+  return out;
+}
+// Ein Bildteil lesen: großzügiges Antwortlimit, bei abgeschnittener Antwort einmal neu und dann in zwei kleineren Stücken
+async function readPart(img: Blob, name: string, part: number, parts: number, sp?: string[], depth = 0): Promise<any> {
+  const ask = () => AI.json(listPrompt(name, part, parts, sp), { images: [img], maxTokens: 8000 });
+  try { return await ask(); } catch (e: any) {
+    if (!e || !["invalid_json", "empty_completion"].includes(e.code)) throw e;
+    if (depth === 0) { try { return await ask(); } catch (e2: any) { if (!e2 || !["invalid_json", "empty_completion"].includes(e2.code)) throw e2; } }
+    if (depth >= 2) throw e;
+    const halves = await splitImage(img), a = await readPart(halves[0], name, part, parts, sp, depth + 1), b = await readPart(halves[1], name, part, parts, sp || a?.spalten, depth + 1);
+    const j = ZF.joinChunks([a, b]); return { ...a, spalten: j.headers, zeilen: j.rows, unsicher: [...(a?.unsicher || []), ...(b?.unsicher || [])] };
+  }
 }
 type ListRead = { headers: string[]; rows: string[][]; dropped: number; total: number | null; unsure: string[]; title: string; pages: number };
 function ListCard({ l, onCreate, onDrop }: { l: ListRead; onCreate: (name: string) => void; onDrop: () => void }) {
@@ -130,9 +150,10 @@ export function Belege() {
     if (!AI.active()) { setSt({ error: "", msg: { noAi: true } }); return; }
     try {
       setSt({ busy: `KI liest die Liste… Teil 1 von ${imgs.length}` });
-      const first: any = await AI.json(listPrompt(name, 1, imgs.length), { images: [imgs[0]] });
+      const first: any = await readPart(imgs[0], name, 1, imgs.length);
       const sp: string[] = (first?.spalten || []).map(String); const rest: any[] = new Array(imgs.length - 1); let n = 1;
-      const work = async (i: number) => { rest[i - 1] = await AI.json(listPrompt(name, i + 1, imgs.length, sp), { images: [imgs[i]] }); setSt({ busy: `KI liest die Liste… ${++n} von ${imgs.length} Teilen` }); };
+      const work = async (i: number) => { rest[i - 1] = await readPart(imgs[i], name, i + 1, imgs.length, sp).catch((e: any) => { if (!e || !["invalid_json", "empty_completion"].includes(e.code)) throw e;
+        return { zeilen: [], unsicher: [`Teil ${i + 1} von ${imgs.length} (Seite ${Math.floor(i / 2) + 1}) konnte nicht gelesen werden – dort fehlen Einträge.`] }; }); setSt({ busy: `KI liest die Liste… ${++n} von ${imgs.length} Teilen` }); };
       const queue = imgs.map((_, i) => i).slice(1); await Promise.all([0, 1, 2].map(async () => { while (queue.length) await work(queue.shift()!); }));
       const chunks = [first, ...rest], j = ZF.joinChunks(chunks);
       if (!j.rows.length) { setSt({ error: "In diesem Dokument wurde keine Liste gefunden." }); return; }

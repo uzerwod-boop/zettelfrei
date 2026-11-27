@@ -109,17 +109,17 @@ function post(url,headers,body,signal){
 
 /* ---------- Anfragen ---------- */
 var JSON_HINT="\n\nAntworte ausschließlich mit gültigem JSON, ohne Text davor oder danach.";
-function anthropicBody(prompt,images,m){
+function anthropicBody(prompt,images,m,max){
   var content=images.map(function(im){ return {type:"image",source:{type:"base64",media_type:im.mediaType,data:im.data}}; });
   content.push({type:"text",text:prompt+JSON_HINT});
-  return {model:m,max_tokens:4096,messages:[{role:"user",content:content}]};
+  return {model:m,max_tokens:max||4096,messages:[{role:"user",content:content}]};
 }
 function anthropicText(res){ return (res.content||[]).filter(function(b){ return b.type==="text"; }).map(function(b){ return b.text; }).join(""); }
-function openaiBody(prompt,images,m){
+function openaiBody(prompt,images,m,max){
   var content=images.length
     ? [{type:"text",text:prompt+JSON_HINT}].concat(images.map(function(im){ return {type:"image_url",image_url:{url:"data:"+im.mediaType+";base64,"+im.data}}; }))
     : prompt+JSON_HINT;
-  return {model:m,temperature:0,max_tokens:4096,messages:[{role:"user",content:content}]};
+  return {model:m,temperature:0,max_tokens:max||4096,messages:[{role:"user",content:content}]};
 }
 function openaiText(res){ var c=res&&res.choices&&res.choices[0]&&res.choices[0].message; return c?(typeof c.content==="string"?c.content:(c.content||[]).map(function(p){ return p.text||""; }).join("")):""; }
 
@@ -132,16 +132,16 @@ function json(prompt,opts){
     return artifactSample.json(prompt,o);
   }
   return Promise.all((opts.images||[]).map(toImage)).then(function(images){
-    if(p==="server") return post("api/messages",{"content-type":"application/json"},anthropicBody(prompt,images,null),opts.signal).then(anthropicText);
+    if(p==="server") return post("api/messages",{"content-type":"application/json"},anthropicBody(prompt,images,null,opts.maxTokens),opts.signal).then(anthropicText);
     if(p==="claude") return post("https://api.anthropic.com/v1/messages",{
         "content-type":"application/json","x-api-key":cfg.keys.claude,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"
-      },anthropicBody(prompt,images,model("claude")),opts.signal).then(anthropicText);
+      },anthropicBody(prompt,images,model("claude"),opts.maxTokens),opts.signal).then(anthropicText);
     if(p==="openrouter") return post(OPENROUTER_URL,{
         "content-type":"application/json","authorization":"Bearer "+cfg.keys.openrouter,
         "HTTP-Referer":location.origin&&location.origin!=="null"?location.origin:"https://github.com/uzerwod-boop/zettelfrei","X-OpenRouter-Title":"Zettelfrei"
-      },Object.assign(openaiBody(prompt,images,model("openrouter")),{usage:{include:true}}),opts.signal).then(openaiText);
+      },Object.assign(openaiBody(prompt,images,model("openrouter"),opts.maxTokens),{usage:{include:true}}),opts.signal).then(openaiText);
     var headers={"content-type":"application/json"}; if(cfg.keys.local) headers.authorization="Bearer "+cfg.keys.local;
-    return post(String(cfg.url||"").replace(/\/+$/,"")+"/chat/completions",headers,openaiBody(prompt,images,model("local")),opts.signal).then(openaiText);
+    return post(String(cfg.url||"").replace(/\/+$/,"")+"/chat/completions",headers,openaiBody(prompt,images,model("local"),opts.maxTokens),opts.signal).then(openaiText);
   }).then(function(text){ if(typeof text!=="string"||!text.trim()) throw err("empty_completion","Leere Antwort"); return parseJson(text); });
 }
 

@@ -2,6 +2,12 @@
 
 Alle wichtigen Änderungen an Zettelfrei. Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.9.2] – 2026-11-27 · Lange PDF-Listen zuverlässig lesen
+
+### Behoben
+- Bei dichten Listen (z. B. Odoo-Pipeline mit vielen Spalten) brach die KI-Antwort ab: „Die Antwort war unvollständig“. Listen bekommen jetzt ein doppelt so großes Antwortlimit. Wird eine Antwort trotzdem abgeschnitten, versucht Zettelfrei es noch einmal und liest das Stück dann in zwei kleineren Hälften.
+- Lässt sich ein einzelnes Stück gar nicht lesen, bricht nicht mehr die ganze Liste ab: Die übrigen Einträge werden übernommen, und die Vorschau nennt die Stelle, an der Einträge fehlen.
+
 ## [0.9.1] – 2026-11-27 · PDF-Liste mit einem Klick als Blatt
 
 ### Neu
@@ -213,6 +219,7 @@ Erkenntnis aus Tests mit einem schnellen, günstigen Modell: Regeln allein reich
 - KI wahlweise über OpenRouter, eigenen Server, Claude API oder lokales Modell.
 - PDFs und Fotos von Lieferantenrechnungen per KI einlesen.
 
+[0.9.2]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.9.2
 [0.9.1]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.9.1
 [0.9.0]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.9.0
 [0.8.0]: https://github.com/uzerwod-boop/zettelfrei/releases/tag/v0.8.0
