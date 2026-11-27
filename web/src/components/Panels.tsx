@@ -99,13 +99,13 @@ function ListCard({ l, onCreate, onDrop }: { l: ListRead; onCreate: (name: strin
     </div>);
 }
 
-type BelegState = { list?: ListRead; busy?: string; inv?: any; plan?: any[]; planState?: "open" | "done" | "dropped"; label?: string; msg?: any; error?: string; info?: string };
+type BelegState = { file?: File; list?: ListRead; busy?: string; inv?: any; plan?: any[]; planState?: "open" | "done" | "dropped"; label?: string; msg?: any; error?: string; info?: string };
 export function Belege() {
   const s = useStore(); const [st, setSt] = useState<BelegState>({}); const [target, setTarget] = useState<number>(-1); const [over, setOver] = useState(false);
   const inp = useRef<HTMLInputElement>(null);
   const tables = (s.model?.sheets || []).map((x: any, i: number) => ({ x, i })).filter((o: any) => o.x.hr >= 0);
   const listMode = () => !S.model || target === NEW_LIST;
-  const queue = useRef<File[]>([]), [left, setLeft] = useState(0);
+  const queue = useRef<File[]>([]), [left, setLeft] = useState(0), lastFile = useRef<File | null>(null);
   const next = () => { const f = queue.current.shift(); setLeft(queue.current.length); if (f) handle(f, true); };
   const tgt = () => S.model.sheets[target >= 0 && S.model.sheets[target] ? target : S.cur];
   useEffect(() => { setTarget(-1); }, [s.model]);
@@ -117,14 +117,14 @@ export function Belege() {
   const readXml = (text: string) => { try { showInv(ZFE.read(text)); } catch (e: any) { setSt({ error: `Diese XML-Datei ist keine lesbare E-Rechnung (${e.message}).` }); } };
   const extract = (text: string, images: Blob[], name: string) => {
     if (!AI.active()) { setSt({ error: "", msg: { noAi: true } }); return; }
-    const t = tgt(); setSt({ busy: "KI liest das Dokument…" });
+    const t = tgt(); setSt(o => ({ file: o.file, busy: "KI liest das Dokument…" }));
     const prompt = context() + `\n\nDer Nutzer hat ein Dokument hochgeladen (${name})${images.length ? ", siehe Bild" : ""}. Übertrage den Inhalt in das Blatt „${t.name}“.\n` +
       "Überlege, was das Dokument für dieses Blatt bedeutet: z. B. bei einer Lieferantenrechnung im Lager den Bestand passender vorhandener Artikel per {\"plus\": Menge} erhöhen und unbekannte Artikel neu anlegen; bei einer Kundenbestellung einen neuen Auftrag anlegen; bei einem Stundenzettel neue Zeilen pro Person und Tag. Ordne Kommission oder Baustelle einem vorhandenen Projekt zu, wenn eindeutig.\n" +
       "In \"antwort\" in einem Satz zusammenfassen, was im Dokument steht und was du überträgst. Unleserliches nicht raten, sondern in rueckfrage nennen.\n" + (text ? `Text des Dokuments:\n"""${text}"""\n\n` : "") + RULES;
     AI.json(prompt, { images }).then((res: any) => {
       const results = ZF.runQueries(S.model, res.abfragen || []), plan = ZF.planOps(S.model, res.aenderungen || []);
-      setSt({ msg: { id: 0, text: name, status: "done", res, results, plan, planState: plan.length ? "open" : undefined, label: "Dokument übernommen: " + name } });
-    }, (e: any) => setSt({ error: aiError(e) }));
+      setSt(o => ({ file: o.file, msg: { id: 0, text: name, status: "done", res, results, plan, planState: plan.length ? "open" : undefined, label: "Dokument übernommen: " + name } }));
+    }, (e: any) => setSt(o => ({ file: o.file, error: aiError(e) })));
   };
   const readList = async (imgs: Blob[], name: string, pages: number) => {
     if (!AI.active()) { setSt({ error: "", msg: { noAi: true } }); return; }
@@ -147,7 +147,7 @@ export function Belege() {
     toast(`Blatt „${sh.name}“ mit ${l.rows.length} Zeilen angelegt`);
   };
   const handle = async (f: File, forceList = false) => {
-    setSt({});
+    setSt({}); lastFile.current = f;
     if (!S.model && !/pdf$/i.test(f.type) && !/\.pdf$/i.test(f.name) && !f.type.startsWith("image/")) { toast("Zuerst eine Excel-Datei öffnen."); return; }
     if (forceList || listMode()) {
       if (f.type.startsWith("image/")) { readList([f], f.name, 1); return; }
@@ -209,6 +209,8 @@ export function Belege() {
         {left > 0 && <p className="hint">Danach noch {left} Datei{left > 1 ? "en" : ""}: {queue.current.map(f => f.name).join(", ")}</p>}
         {inv && st.plan && st.plan.length > 0 && <PlanCard plan={st.plan} state={st.planState} label={st.label!} onDone={ps => setSt(o => ({ ...o, planState: ps }))} />}
         {st.msg && (st.msg.noAi ? <p className="hint">Dafür braucht Zettelfrei eine KI. <button type="button" className="linkbtn" onClick={openSettings}>KI einrichten</button></p> : <Bot m={st.msg} />)}
+        {st.msg && !st.msg.noAi && lastFile.current && (/\.pdf$/i.test(lastFile.current.name) || lastFile.current.type.startsWith("image/")) && <div className="row"><span className="hint">Ist das eine Liste aus einem anderen Programm (z. B. Odoo)?</span>
+          <button type="button" className="btn ghost small" id="asList" onClick={() => { setTarget(NEW_LIST); handle(lastFile.current!, true); }}>Als neues Blatt übernehmen</button></div>}
       </div>
     </div>);
 }

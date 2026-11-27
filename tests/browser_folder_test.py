@@ -62,6 +62,15 @@ const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Sheet1');requ
             await pg.locator(".sheettabs [role=tab]").first.click(button="right"); await pg.click("text=Datei als Blatt hinzufügen")
             await pg.locator(".sheettabs input[type=file]").set_input_files(os.path.join(ROOT, "beispiele", "Material_Lager.xlsx"))
             await pg.wait_for_selector(".sheettabs >> text=Lager", timeout=5000); check(True, "Datei per Rechtsklick als Blatt hinzugefügt")
+            # PDF auf die Tabelle gezogen (nicht als Liste gewählt): Knopf „Als neues Blatt übernehmen“
+            data = open(os.path.join(folder, "Pipeline.pdf"), "rb").read()
+            dt = await pg.evaluate_handle("(b)=>{const d=new DataTransfer();d.items.add(new File([new Uint8Array(b)],'Pipeline 2.pdf',{type:'application/pdf'}));return d;}", list(data))
+            await pg.dispatch_event(".sheetwrap", "drop", {"dataTransfer": dt})
+            try: await pg.wait_for_selector("#asList", timeout=20000)
+            except Exception: await pg.screenshot(path=os.path.join(OUT, "fail.png")); print(await pg.inner_text("#pdfOut")); raise
+            await pg.click("#asList")
+            await pg.wait_for_selector(".listcard", timeout=20000); await pg.click("#listCreate")
+            await pg.wait_for_selector(".sheettabs >> text=Aktivitäten 2", timeout=5000); check(True, "Beleg-Ergebnis lässt sich als neues Blatt übernehmen")
             check(not errs, "keine JS-Fehler " + "; ".join(errs[:3]))
             await b.close()
     finally:
