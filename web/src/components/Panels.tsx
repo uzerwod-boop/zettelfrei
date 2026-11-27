@@ -115,7 +115,7 @@ function ListCard({ l, onCreate, onDrop }: { l: ListRead; onCreate: (name: strin
   return (
     <div className="listcard">
       <div className="einv-h"><span className="badge">Liste</span><span>{l.rows.length} Einträge · {l.headers.length} Spalten · {l.pages} Seite{l.pages === 1 ? "" : "n"} gelesen</span></div>
-      {missing && <p className="planwarn">Im Dokument steht die Zahl {l.total}, gelesen wurden {l.rows.length} Einträge. {l.total > l.rows.length ? "Das kann die Gesamtzahl im Ursprungsprogramm sein, wenn nicht alle Einträge mitgedruckt wurden – bitte kurz mit dem Original vergleichen." : "Bitte kurz mit dem Original vergleichen."}</p>}
+      {missing && <p className="planwarn">Im Dokument steht die Zahl {l.total}, gelesen wurden {l.rows.length} Einträge. {(l.total ?? 0) > l.rows.length ? "Das kann die Gesamtzahl im Ursprungsprogramm sein, wenn nicht alle Einträge mitgedruckt wurden – bitte kurz mit dem Original vergleichen." : "Bitte kurz mit dem Original vergleichen."}</p>}
       {!missing && l.total != null && <p className="hint okc">Vollständig: alle {l.total} Einträge laut Dokument gelesen.</p>}
       {l.unsure.length > 0 && <div className="planwarn"><strong>Nicht sicher gelesen:</strong><ul>{l.unsure.slice(0, 8).map((u, i) => <li key={i}>{u}</li>)}</ul></div>}
       <div className="listprev"><table><thead><tr><th>#</th>{l.headers.map((h, i) => <th key={i}>{h}</th>)}</tr></thead>
